@@ -1,0 +1,185 @@
+<template>
+  <a-modal v-model:visible="onlyRefundDetailVisible" title="售后详情" width="min(900px, 92vw)" class="detail">
+    <div class="item">
+      <div class="item-title">售后信息</div>
+      <a-descriptions bordered :column="2" :label-style="{ width: '160px' }">
+        <a-descriptions-item label="售后单号">{{ currentOrder?.after_sale_no }}</a-descriptions-item>
+        <a-descriptions-item label="申请时间">{{ currentOrder?.created_at }}</a-descriptions-item>
+        <a-descriptions-item label="售后类型"> {{ afterSaleStatus.typeMap[currentOrder?.after_sale_type] }}
+        </a-descriptions-item>
+        <a-descriptions-item label="售后原因">{{
+            afterSaleStatus.reasonMap[currentOrder?.reason]
+          }}
+        </a-descriptions-item>
+        <a-descriptions-item label="补充说明" :span="2">{{ currentOrder?.remark }}</a-descriptions-item>
+      </a-descriptions>
+    </div>
+    <div class="item">
+      <div class="item-title">用户信息</div>
+      <a-descriptions bordered :column="2" :label-style="{ width: '160px' }">
+        <a-descriptions-item label="收货人">{{ currentOrder?.consignee }}</a-descriptions-item>
+        <a-descriptions-item label="手机号码">{{ currentOrder?.phone }}</a-descriptions-item>
+        <a-descriptions-item label="收货地址" :span="2">
+          {{ (currentOrder?.region || '') + ' ' + (currentOrder?.detail_address || '') }}
+        </a-descriptions-item>
+      </a-descriptions>
+    </div>
+    <div class="item">
+      <div class="item-title">订单信息</div>
+      <a-descriptions bordered :column="2" :label-style="{ width: '160px' }">
+        <a-descriptions-item label="订单号">{{ currentOrder?.order_no }}</a-descriptions-item>
+        <a-descriptions-item label="支付时间">{{ currentOrder?.pay_at }}</a-descriptions-item>
+        <a-descriptions-item label="支付方式">{{ currentOrder?.pay_type }}</a-descriptions-item>
+        <a-descriptions-item label="实付总额">￥{{ currentOrder?.pay_amount }}</a-descriptions-item>
+      </a-descriptions>
+    </div>
+    <div class="item">
+      <div class="item-title">商品信息</div>
+      <a-table :dataSource="items" row-key="product_id" :pagination="false" size="small"
+               style="margin-bottom: 16px;" class="table-title">
+        <a-table-column title="商品名称" dataIndex="product_name"></a-table-column>
+        <a-table-column title="商品图片">
+          <template #default="{record}">
+            <a-image :src="record.image" :width="80" />
+          </template>
+        </a-table-column>
+        <a-table-column title="单价" width="100">
+          <template #default="{ record }">￥{{ record.sales_price }}</template>
+        </a-table-column>
+        <a-table-column title="增值保障" width="100">
+          <template #default="{ record }">
+            <span v-if="Number(record.insurance_fee) > 0">￥{{ record.insurance_fee }}</span>
+            <span v-else>-</span>
+          </template>
+        </a-table-column>
+        <a-table-column title="购买数量" dataIndex="quantity" width="100"></a-table-column>
+        <a-table-column title="单品小计">
+          <template #default="{ record }">￥{{ record.refund_amount }}</template>
+        </a-table-column>
+      </a-table>
+    </div>
+    <div class="item">
+      <div class="item-title">售后进度</div>
+      <div style="margin-top:15px">
+        <a-steps :current="stepCurrent" size="small">
+          <a-step title="申请售后" :description="currentOrder?.created_at" />
+          <a-step title="商家审核"
+                  :status="currentOrder?.status === 'rejected' ? 'error' : undefined"
+                  :description="stepDescription(1)"></a-step>
+          <a-step title="商家确认退款" :description="stepDescription(2)"></a-step>
+          <a-step title="退款成功" :description="stepDescription(3)"></a-step>
+        </a-steps>
+      </div>
+    </div>
+  </a-modal>
+</template>
+<script setup>
+import {ref, computed} from "vue";
+import {getAfterSale} from '@/api/afterSale.js'
+
+const onlyRefundDetailVisible = ref(false)
+const currentOrder = ref()
+// 根据售后状态，算进度条走到第几步
+const stepCurrent = computed(() => {
+  const status = currentOrder.value?.status
+  if (status === 'reviewing') return 1   // 商家审核中 → 停在「商家审核」
+  if (['refunding', 'exchanging', 'returning'].includes(status)) return 2  // 审核通过 → 到「商家确认退款」
+  if (status === 'refund_confirming') return 3   // 确认退款 → 到「退款成功」
+  if (['refunded', 'exchanged', 'returned'].includes(status)) return 4     // 完成 → 全部走完
+  return 1                                // 其它（含拒绝）默认停「商家审核」
+})
+
+// 进度条每一步的描述文字
+const stepDescription = (index) => {
+  const o = currentOrder.value
+  const status = o?.status
+  const done = ['refunded', 'exchanged', 'returned']
+  const processing = ['refunding', 'exchanging', 'returning']
+  if (index === 0) return o?.created_at || ''
+  if (index === 1) {           // 商家审核
+    if (status === 'reviewing') return '审核中'
+    if (status === 'rejected') return o?.rejected_at || '不通过'
+    if (processing.includes(status) || status === 'refund_confirming' || done.includes(status)) return o?.review_at || '已完成'
+    return '待处理'
+  }
+  if (index === 2) {           // 商家确认退款
+    if (status === 'rejected') return '—'
+    if (processing.includes(status)) return '退款中'
+    if (status === 'refund_confirming') return o?.refund_at || '已确认退款'
+    if (done.includes(status)) return o?.refund_at || '已完成'
+    return '待处理'
+  }
+  if (index === 3) {           // 退款成功
+    if (status === 'rejected') return '—'
+    if (status === 'refund_confirming') return '退款中'
+    if (done.includes(status)) return o?.refunded_at || '已完成'
+    return '待处理'
+  }
+  return ''
+}
+// =================== 加载订单详情 ============
+const items = ref([])
+const loadDetailOrders = (id) => {
+  getAfterSale(id)
+      .then(res => {
+        const detail = res.data.data
+        currentOrder.value = detail
+        items.value = detail.items
+      })
+      .catch(err => {
+        console.log('详情请求失败：', err.response?.status, err.response?.data)
+      })
+
+}
+defineProps({
+  afterSaleStatus: {type: Object, default: () => ({map: {}, reasonMap: {}, typeMap: {}})}
+})
+
+// 定义打开弹窗的方法，并暴露给父组件onlyRefundList.vue
+const onlyRefundDetailOpen = (record) => {
+  onlyRefundDetailVisible.value = true
+  currentOrder.value = record
+  loadDetailOrders(record.id)
+}
+defineExpose({onlyRefundDetailOpen})
+
+
+</script>
+
+<style scoped>
+.detail .item {
+  margin-bottom: 20px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid #eee;
+}
+
+.item .item-title {
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.1);
+  margin-bottom: 5px;
+  padding: 8px 0 8px 10px;
+  font-size: 16px;
+  border-radius: 8px;
+}
+
+.item .table-title:deep(.ant-table-tbody >tr >td) {
+  font-size: 14px;
+  text-align: center;
+}
+.item .table-item {
+  border-radius: 8px;
+}
+
+/* 售后进度条：窄弹窗下缩小字体、允许换行，避免标题/时间戳被挡 */
+.item :deep(.ant-steps-item-title) {
+  font-size: 13px;
+  white-space: normal;
+  line-height: 1.4;
+}
+
+.item :deep(.ant-steps-item-description) {
+  font-size: 12px;
+  white-space: normal;
+  word-break: break-all;
+  line-height: 1.4;
+}
+</style>
