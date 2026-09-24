@@ -31,11 +31,11 @@
             type="password"
         />
       </a-form-item>
-      <!-- 【上线前必删】下面这个「登录」按钮是本机开发用的入口（登录模板店维护演示素材）。
-           上线前删掉它，只留「一键体验」。
-           注意：删按钮只是藏入口，POST /api/login 接口还在，知道 admin123 的人直接打接口仍能登进模板店（只读）
-           另外本地开发要用它，删之前先确认你手上有改回来的版本，别提交错分支 -->
+      <!-- 「登录」按钮是本机开发用的入口（登录模板店维护演示素材），
+           用 v-if="import.meta.env.DEV" 只在开发环境显示，打包上线后自动隐藏，只留「一键体验」。
+           注意：藏按钮只是藏入口，POST /api/login 接口还在，知道 admin123 的人直接打接口仍能登进模板店（只读） -->
       <a-button
+          v-if="import.meta.env.DEV"
           htmlType="submit"
           class="login-button bg-primary-600"
           type="primary"
