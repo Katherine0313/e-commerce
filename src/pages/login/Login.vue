@@ -32,10 +32,10 @@
         />
       </a-form-item>
       <!-- 「登录」按钮是本机开发用的入口（登录模板店维护演示素材），
-           用 v-if="import.meta.env.DEV" 只在开发环境显示，打包上线后自动隐藏，只留「一键体验」。
+           用 v-if="isDev" 只在开发环境显示，打包上线后自动隐藏，只留「一键体验」。
            注意：藏按钮只是藏入口，POST /api/login 接口还在，知道 admin123 的人直接打接口仍能登进模板店（只读） -->
       <a-button
-          v-if="import.meta.env.DEV"
+          v-if="isDev"
           htmlType="submit"
           class="login-button bg-primary-600"
           type="primary"
@@ -80,6 +80,8 @@ import router from '@/router'
 // });
 const loading = ref(false);
 const sandboxLoading = ref(false);
+// import.meta.env 不能在模板表达式里直接用（模板编译器按非 module 解析），先在 script 里取成变量
+const isDev = import.meta.env.DEV
 const form = reactive({
   username: 'admin',
   password: '',
