@@ -141,9 +141,7 @@ const startSandbox = () => {
 .login {
   min-height: max(100vh, 720px);
   margin-top: -78px;
-}
 
-.login-box {
   .login-form {
   @apply h-fit border-border rounded-sm text-text bg-container;
 
