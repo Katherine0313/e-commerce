@@ -5,6 +5,10 @@
   useDragModal('drag-modal-author');
   import dayjs from 'dayjs';
   import { EditFilled } from '@ant-design/icons-vue';
+  import face1 from '@/assets/avatar/face-1.jpg';
+  import face2 from '@/assets/avatar/face-2.jpg';
+  import face3 from '@/assets/avatar/face-3.jpg';
+  import face4 from '@/assets/avatar/face-4.jpg';
   const columns = [
     {
       title: 'AUTHOR',
@@ -19,7 +23,7 @@
     {
       name: 'Li Zhi',
       email: '1126263215@qq.com',
-      avatar: '/src/assets/avatar/face-1.jpg',
+      avatar: face1,
       jobs: 'developer',
       department: 'Technical',
       status: 1,
@@ -28,7 +32,7 @@
     {
       name: 'Li Zhi',
       email: '1126263215@qq.com',
-      avatar: '/src/assets/avatar/face-2.jpg',
+      avatar: face2,
       jobs: 'developer',
       department: 'Technical',
       status: 0,
@@ -37,7 +41,7 @@
     {
       name: 'Li Zhi',
       email: '1126263215@qq.com',
-      avatar: '/src/assets/avatar/face-3.jpg',
+      avatar: face3,
       jobs: 'developer',
       department: 'Technical',
       status: 1,
@@ -46,7 +50,7 @@
     {
       name: 'Li Zhi',
       email: '1126263215@qq.com',
-      avatar: '/src/assets/avatar/face-4.jpg',
+      avatar: face4,
       jobs: 'developer',
       department: 'Technical',
       status: 0,

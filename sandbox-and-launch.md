@@ -1,5 +1,6 @@
 # 沙箱与上线手册
 
+
 > 最后更新：2026-09-15
 > 上线前的检查项都带 `【上线前】` 标记，用下面这条命令一次找全（排除 docs 是因为本文件自己含这个标记）：
 > `grep -rn "【上线前" . --exclude-dir=node_modules --exclude-dir=dist --exclude-dir=docs`
@@ -54,7 +55,7 @@ cd server && node index.js     # .env 里 ALLOW_TEMPLATE_WRITE=1 已常开
 
 ### 5. 回收任务依赖进程常驻
 
-启动扫一次 + 每小时一次，**跑在服务进程内**。进程停了回收也停，过期沙箱会一直堆着占磁盘 —— 这就是 pm2 要开 `autorestart` 的原因。
+启动扫一次 + 每小时一次，**跑在服务进程内**。进程停了回收也停，过期沙箱会一直堆着占磁盘 —— 这就是 supervisor 要开 `autorestart=true` 的原因。
 
 ### 6. 唯一需要手动维护的地方
 
@@ -67,8 +68,8 @@ cd server && node index.js     # .env 里 ALLOW_TEMPLATE_WRITE=1 已常开
 ### A. 本机打包前
 
 1. `grep -rn "【上线前" . --exclude-dir=node_modules --exclude-dir=dist --exclude-dir=docs`，逐项处理
-2. `VITE_API_BASE_URL` 改成线上后端地址，**然后重新 `npm run build`**（`VITE_` 变量是构建时打进产物的，不重新构建不生效）
-3. 删掉登录页的「登录」按钮，只留「一键体验」
+2. `VITE_API_BASE_URL` 改成空值（同源相对路径，由 Nginx 反代 `/api`），**然后重新 `npm run build`**（`VITE_` 变量是构建时打进产物的，不重新构建不生效）
+3. 登录页「登录」按钮已用 `v-if="isDev"` 控制，生产环境自动隐藏、只留「一键体验」，无需手动删
 4. **清沙箱**（见 二.4）
 5. 提交
 
@@ -81,7 +82,7 @@ cd server && node index.js     # .env 里 ALLOW_TEMPLATE_WRITE=1 已常开
 ### C. 腾讯云
 
 9. **`JWT_SECRET` 必须是新生成的随机串**，不要沿用本地那份。缺失会直接拒绝启动（刻意的设计）
-10. `pm2 start ecosystem.config.js` → `pm2 save` → `pm2 startup`（按提示执行它打印的那行命令）
+10. 用 supervisor 托管后端（本机不用 pm2）：`/etc/supervisor/conf.d/stepin-api.conf` 里 `directory=<项目>/server`、`command=node index.js`、`autostart=true`、`autorestart=true`，配好后 `supervisorctl reread && supervisorctl update` 拉起
 11. **只能单实例**。已有代码层兜底：`util/singleInstance.js` 的 PID 锁会让第二个实例拒绝启动
 12. 安全组放行端口；确认 `dist` 由谁托管（`index.js` 只托管了 `/image/**`，没托管 dist，通常是 nginx）
 13. **启动日志瞄一眼**：出现 `⚠️ ALLOW_TEMPLATE_WRITE=1` 就说明写保护在线上被关掉了，立刻处理
@@ -125,5 +126,5 @@ cd server && node index.js     # .env 里 ALLOW_TEMPLATE_WRITE=1 已常开
 | `server/middleware/templateGuard.js` | 模板店写保护 |
 | `server/util/jwt.js` | 密钥与签发（缺失即拒绝启动） |
 | `server/util/singleInstance.js` | 单实例 PID 锁 |
-| `server/ecosystem.config.js` | pm2 配置（fork / 单实例 / 常驻） |
+| `server/ecosystem.config.js` | pm2 进程配置（本项目用 supervisor 托管，此文件是 pm2 专用、可忽略） |
 | `server/swagger.yml` | 接口文档（含沙箱与店铺接口） |

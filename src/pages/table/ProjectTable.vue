@@ -9,6 +9,10 @@
   import EditableCell from '@/components/editable-cell';
   import { message } from 'ant-design-vue';
   import { getBase64 } from '@/utils/file';
+  import shopifyLogo from '@/assets/logo/shopify.svg';
+  import atlassianLogo from '@/assets/logo/atlassian.svg';
+  import invisionLogo from '@/assets/logo/invision.svg';
+  import jiraLogo from '@/assets/logo/jira.svg';
   const columns = [
     { title: 'COMPANIES', dataIndex: 'company' },
     {
@@ -22,28 +26,28 @@
   ];
   const projects = reactive([
     {
-      logo: '/src/assets/logo/shopify.svg',
+      logo: shopifyLogo,
       company: 'shopify',
       budget: 1200,
       status: 1,
       progress: 90,
     },
     {
-      logo: '/src/assets/logo/atlassian.svg',
+      logo: atlassianLogo,
       company: 'atlassian',
       budget: 1200,
       status: 1,
       progress: 90,
     },
     {
-      logo: '/src/assets/logo/invision.svg',
+      logo: invisionLogo,
       company: 'invision',
       budget: 1200,
       status: 1,
       progress: 90,
     },
     {
-      logo: '/src/assets/logo/jira.svg',
+      logo: jiraLogo,
       company: 'jira',
       budget: 1200,
       status: 1,

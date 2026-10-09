@@ -1,29 +1,33 @@
 <script setup>
   import { reactive } from 'vue';
+  import face1 from '@/assets/avatar/face-1.jpg';
+  import face2 from '@/assets/avatar/face-2.jpg';
+  import face3 from '@/assets/avatar/face-3.jpg';
+  import face4 from '@/assets/avatar/face-4.jpg';
   const chatList = reactive([
     {
       name: 'Sophie B.',
-      avatar: 'src/assets/avatar/face-1.jpg',
+      avatar: face1,
       message: 'Hi! I need more information',
     },
     {
       name: 'Sophie B.',
-      avatar: 'src/assets/avatar/face-2.jpg',
+      avatar: face2,
       message: 'Hi! I need more information',
     },
     {
       name: 'Sophie B.',
-      avatar: 'src/assets/avatar/face-3.jpg',
+      avatar: face3,
       message: 'Hi! I need more information',
     },
     {
       name: 'Sophie B.',
-      avatar: 'src/assets/avatar/face-4.jpg',
+      avatar: face4,
       message: 'Hi! I need more information',
     },
     {
       name: 'Sophie B.',
-      avatar: 'src/assets/avatar/face-1.jpg',
+      avatar: face1,
       message: 'Hi! I need more information',
     },
   ]);

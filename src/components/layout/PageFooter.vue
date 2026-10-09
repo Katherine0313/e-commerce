@@ -1,32 +1,19 @@
 <script setup></script>
 <template>
   <div class="page-footer">
-    <div class="links">
-      <a
-        class="link"
-        href="#"
-        target="_blank"
-      >
-        Stepin 首页
-      </a>
-      <a
-        class="link"
-        href="#"
-        target="_blank"
-      >
-        <GithubOutlined />
-      </a>
-      <a
-        class="link"
-        href="#"
-        target="_blank"
-      >
-        Ant Design
-      </a>
-    </div>
     <div class="copyright">
       Copyright
-      <CopyrightOutlined class="icon-copyright" /> 2020 ICZER 工作室出品
+      <CopyrightOutlined class="icon-copyright" /> 2026 杰米多多
+    </div>
+    <!-- 工信部 ICP 备案号，管局要求可点击跳转到备案查询官网 -->
+    <div class="beian">
+      <a
+        href="https://beian.miit.gov.cn/"
+        target="_blank"
+        rel="noopener noreferrer"
+      >
+        粤ICP备2026115644号
+      </a>
     </div>
   </div>
 </template>
@@ -36,21 +23,16 @@
     text-align: center;
     @apply text-gray-400;
 
-    .links {
-      display: flex;
-      justify-content: center;
-
-      .link {
-        @apply hover:text-gray-400 pl-4 pr-4;
-      }
-    }
-
     .copyright {
       margin-top: 8px;
 
       .icon-copyright {
         margin: 0;
       }
+    }
+
+    .beian {
+      margin-top: 4px;
     }
   }
 </style>

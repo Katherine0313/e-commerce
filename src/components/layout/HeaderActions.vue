@@ -5,6 +5,10 @@
   import DayNightSwitch from '@/components/switch/DayNightSwitch.vue';
   import { BellOutlined } from '@ant-design/icons-vue';
   import Fullscreen from '../fullscreen/Fullscreen.vue';
+  import face1 from '@/assets/avatar/face-1.jpg';
+  import face2 from '@/assets/avatar/face-2.jpg';
+  import face3 from '@/assets/avatar/face-3.jpg';
+  import face4 from '@/assets/avatar/face-4.jpg';
   defineEmits(['showSetting']);
   const noticeList = reactive([
     {
@@ -13,25 +17,25 @@
         {
           title: '影佑',
           content: 'xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx',
-          img: 'src/assets/avatar/face-1.jpg',
+          img: face1,
           time: 0,
         },
         {
           title: '影佑',
           content: 'xxxxxxxxxxxxxxxxxx',
-          img: 'src/assets/avatar/face-2.jpg',
+          img: face2,
           time: 0,
         },
         {
           title: '影佑',
           content: 'xxxxxxxxxxxxxxxxxx',
-          img: 'src/assets/avatar/face-3.jpg',
+          img: face3,
           time: 0,
         },
         {
           title: '影佑',
           content: 'xxxxxxxxxxxxxxxxxx',
-          img: 'src/assets/avatar/face-4.jpg',
+          img: face4,
           time: 0,
         },
       ],
@@ -42,25 +46,25 @@
         {
           title: '影佑',
           content: 'xxxxxxxxxxxxxxxxxx',
-          img: 'http://i2.hdslb.com/bfs/face/80b6731ccf865ca7a4ac17e6e8848fd0e34c1b91.jpg',
+          img: 'https://i2.hdslb.com/bfs/face/80b6731ccf865ca7a4ac17e6e8848fd0e34c1b91.jpg',
           time: 0,
         },
         {
           title: '影佑',
           content: 'xxxxxxxxxxxxxxxxxx',
-          img: 'http://i2.hdslb.com/bfs/face/80b6731ccf865ca7a4ac17e6e8848fd0e34c1b91.jpg',
+          img: 'https://i2.hdslb.com/bfs/face/80b6731ccf865ca7a4ac17e6e8848fd0e34c1b91.jpg',
           time: 0,
         },
         {
           title: '影佑',
           content: 'xxxxxxxxxxxxxxxxxx',
-          img: 'http://i2.hdslb.com/bfs/face/80b6731ccf865ca7a4ac17e6e8848fd0e34c1b91.jpg',
+          img: 'https://i2.hdslb.com/bfs/face/80b6731ccf865ca7a4ac17e6e8848fd0e34c1b91.jpg',
           time: 0,
         },
         {
           title: '影佑',
           content: 'xxxxxxxxxxxxxxxxxx',
-          img: 'http://i2.hdslb.com/bfs/face/80b6731ccf865ca7a4ac17e6e8848fd0e34c1b91.jpg',
+          img: 'https://i2.hdslb.com/bfs/face/80b6731ccf865ca7a4ac17e6e8848fd0e34c1b91.jpg',
           time: 0,
         },
       ],
@@ -71,25 +75,25 @@
         {
           title: '影佑',
           content: 'xxxxxxxxxxxxxxxxxx',
-          img: 'http://i2.hdslb.com/bfs/face/80b6731ccf865ca7a4ac17e6e8848fd0e34c1b91.jpg',
+          img: 'https://i2.hdslb.com/bfs/face/80b6731ccf865ca7a4ac17e6e8848fd0e34c1b91.jpg',
           time: 0,
         },
         {
           title: '影佑',
           content: 'xxxxxxxxxxxxxxxxxx',
-          img: 'http://i2.hdslb.com/bfs/face/80b6731ccf865ca7a4ac17e6e8848fd0e34c1b91.jpg',
+          img: 'https://i2.hdslb.com/bfs/face/80b6731ccf865ca7a4ac17e6e8848fd0e34c1b91.jpg',
           time: 0,
         },
         {
           title: '影佑',
           content: 'xxxxxxxxxxxxxxxxxx',
-          img: 'http://i2.hdslb.com/bfs/face/80b6731ccf865ca7a4ac17e6e8848fd0e34c1b91.jpg',
+          img: 'https://i2.hdslb.com/bfs/face/80b6731ccf865ca7a4ac17e6e8848fd0e34c1b91.jpg',
           time: 0,
         },
         {
           title: '影佑',
           content: 'xxxxxxxxxxxxxxxxxx',
-          img: 'http://i2.hdslb.com/bfs/face/80b6731ccf865ca7a4ac17e6e8848fd0e34c1b91.jpg',
+          img: 'https://i2.hdslb.com/bfs/face/80b6731ccf865ca7a4ac17e6e8848fd0e34c1b91.jpg',
           time: 0,
         },
       ],

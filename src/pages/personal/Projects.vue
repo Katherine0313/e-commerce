@@ -2,18 +2,23 @@
   import AvatarList from '@/components/avatar/AvatarList.vue';
   import { UploadOutlined } from '@ant-design/icons-vue';
   import { reactive } from 'vue';
+  import personalBg from '@/assets/personal-bg.png';
+  import face1 from '@/assets/avatar/face-1.jpg';
+  import face2 from '@/assets/avatar/face-2.jpg';
+  import face3 from '@/assets/avatar/face-3.jpg';
+  import face4 from '@/assets/avatar/face-4.jpg';
   const projectList = reactive([
     {
       title: 'Modern',
       no: 1,
       description:
         'As Uber works through a huge amount of internal management turmoil.',
-      img: 'src/assets/personal-bg.png',
+      img: personalBg,
       members: [
-        { nickname: 'jack', avatar: '/src/assets/avatar/face-1.jpg' },
-        { nickname: 'jack', avatar: '/src/assets/avatar/face-2.jpg' },
-        { nickname: 'jack', avatar: '/src/assets/avatar/face-3.jpg' },
-        { nickname: 'jack', avatar: '/src/assets/avatar/face-4.jpg' },
+        { nickname: 'jack', avatar: face1 },
+        { nickname: 'jack', avatar: face2 },
+        { nickname: 'jack', avatar: face3 },
+        { nickname: 'jack', avatar: face4 },
       ],
     },
     {
@@ -21,12 +26,12 @@
       no: 2,
       description:
         'As Uber works through a huge amount of internal management turmoil.',
-      img: 'src/assets/personal-bg.png',
+      img: personalBg,
       members: [
-        { nickname: 'jack', avatar: '/src/assets/avatar/face-1.jpg' },
-        { nickname: 'jack', avatar: '/src/assets/avatar/face-2.jpg' },
-        { nickname: 'jack', avatar: '/src/assets/avatar/face-3.jpg' },
-        { nickname: 'jack', avatar: '/src/assets/avatar/face-4.jpg' },
+        { nickname: 'jack', avatar: face1 },
+        { nickname: 'jack', avatar: face2 },
+        { nickname: 'jack', avatar: face3 },
+        { nickname: 'jack', avatar: face4 },
       ],
     },
     {
@@ -34,20 +39,20 @@
       no: 3,
       description:
         'As Uber works through a huge amount of internal management turmoil.',
-      img: 'src/assets/personal-bg.png',
+      img: personalBg,
       members: [
-        { nickname: 'jack', avatar: '/src/assets/avatar/face-1.jpg' },
-        { nickname: 'jack', avatar: '/src/assets/avatar/face-2.jpg' },
-        { nickname: 'jack', avatar: '/src/assets/avatar/face-3.jpg' },
-        { nickname: 'jack', avatar: '/src/assets/avatar/face-4.jpg' },
+        { nickname: 'jack', avatar: face1 },
+        { nickname: 'jack', avatar: face2 },
+        { nickname: 'jack', avatar: face3 },
+        { nickname: 'jack', avatar: face4 },
       ],
     },
   ]);
   const avatarList = [
-    { nickname: 'jack', avatar: '/src/assets/avatar/face-1.jpg' },
-    { nickname: 'jack', avatar: '/src/assets/avatar/face-2.jpg' },
-    { nickname: 'jack', avatar: '/src/assets/avatar/face-3.jpg' },
-    { nickname: 'jack', avatar: '/src/assets/avatar/face-4.jpg' },
+    { nickname: 'jack', avatar: face1 },
+    { nickname: 'jack', avatar: face2 },
+    { nickname: 'jack', avatar: face3 },
+    { nickname: 'jack', avatar: face4 },
   ];
 </script>
 <template>

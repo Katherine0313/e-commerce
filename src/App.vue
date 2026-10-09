@@ -1,6 +1,6 @@
 <template>
   <stepin-view
-      system-name="Stepin"
+      system-name="杰米多多"
       logo-src="@/assets/vite.svg"
       :user="user"
       :nav-mode="navMode"
@@ -10,6 +10,9 @@
   >
     <template #headerActions>
       <HeaderActions @showSetting="showSetting = true" />
+    </template>
+    <template #footer>
+      <PageFooter />
     </template>
     <template #themeEditorTab>
       <a-tab-pane tab="其它" key="other">
@@ -24,7 +27,7 @@
 import {computed, onMounted, reactive, ref} from 'vue';
 import {useRouter} from 'vue-router';
 import avatar from '@/assets/avatar/zongjie.webp';
-import {HeaderActions} from '@/components/layout';
+import {HeaderActions, PageFooter} from '@/components/layout';
 import Setting from './components/setting';
 import {LoginModal} from '@/pages/login';
 import {configTheme, themeList} from '@/theme';
