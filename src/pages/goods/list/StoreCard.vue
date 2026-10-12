@@ -5,11 +5,14 @@
     <div class="store-info">
       <div class="store-name-row">
         <span class="store-name">{{ shopName }}</span>
-        <span class="store-badge">官方认证</span>
+
       </div>
       <div class="store-subtitle">自营店铺 · 正品保障</div>
     </div>
-    <a-button class="store-enter-btn">进入店铺</a-button>
+    <div class="store-card-right">
+      <span class="store-badge">官方认证</span>
+      <a-button class="store-enter-btn">进入店铺</a-button>
+    </div>
   </div>
 </template>
 
@@ -78,8 +81,9 @@ onMounted(() => {
   background: #FFF3E6;
   border: 1px solid #FFB380;
   border-radius: 999px;
-  padding: 2px 12px;
+  padding: 4px 12px;
   line-height: 1.6;
+  text-align: center;
 }
 
 .store-subtitle { /* 灰色副标题 */
@@ -89,7 +93,7 @@ onMounted(() => {
 
 .store-enter-btn { /* 右侧进入店铺按钮 */
   flex-shrink: 0;
-  height: 46px;
+  height: 36px;
   padding: 0 28px;
   border-radius: 999px;
   background: #fff;
@@ -98,9 +102,14 @@ onMounted(() => {
   font-size: 15px;
   cursor: pointer;
   transition: background .2s;
+  margin-top:10px;
 }
-
+.store-card-right{
+  display: flex;
+  flex-direction: column;
+}
 .store-enter-btn:hover {
   background: #FFF3E6;
 }
+
 </style>
