@@ -483,7 +483,7 @@ defineExpose({paidVisibleOpen})
 
 .btn-confirm {
   width: 100%;
-  height: 46px;
+  height: 40px;
   border-radius: 8px;
   border: none;
   background: linear-gradient(135deg, #FF6700, #FF8533);

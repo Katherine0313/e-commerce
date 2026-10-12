@@ -14,11 +14,10 @@ import 'stepin/es/style';
 // import 'default-passive-events';
 import '@/theme/index.less';
 import { AuthPlugin, IconfontPlugin } from '@/plugins';
-// 预注册 vue-ueditor-wrap，避免动态 import 时 UMD 模块加载失败
-import VueUeditorWrap from 'vue-ueditor-wrap';
+import lazy from '@/directives/lazy';
 const app = createApp(App);
-// 全局注册富文本组件
-app.component('vue-ueditor-wrap', VueUeditorWrap);
+// 注册图片懒加载指令 v-lazy（用于列表缩略图，避免全量请求）
+app.directive('lazy', lazy);
 
 // 注册Pinia到Vue应用
 app.use(pinia)

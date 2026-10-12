@@ -40,7 +40,7 @@
         <a-table-column title="商品名称" dataIndex="product_name"></a-table-column>
         <a-table-column title="商品图片">
           <template #default="{record}">
-            <a-image :src="record.image" :width="80" />
+            <img v-lazy="record.image" width="80" />
           </template>
         </a-table-column>
         <a-table-column title="单价" width="100">

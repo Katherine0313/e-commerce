@@ -20,7 +20,7 @@
       <template #bodyCell="{ record, column }">
         <template v-if="column.dataIndex === 'product'">
           <div class="flex items-center">
-            <img class="w-6 h-6 rounded object-cover" :src="record.image" />
+            <img class="w-6 h-6 rounded object-cover" v-lazy="record.image" />
             <span class="ml-sm">{{ record.name }}</span>
           </div>
         </template>

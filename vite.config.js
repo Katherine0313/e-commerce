@@ -7,6 +7,11 @@ import { AntdvLessPlugin, AntdvModifyVars } from 'stepin/lib/style/plugins';
 const timestamp = new Date().getTime();
 const prodRollupOptions = {
   output: {
+    // 手动分包：vue 核心与 antd 拆独立 chunk，业务代码改动不影响其 hash，利于长期缓存
+    manualChunks: {
+      'vue-vendor': ['vue', 'vue-router', 'pinia'],
+      'antd-vendor': ['ant-design-vue', '@ant-design/icons-vue'],
+    },
     chunkFileNames: (chunk) => {
       return 'assets/' + chunk.name + '.[hash]' + '.' + timestamp + '.js';
     },

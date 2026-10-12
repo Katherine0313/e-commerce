@@ -69,7 +69,6 @@
               <span>全国联保</span>
             </div>
           </div>
-
           <!-- ===== 数量选择器 ===== -->
           <div class="quantity-row">
             <span class="quantity-label">数量</span>
@@ -115,26 +114,6 @@
           <div class="buy-row">
             <a-button class="btn-cart" @click="handleAddToCart">加入购物车</a-button>
             <a-button class="btn-buy" @click="handlePay">立即购买</a-button>
-          </div>
-
-          <!-- ===== 底部服务图标 ===== -->
-          <div class="footer-services">
-            <div class="fs-item">
-              <CheckCircleOutlined />
-              <span>官方正品</span>
-            </div>
-            <div class="fs-item">
-              <SafetyOutlined />
-              <span>假一赔十</span>
-            </div>
-            <div class="fs-item">
-              <CarOutlined />
-              <span>免费包邮</span>
-            </div>
-            <div class="fs-item">
-              <DollarOutlined />
-              <span>七天价保</span>
-            </div>
           </div>
 
           <!-- 最终支付价格 -->
@@ -282,6 +261,11 @@ watch(() => props.productId, (id) => {
       .then(res => {
         if (String(props.productId) !== String(id)) return
         product.value = res.data.data
+        // 详情富文本里的图片是原图，打开弹窗会几十张全量加载导致卡顿；
+        // 给每个 <img> 补 loading="lazy"，首屏只加载可视区图片（浏览器原生懒加载）
+        if (product.value && product.value.body) {
+          product.value.body = product.value.body.replace(/<img\b/gi, '<img loading="lazy" ')
+        }
         console.log(res)
       })
       .catch(err => {
@@ -403,7 +387,7 @@ const handlePay = async () => {
   padding: 28px;
   display: flex;
   flex-direction: column;
-  gap: 24px; /* 各子模块统一间距 */
+  gap: 14px; /* 各子模块统一间距 */
 }
 
 /* ══════════════════════════════════════════════════════
@@ -470,7 +454,7 @@ const handlePay = async () => {
 .price-card { /* 红橙渐变背景卡片 */
   background: linear-gradient(135deg, #FF4E2A 0%, #FF7A00 100%);
   border-radius: 16px;
-  padding: 22px 24px;
+  padding: 8px 24px;
   color: #fff;
   overflow: hidden;
   position: relative;
@@ -478,7 +462,7 @@ const handlePay = async () => {
 .price-card .tag{
   position: absolute;
   right:18px;
-  bottom:32px;
+  bottom:22px;
   background: rgba(225,225,225,0.2);
   border-radius: 32px;
   padding: 6px 16px;
@@ -516,7 +500,7 @@ const handlePay = async () => {
 .info-card { /* 浅灰背景圆角卡 */
   background: #fafafa;
   border-radius: 12px;
-  padding: 18px 20px;
+  padding: 0 20px;
 }
 
 .info-row { /* 单行：标签 + 值 */
@@ -593,7 +577,7 @@ const handlePay = async () => {
 
 .step-btn { /* − / + 按钮 */
   width: 42px;
-  height: 40px;
+  height: 30px;
   border: none;
   background: #fff;
   font-size: 22px;
@@ -648,7 +632,7 @@ const handlePay = async () => {
 .insurance-card { /* 单张保障卡片 */
   flex: 1;
   text-align: center;
-  padding: 14px 8px;
+  padding: 4px 8px;
   border: 1.5px solid #e8e8e8;
   border-radius: 12px;
   cursor: pointer;
@@ -668,7 +652,6 @@ const handlePay = async () => {
 .insurance-name { /* 保障名称 */
   font-size: 13px;
   color: #555;
-  margin-bottom: 4px;
 }
 
 .insurance-price { /* 保障价格：橙色加粗 */
@@ -687,7 +670,8 @@ const handlePay = async () => {
 
 .btn-cart { /* 加入购物车：白底橙色描边胶囊 */
   flex: 1;
-  height: 50px;
+  height: 40px;
+  align-item:center;
   border-radius: 999px;
   font-size: 17px;
   font-weight: 600;
@@ -695,6 +679,7 @@ const handlePay = async () => {
   color: #FF6700;
   border: 1.5px solid #FF6700;
   transition: all .2s;
+
 }
 
 .btn-cart:hover { /* Hover：浅橙背景 */
@@ -705,7 +690,8 @@ const handlePay = async () => {
 
 .btn-buy { /* 立即购买：红橙渐变胶囊 */
   flex: 1;
-  height: 50px;
+  height: 40px;
+  align-item:center;
   border-radius: 999px;
   font-size: 17px;
   font-weight: 600;
@@ -747,7 +733,6 @@ const handlePay = async () => {
    ══════════════════════════════════════════════════════ */
 .final-price { /* 右对齐合计 */
   text-align: right;
-  margin-top: 4px;
   font-size: 16px;
   color: #333;
 }

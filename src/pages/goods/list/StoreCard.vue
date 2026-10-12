@@ -37,8 +37,8 @@ onMounted(() => {
   background: #fff;
   border-radius: 18px;
   box-shadow: 0 8px 30px rgba(0, 0, 0, .05);
-  padding: 24px 18px;
-  margin-bottom: 10px;
+  padding: 14px 18px;
+  margin-bottom: 8px;
 }
 
 .store-avatar { /* 圆形 Logo：72×72 + 浅灰描边 */

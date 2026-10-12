@@ -30,6 +30,7 @@
           <a-upload
               :action="uploadAction"
               :headers="uploadHeaders"
+              :before-upload="compressImage"
               @change="imageUpload"
           >
             <a-button class="upload-btn" >
@@ -63,6 +64,7 @@ import {message} from 'ant-design-vue'
 import Editor from './Editor.vue'
 import SalesInfo from './SalesInfo.vue'
 import {getToken} from '@/utils/token'
+import {compressImage} from '@/utils/compressImage'
 
 
 const data = ref([])

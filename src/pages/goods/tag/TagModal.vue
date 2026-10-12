@@ -9,7 +9,7 @@
              :data-source="tagGoods" class="first-modal-table">
       <a-table-column title="商品信息">
         <template #default="{record}">
-          <img :src="record.image" width="50px">
+          <img v-lazy="record.image" width="50px">
         </template>
       </a-table-column>
       <a-table-column data-index="name"></a-table-column>
@@ -56,7 +56,7 @@
                    :scroll="{y:400}" :pagination="false">
             <a-table-column title="商品信息">
               <template #default="{record}">
-                <img :src="record.image">
+                <img v-lazy="record.image">
               </template>
             </a-table-column>
             <a-table-column data-index="name"></a-table-column>

@@ -32,6 +32,7 @@
           <a-upload
               :action="uploadAction"
               :headers="uploadHeaders"
+              :before-upload="compressImage"
               v-model:file-list="fileList"
               :maxCount="1"
               @change="imageUpload"
@@ -69,6 +70,7 @@ import {UploadOutlined} from "@ant-design/icons-vue";
 import Editor from "@/pages/goods/add-goods/Editor.vue";
 import SalesInfo from "@/pages/goods/add-goods/SalesInfo.vue";
 import {getToken} from '@/utils/token'
+import {compressImage} from '@/utils/compressImage'
 const editOpen = ref(false)
 const editingId = ref(null)  // 正在编辑的商品 id
 const fileList = ref([])

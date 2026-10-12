@@ -9,7 +9,7 @@
              class="goods-modal-table" :data-source="relateGoodsList">
       <a-table-column title="商品信息">
         <template #default="{record}">
-          <img :src="record.image" />
+          <img v-lazy="record.image" />
         </template>
       </a-table-column>
       <a-table-column dataIndex="name"></a-table-column>

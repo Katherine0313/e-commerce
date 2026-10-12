@@ -18,7 +18,7 @@
           :scroll="{y:1000}">
           <a-table-column title="商品信息">
             <template #default="{record}">
-              <a-image :src="record.image" :width="80"/>
+              <img v-lazy="record.image" width="80"/>
             </template>
           </a-table-column>
           <a-table-column title="商品名称" dataIndex="name"></a-table-column>
@@ -30,7 +30,7 @@
         <a-table class="goods-modal-table" :data-source="selectedRows" :row-key="'id'">
           <a-table-column title="商品信息">
             <template #default="{record}">
-              <a-image :src="record.image" :width="100" />
+              <img v-lazy="record.image" width="100" />
             </template>
           </a-table-column>
           <a-table-column title="商品名称" dataIndex="name"></a-table-column>

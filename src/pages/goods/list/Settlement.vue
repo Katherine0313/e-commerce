@@ -141,12 +141,14 @@
           </div>
 
           <!-- 按钮 -->
-          <a-button class="btn-return" @click="handleReturn">
-            返回
-          </a-button>
-          <a-button class="btn-pay" @click="handlePay">
-            提交订单
-          </a-button>
+          <div class="btn-row">
+            <a-button class="btn-return" @click="handleReturn">
+              返回
+            </a-button>
+            <a-button class="btn-pay" @click="handlePay">
+              提交订单
+            </a-button>
+          </div>
         </div>
       </div>
     </div>
@@ -453,7 +455,7 @@ const handlePay = () => {
   background: #fff;
   border-radius: 18px;
   box-shadow: 0 4px 20px rgba(0, 0, 0, .04);
-  padding: 18px 20px;
+  padding: 6px 20px;
   border: 2px solid transparent;
   transition: border-color .2s;
 }
@@ -488,8 +490,8 @@ const handlePay = () => {
 
 /* 商品图片 */
 .item-image {
-  width: 100px;
-  height: 100px;
+  width: 60px;
+  height: 50px;
   border-radius: 12px;
   object-fit: cover;
   flex-shrink: 0;
@@ -505,14 +507,9 @@ const handlePay = () => {
   font-size: 16px;
   font-weight: 600;
   color: #222;
-  margin-bottom: 6px;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-}
-
-.item-meta {
-  margin-bottom: 6px;
 }
 
 .item-badge {
@@ -547,8 +544,8 @@ const handlePay = () => {
 }
 
 .step-btn {
-  width: 36px;
-  height: 36px;
+  width: 26px;
+  height: 26px;
   border: none;
   background: #fff;
   font-size: 20px;
@@ -714,9 +711,15 @@ const handlePay = () => {
 }
 
 /* 按钮 */
+.btn-row {
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+}
+
 .btn-return {
-  width: 100%;
-  height: 46px;
+  width: 120px;
+  height: 40px;
   border-radius: 999px;
   font-size: 15px;
   font-weight: 500;
@@ -731,8 +734,8 @@ const handlePay = () => {
 }
 
 .btn-pay {
-  width: 100%;
-  height: 50px;
+  width: 120px;
+  height: 40px;
   border-radius: 999px;
   font-size: 17px;
   font-weight: 600;

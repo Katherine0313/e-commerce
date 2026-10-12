@@ -134,12 +134,14 @@
           </div>
 
           <!-- 按钮 -->
-          <a-button class="btn-settle" @click="handleSettlement" :disabled="!selectedCount">
-            去支付
-          </a-button>
-          <a-button class="btn-continue" @click="cancelSettlement">
-            继续购物
-          </a-button>
+          <div class="btn-row">
+            <a-button class="btn-settle" @click="handleSettlement" :disabled="!selectedCount">
+              去支付
+            </a-button>
+            <a-button class="btn-continue" @click="cancelSettlement">
+              继续购物
+            </a-button>
+          </div>
 
           <!-- 服务保障 -->
           <div class="checkout-services">
@@ -397,7 +399,7 @@ const cancelSettlement = () => {
   background: #fff;
   border-radius: 18px;
   box-shadow: 0 4px 20px rgba(0, 0, 0, .04);
-  padding: 12px 14px;
+  padding: 6px 14px;
   border: 2px solid transparent;
   transition: border-color .2s;
 }
@@ -432,8 +434,8 @@ const cancelSettlement = () => {
 
 /* 商品图片 */
 .item-image {
-  width: 72px;
-  height: 72px;
+  width: 60px;
+  height: 50px;
   border-radius: 12px;
   object-fit: cover;
   flex-shrink: 0;
@@ -453,10 +455,6 @@ const cancelSettlement = () => {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-}
-
-.item-meta {
-  margin-bottom: 6px;
 }
 
 .item-badge {
@@ -491,8 +489,8 @@ const cancelSettlement = () => {
 }
 
 .step-btn {
-  width: 30px;
-  height: 30px;
+  width: 20px;
+  height: 20px;
   border: none;
   background: #fff;
   font-size: 20px;
@@ -662,7 +660,7 @@ const cancelSettlement = () => {
   display: flex;
   justify-content: space-between;
   align-items: baseline;
-  padding: 16px 0;
+  padding: 10px 0;
   border-top: 1px solid #f0f0f0;
 }
 
@@ -684,9 +682,15 @@ const cancelSettlement = () => {
 }
 
 /* 按钮 */
+.btn-row {
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+}
+
 .btn-settle {
-  width: 100%;
-  height: 50px;
+  width: 120px;
+  height: 40px;
   border-radius: 999px;
   font-size: 17px;
   font-weight: 600;
@@ -707,8 +711,8 @@ const cancelSettlement = () => {
 }
 
 .btn-continue {
-  width: 100%;
-  height: 46px;
+  width: 120px;
+  height: 40px;
   border-radius: 999px;
   font-size: 15px;
   font-weight: 500;
