@@ -1,5 +1,5 @@
 <template>
-  <a-modal v-model:visible="mallVisible" title="商品预览" :footer="null" width="80%" @cancel="handleCancel">
+  <a-modal v-model:visible="mallVisible" class="preview-modal" title="商品预览" :footer="null" @cancel="handleCancel">
     <div class="mall-container">
       <div class="l">
         <StoreCard />
@@ -327,6 +327,7 @@ const handlePay = async () => {
 </script>
 <style scoped>
 .mall-container {
+  width: 100%;      /* 填满弹窗 content，给 flex 明确可用空间 */
   max-width: 900px;
   display: flex;
   margin: 0 auto;
@@ -335,7 +336,8 @@ const handlePay = async () => {
 }
 
 .mall-container .l {
-  max-width:450px;
+  max-width:400px;
+  min-width: 0;     /* 允许收缩，防止内容撑破弹窗 */
 }
 
 .l .product-img {
@@ -347,12 +349,12 @@ const handlePay = async () => {
    模块 01 — 店铺信息卡片已抽成 StoreCard.vue（三处共用）
    ══════════════════════════════════════════════════════ */
 
-
 /* ══════════════════════════════════════════════════════
    模块 02 — 右侧面板容器 + Sticky
    ══════════════════════════════════════════════════════ */
 .mall-container .r {
   flex: 1;
+  min-width: 0; /* 允许收缩，内容换行而不是溢出弹窗 */
   position: sticky; /* 右侧固定不动，左侧滚动 */
   align-self: flex-start; /* flex 子项不拉伸，贴顶对齐 */
   top: 10px; /* 距滚动容器顶部 10px 时固定 */
@@ -758,6 +760,12 @@ const handlePay = async () => {
 </style>
 <!-- 购物车弹窗样式，必须非 scoped —— a-modal 渲染在 body 下 -->
 <style>
+/* 预览弹窗：宽度最大 900px、随窗口收缩的弹性布局（不写死 :width prop） */
+.preview-modal .ant-modal-content {
+  width: 900px;
+  max-width: calc(100vw - 64px); /* 小屏留边距，随窗口收缩 */
+}
+
 .cart-modal {
   text-align: center;
 }
