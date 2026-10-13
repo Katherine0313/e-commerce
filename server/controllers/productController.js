@@ -7,10 +7,10 @@ const { cleanRichText } = require('../util/sanitizeHtml');
 const productController = {
     // 获取全部商品列表（支持分类筛选、关键词搜索）
     getProducts: (req, res) => {
-        const { category_id, search } = req.query;
+        const { category_id, search, page, pageSize } = req.query;
         // shopId 来自 token（resolveShop 中间件注入），绝不从 query 取
         const result = Product.getAll(
-            { categoryId: category_id, search }, req.shopId);
+            { categoryId: category_id, search, page, pageSize }, req.shopId);
         res.json({ success: true, data: result.data, total: result.total });
     },
 

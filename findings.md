@@ -16,6 +16,8 @@
 - 构建产物体积（`dist/assets` 实量）：主入口 `index.js` 1.9MB、工作台 `Workplace.js` 1.1MB、`SalesInfo.js` 800KB，而商品列表 `List.js` 仅 32KB——说明主入口全量引了重依赖，且列表静态引了编辑弹窗链。
 - `vue-ueditor-wrap` 全项目零使用（仅 main.js 注册），是纯死代码，白白占主入口体积。
 - `main.js` 全量 `import stepin from 'stepin/es'` + 全量 `ant-design-vue/dist/antd.variable.less`，是主入口 1.9MB 的主要来源。
+- 生产 nginx（宝塔）：`/image/upload`、`/image/body` 已反代到后端、HTTP/2 已开启；但未开 gzip、js/css 缓存仅 12h、上传图无浏览器缓存。
+- 商品列表接口无分页：`productDB.getAll` 已算 `total`（注释写"分页用"）但未加 `LIMIT/OFFSET`，一次性查全部商品返回大 JSON；前端 `List.vue` 的 `onActivated` 每次切页全量拉取，是菜单切换 3 秒卡顿的主因（与图片懒加载是两回事）。
 
 ## 技术决策
 | 决策 | 理由 |

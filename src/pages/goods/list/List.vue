@@ -20,7 +20,8 @@
   <Mall v-model:visible="mallOpen" :productId="mallProductId" />
   <!--:dataSource="data"指的是数据来源于后端的data字段，如果没有这个，表格渲染不出来
   customRow 点击行预览-->
-  <a-table :dataSource="data" :columns="columns"  class="title" :customRow="customRow" >
+  <a-table :dataSource="data" :columns="columns"  class="title" :customRow="customRow"
+           :pagination="pagination" row-key="id" @change="handleTableChange">
     <!-- 操作列的插槽-->
     <template #bodyCell="{column, record}">
       <template v-if="column.key === 'image'">
@@ -60,18 +61,35 @@ import Mall from './Mall.vue'
 const data = ref([])
 // 定义输入框的search
 const search = ref('')
-// 加载全部商品数据
+// 分页状态（后端真分页：每次只请求当前页，不再全量拉取）
+const pagination = ref({
+  current: 1,
+  pageSize: 13,
+  total: 0,
+  showSizeChanger: true,
+  showTotal: (total) => `共 ${total} 条`,
+})
+// 加载商品数据（带分页参数，只查当前页）
 const loadData = () => {
   getGoodsList({
     search: search.value,
+    page: pagination.value.current,
+    pageSize: pagination.value.pageSize,
   })
       .then(res => {
         data.value = res.data.data
+        pagination.value.total = res.data.total
       })
       .catch(err => {
         message.error('网络连接超时，请检查网络后再试')
         console.log('商品列表加载失败', err)
       })
+}
+// 分页/每页条数变化时重新请求当前页
+const handleTableChange = (pag) => {
+  pagination.value.current = pag.current
+  pagination.value.pageSize = pag.pageSize
+  loadData()
 }
 // id → 名称的映射，例如 101 → "苹果手机"
 const categoryMap = ref({})
@@ -158,8 +176,9 @@ const columns = [
     width: 160,
   },
 ]
-// 搜索事件
+// 搜索事件：重置回第一页再查，避免带着旧页码查空页
 const handleSearch = () => {
+  pagination.value.current = 1
   loadData()
 }
 // ====================== 预览弹窗 =====================

@@ -312,11 +312,9 @@ const handlePay = async () => {
 <style scoped>
 .mall-container {
   width: 100%;      /* 填满弹窗 content，给 flex 明确可用空间 */
-  max-width: 900px;
   display: flex;
   margin: 0 auto;
-  padding: 10px;
-  gap:30px;
+  gap:20px;
 }
 
 .mall-container .l {
@@ -341,7 +339,7 @@ const handlePay = async () => {
   min-width: 0; /* 允许收缩，内容换行而不是溢出弹窗 */
   position: sticky; /* 右侧固定不动，左侧滚动 */
   align-self: flex-start; /* flex 子项不拉伸，贴顶对齐 */
-  top: 10px; /* 距滚动容器顶部 10px 时固定 */
+  top: 1px; /* 距滚动容器顶部 10px 时固定 */
 }
 
 /* ══════════════════════════════════════════════════════
@@ -384,10 +382,10 @@ const handlePay = async () => {
   background: #fff;
   border-radius: 18px;
   box-shadow: 0 8px 30px rgba(0, 0, 0, .05);
-  padding: 28px;
+  padding: 0 18px;
   display: flex;
   flex-direction: column;
-  gap: 14px; /* 各子模块统一间距 */
+  gap: 12px; /* 各子模块统一间距 */
 }
 
 /* ══════════════════════════════════════════════════════
@@ -434,10 +432,9 @@ const handlePay = async () => {
    模块 06 — 商品标题 + 卖点
    ══════════════════════════════════════════════════════ */
 .product-title { /* 34px 粗体标题 */
-  font-size: 34px;
+  font-size: 29px;
   font-weight: 700;
   color: #111;
-  line-height: 1.3;
   margin: 0;
 }
 
@@ -445,7 +442,6 @@ const handlePay = async () => {
   font-size: 15px;
   color: #999;
   margin: 0;
-  line-height: 1.5;
 }
 
 /* ══════════════════════════════════════════════════════

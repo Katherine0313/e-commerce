@@ -8,11 +8,11 @@
 
 ## 下一步
 
-重新构建验证：主入口因删 ueditor 变小、vue/antd 拆出独立 chunk；确认列表缩略图懒加载生效（滚动才请求）。
+验证上线效果：nginx gzip/缓存、列表缩略图懒加载、上传压缩、JS 分包、商品列表分页是否生效。
 
 ## 当前阶段
 
-阶段 6（服务端 nginx，待做）
+阶段 8（商品列表后端分页，进行中）
 
 ## 各阶段
 
@@ -48,16 +48,26 @@
 - [x] antd 样式按需 —— 判定不可行（stepin 动态主题依赖 antd.variable.less）
 - **状态：** complete
 
-### 阶段 6：服务端 nginx（生产，可选优化）
-- [ ] gzip 压缩（当前 vhost 未开，收益最大）
-- [ ] js/css immutable 长缓存（当前 12h 偏短）
-- [ ] 上传图加浏览器缓存（webp 未缓存）
-- **状态：** pending
+### 阶段 6：服务端 nginx（生产）
+- [x] 分析 nginx 配置：确认 /image 反代已配好、HTTP/2 已开启
+- [x] 提供 gzip + js/css immutable + 图片缓存配置（nginx-optimization.md）
+- [x] 用户已打包上线
+- **状态：** complete
 
 ### 阶段 7：测试与验证
-- [ ] 重新构建，对比 chunk 体积
-- [ ] 验证列表缩略图滚动才加载、上传压缩生效
-- **状态：** pending
+- [ ] 验证列表缩略图滚动才加载
+- [ ] 验证上传压缩生效
+- [ ] 验证 nginx gzip/缓存生效（响应头）
+- **状态：** in_progress
+
+### 阶段 8：商品列表后端分页
+- [x] 定位根因：商品列表接口无分页，onActivated 全量拉取
+- [x] productDB.getAll 加 LIMIT/OFFSET（pageSize>0 才分页，兼容旧调用）
+- [x] productController.getProducts 透传 page/pageSize
+- [x] List.vue 接入受控分页器（:pagination + @change + row-key）
+- [x] 搜索重置回第一页
+- [ ] 验证翻页/改每页条数/搜索正确
+- **状态：** in_progress
 
 ## 关键问题
 

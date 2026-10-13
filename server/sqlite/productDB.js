@@ -49,7 +49,16 @@ const ProductDB = {
     // 5. 排序：按 ID 升序
     sql += " ORDER BY p.id ASC, p.created_at ASC";
 
-    // 6. 执行查询，逐行取出结果
+    // 6. 分页：pageSize > 0 时追加 LIMIT/OFFSET，只查当前页
+    //    （total 已在上面按全量条件算出，不受 LIMIT 影响）
+    const page = parseInt(filters.page, 10) || 1;
+    const pageSize = parseInt(filters.pageSize, 10) || 0;
+    if (pageSize > 0) {
+      sql += ' LIMIT ? OFFSET ?';
+      params.push(pageSize, (page - 1) * pageSize);
+    }
+
+    // 7. 执行查询，逐行取出结果
     const stmt = db.prepare(sql);
     if (params.length > 0) stmt.bind(params);
     const data = [];
