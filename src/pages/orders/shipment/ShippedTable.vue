@@ -2,17 +2,17 @@
   <div class="shipment-container">
     <a-table :dataSource="list" :row-selection="{selectedRowKeys,onChange:onOrderSelectChange}" row-key="id">
       <a-table-column title="编号" dataIndex="id"></a-table-column>
-      <a-table-column title="订单编号" dataIndex="order_no"></a-table-column>
-      <a-table-column title="发货时间" dataIndex="ship_at"></a-table-column>
-      <a-table-column title="实收金额" dataIndex="pay_amount"></a-table-column>
-      <a-table-column title="支付方式" dataIndex="pay_type"></a-table-column>
+      <a-table-column title="订单编号" dataIndex="orderNo"></a-table-column>
+      <a-table-column title="发货时间" dataIndex="shipAt"></a-table-column>
+      <a-table-column title="实收金额" dataIndex="payAmount"></a-table-column>
+      <a-table-column title="支付方式" dataIndex="payType"></a-table-column>
       <a-table-column title="客户" dataIndex="consignee"></a-table-column>
       <a-table-column title="配送方式" dataIndex="courier"></a-table-column>
-      <a-table-column title="快递单号" dataIndex="tracking_number"></a-table-column>
-      <a-table-column title="订单状态" dataIndex="order_status">
+      <a-table-column title="快递单号" dataIndex="trackingNumber"></a-table-column>
+      <a-table-column title="订单状态" dataIndex="orderStatus">
         <template #default="{record}">
-          <a-tag :color="orderStatus.color[record.order_status] || 'default'">
-            {{ orderStatus.map[record.order_status] || record.order_status }}
+          <a-tag :color="orderStatus.color[record.orderStatus] || 'default'">
+            {{ orderStatus.map[record.orderStatus] || record.orderStatus }}
           </a-tag>
         </template>
       </a-table-column>
@@ -34,7 +34,7 @@
     <a-modal v-model:visible="expressVisible" title="物流轨迹" :footer="null" width="600px">
       <div class="logistics-header">
         <div>快递公司：<strong>{{ logisticsData.courier }}</strong></div>
-        <div>快递单号：<strong>{{ logisticsData.tracking_number }}</strong></div>
+        <div>快递单号：<strong>{{ logisticsData.trackingNumber }}</strong></div>
       </div>
       <a-timeline v-if="logisticsData.traces?.length" style="margin-top: 20px;">
         <a-timeline-item
@@ -60,12 +60,12 @@
         <a-row :gutter="16">
           <a-col :span="12">
             <a-form-item label="订单编号">
-              <a-input v-model:value="afterSaleForm.order_no" disabled />
+              <a-input v-model:value="afterSaleForm.orderNo" disabled />
             </a-form-item>
           </a-col>
           <a-col :span="12">
             <a-form-item label="订单状态">
-              <a-input v-model:value="afterSaleForm.order_status" disabled />
+              <a-input v-model:value="afterSaleForm.orderStatus" disabled />
             </a-form-item>
           </a-col>
         </a-row>
@@ -138,7 +138,7 @@ const handleFinishOrder = (record) => {
   Modal.confirm({
     title: '确认收货',
     icon: createVNode(ExclamationCircleOutlined),
-    content: `确认订单 ${record.order_no} 已收货吗？`,
+    content: `确认订单 ${record.orderNo} 已收货吗？`,
     onOk() {
       finishOrder(record.id)
           .then(() => {
@@ -162,7 +162,7 @@ const handleDeleteOrder = (record) => {
   Modal.confirm({
     title: '删除订单',
     icon: createVNode(ExclamationCircleOutlined),
-    content: `请问确认删除订单 ${record.order_no} 吗?`,
+    content: `请问确认删除订单 ${record.orderNo} 吗?`,
     onOk() {
       deleteOrder(record.id)
           .then(() => {
@@ -199,14 +199,14 @@ const handleBatchDeleteOrders = (ids) => {
 const expressVisible = ref(false)
 const logisticsData = reactive({
   courier: '',
-  tracking_number: '',
+  trackingNumber: '',
   traces: []
 })
 const handleExpress = (record) => {
   expressVisible.value = true
   // 重置
   logisticsData.courier = ''
-  logisticsData.tracking_number = ''
+  logisticsData.trackingNumber = ''
   logisticsData.traces = []
   // 请求物流轨迹
   getLogistics(record.id)
@@ -214,7 +214,7 @@ const handleExpress = (record) => {
         const data = res.data?.data
         if (data) {
           logisticsData.courier = data.courier
-          logisticsData.tracking_number = data.tracking_number
+          logisticsData.trackingNumber = data.trackingNumber
           logisticsData.traces = data.traces || []
         }
       })
@@ -230,8 +230,8 @@ const uploadHeaders = {Authorization: 'Bearer ' + getToken()}
 const afterSaleVisible = ref(false)
 const afterSaleForm = reactive({
   order_id: null,
-  order_no: '',
-  order_status: '已发货',
+  orderNo: '',
+  orderStatus: '已发货',
   after_sale_type: 'only_refund',
   reason: undefined,
   remark: '',
@@ -248,8 +248,8 @@ const handleUploadChange = (info) => {
 
 const openAfterSale = (record) => {
   afterSaleForm.order_id = record.id
-  afterSaleForm.order_no = record.order_no
-  afterSaleForm.order_status = '已发货'
+  afterSaleForm.orderNo = record.orderNo
+  afterSaleForm.orderStatus = '已发货'
   afterSaleForm.after_sale_type = 'only_refund'
   afterSaleForm.reason = undefined
   afterSaleForm.remark = ''

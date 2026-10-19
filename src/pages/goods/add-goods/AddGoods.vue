@@ -3,11 +3,11 @@
     <a-card title="商品信息">
       <a-form :model="addGoodsForm" :rules="addGoodsRules" ref="addGoodsFormRef"
               :label-col="{span:3, style:{paddingRight:'5px'}}" :wrapper-col="{span:21}">
-        <a-form-item label="商品分类" name="category_id" >
+        <a-form-item label="商品分类" name="categoryId" >
           <a-cascader
               :options="categoryTree"
-              :field-names="{ value: 'id', label: 'label', children: 'children' }"
-              v-model:value="addGoodsForm.category_id"
+              :field-names="{ value: 'id', label: 'name', children: 'children' }"
+              v-model:value="addGoodsForm.categoryId"
               :change-on-select="false"
               style="max-width:270px"
           />
@@ -20,8 +20,8 @@
             <a-select-option v-for="brand in brandOptions" :value="brand" :key="brand" label="option"></a-select-option>
           </a-select>
         </a-form-item>
-        <a-form-item label="商品副标题" name="sub_title">
-          <a-input v-model:value="addGoodsForm.sub_title" placeholder="请输入商品副标题" />
+        <a-form-item label="商品副标题" name="subTitle">
+          <a-input v-model:value="addGoodsForm.subTitle" placeholder="请输入商品副标题" />
         </a-form-item>
         <a-form-item label="商品简介">
           <a-textarea v-model:value="addGoodsForm.description" show-count maxLength="200" />
@@ -140,10 +140,10 @@ const handleSubmit = () => {
       })
       .then(() => {
         // 3. 级联框的值是路径数组(如[1,101])，后端需要单个 number，取最后一级 id
-        const path = addGoodsForm.value.category_id || []
+        const path = addGoodsForm.value.categoryId || []
         const goodsData = {
           ...addGoodsForm.value,
-          category_id: path.length ? Number(path[path.length - 1]) : null,
+          categoryId: path.length ? Number(path[path.length - 1]) : null,
           ...salesInfoRef.value?.salesInfoForm,
         }
         // 4. 调用添加商品接口
@@ -181,14 +181,14 @@ const addGoodsForm = ref({
   body: '',
   // brand用undefined,否则placeholder不显示
   brand: undefined,
-  sub_title: '',
+  subTitle: '',
   description: '',
-  category_id: [],
+  categoryId: [],
 })
 
 // 校验规则
 const addGoodsRules = {
-  category_id: [
+  categoryId: [
     {required: true, type: 'array', message: '商品分类不能为空', trigger: 'change'}
   ],
   name: [
@@ -197,7 +197,7 @@ const addGoodsRules = {
   brand: [
     {required: true, message: '商品品牌不能为空', trigger: 'change'}
   ],
-  sub_title: [
+  subTitle: [
     {required: true, message: '商品副标题不能为空', trigger: 'blur'}
   ]
 }

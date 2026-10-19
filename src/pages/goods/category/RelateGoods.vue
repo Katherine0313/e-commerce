@@ -13,7 +13,7 @@
         </template>
       </a-table-column>
       <a-table-column dataIndex="name"></a-table-column>
-      <a-table-column dataIndex="sub_title"></a-table-column>
+      <a-table-column dataIndex="subTitle"></a-table-column>
       <a-table-column title="操作">
         <template #default="{record}">
           <a-button type="link" @click="removeRelateGoods(record)">移除</a-button>
@@ -45,9 +45,9 @@ const currentCategory = ref(null)
 
 // 加载当前分类已关联的产品
 const loadRelateGoods = () => {
-  getGoodsList({category_id: currentCategory.value.id})
+  getGoodsList({categoryId: currentCategory.value.id, pageSize: 1000})
       .then(res => {
-        relateGoodsList.value = res.data.data
+        relateGoodsList.value = res.data.data.list
       })
 }
 
@@ -77,7 +77,7 @@ const onSelectChange = (keys, rows) => {
 // ==================== 批量移除 ====================
 const batchRemoveGoods = () => {
   const promises = selectedRows.value.map(product =>
-    updateGoods(product.id, { category_id: null })
+    updateGoods(product.id, { categoryId: null })
   )
   Promise.all(promises)
     .then(() => {
@@ -95,7 +95,7 @@ const batchRemoveGoods = () => {
 
 // ==================== 移除按钮 ====================
 const removeRelateGoods = (record) => {
-  updateGoods(record.id, {category_id: null})
+  updateGoods(record.id, {categoryId: null})
       .then(() => {
         message.success('移除成功')
         loadRelateGoods()

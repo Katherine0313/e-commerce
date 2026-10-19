@@ -2,17 +2,17 @@
   <div class="shipment-container">
     <a-table :dataSource="list"  :row-selection="{selectedRowKeys,onChange:onOrderSelectChange}" row-key="id">
       <a-table-column title="编号" dataIndex="id"></a-table-column>
-      <a-table-column title="订单编号" dataIndex="order_no"></a-table-column>
-      <a-table-column title="订单确认时间" dataIndex="confirm_at"></a-table-column>
-      <a-table-column title="实收金额" dataIndex="pay_amount"></a-table-column>
-      <a-table-column title="支付方式" dataIndex="pay_type"></a-table-column>
+      <a-table-column title="订单编号" dataIndex="orderNo"></a-table-column>
+      <a-table-column title="订单确认时间" dataIndex="confirmAt"></a-table-column>
+      <a-table-column title="实收金额" dataIndex="payAmount"></a-table-column>
+      <a-table-column title="支付方式" dataIndex="payType"></a-table-column>
       <a-table-column title="客户" dataIndex="consignee"></a-table-column>
-      <a-table-column title="配送方式" dataIndex="shipping_type"></a-table-column>
+      <a-table-column title="配送方式" dataIndex="shippingType"></a-table-column>
       <a-table-column title="配送信息及备注" dataIndex="remark"></a-table-column>
-      <a-table-column title="订单状态" dataIndex="order_status">
+      <a-table-column title="订单状态" dataIndex="orderStatus">
         <template #default="{record}">
-          <a-tag :color="orderStatus.color[record.order_status] || 'default'">
-            {{ orderStatus.map[record.order_status] || record.order_status }}
+          <a-tag :color="orderStatus.color[record.orderStatus] || 'default'">
+            {{ orderStatus.map[record.orderStatus] || record.orderStatus }}
           </a-tag>
         </template>
       </a-table-column>
@@ -38,7 +38,7 @@
           </a-select>
         </a-form-item>
         <a-form-item label="快递单号" name="tracking_no">
-          <a-input v-model:value="pendingShipForm.tracking_number" placeholder="请填写快递单号"></a-input>
+          <a-input v-model:value="pendingShipForm.trackingNumber" placeholder="请填写快递单号"></a-input>
         </a-form-item>
       </a-form>
     </a-modal>
@@ -68,7 +68,7 @@ const handlePendingShip = (record) => {
   pendingShipVisible.value = true
 }
 //================= 去发货 表单 ================
-const pendingShipForm = ref({courier: undefined, tracking_number: ''})
+const pendingShipForm = ref({courier: undefined, trackingNumber: ''})
 //================= 快递公司列表 ================
 const courierList = ref([])
 onMounted(() => {
@@ -97,7 +97,7 @@ const handleCancelOrder = (record) => {
   Modal.confirm({
     title: '取消订单',
     icon: createVNode(ExclamationCircleOutlined),
-    content: `确认取消订单 ${record.order_no} 吗？`,
+    content: `确认取消订单 ${record.orderNo} 吗？`,
     onOk() {
       cancelOrder(record.id)
           .then(() => {
@@ -116,7 +116,7 @@ const handleDeleteOrder = (record) => {
   Modal.confirm({
     title: '删除订单',
     icon: createVNode(ExclamationCircleOutlined),
-    content: `请问确认删除订单 ${record.order_no} 吗?`,
+    content: `请问确认删除订单 ${record.orderNo} 吗?`,
     onOk() {
       deleteOrder(record.id)
           .then(() => {

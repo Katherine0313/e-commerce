@@ -22,7 +22,7 @@
             </template>
           </a-table-column>
           <a-table-column title="商品名称" dataIndex="name"></a-table-column>
-          <a-table-column dataIndex="sub_title"></a-table-column>
+          <a-table-column dataIndex="subTitle"></a-table-column>
         </a-table>
       </div>
       <div class="r">
@@ -71,9 +71,9 @@ const categoryId = ref(null)
 // ==================== 左侧表格：搜索 ====================
 const search = ref('')
 const handleSearch = () => {
-  getGoodsList({search: search.value})
+  getGoodsList({search: search.value, pageSize: 1000})
       .then(res => {
-        setGoodsList(res.data.data)
+        setGoodsList(res.data.data.list)
       })
       .catch(err => {
         console.log(err)
@@ -107,15 +107,15 @@ const goodsList = ref([])
 // 统一入口：只保留还没绑定分类的商品
 // 已经属于某个分类的商品不能再被关联，否则会把它从原分类里静默抢走
 const setGoodsList = (list) => {
-  goodsList.value = list.filter(item => !item.category_id)
+  goodsList.value = list.filter(item => !item.categoryId)
 }
 
 const openAddGoodsModal = (catId) => {
   categoryId.value = catId
   addGoodsOpen.value = true
-  getGoodsList()
+  getGoodsList({pageSize: 1000})
       .then(res => {
-        setGoodsList(res.data.data)
+        setGoodsList(res.data.data.list)
       })
 }
 
@@ -142,9 +142,9 @@ const refreshGoodsList = () => {
   selectedTag.value = null
   selectedRowKeys.value = []
   selectedRows.value = []
-  getGoodsList()
+  getGoodsList({pageSize: 1000})
       .then(res => {
-        setGoodsList(res.data.data)
+        setGoodsList(res.data.data.list)
       })
       .catch(err => {
         console.log(err)
@@ -158,7 +158,7 @@ const cancelAddGoods = () => {
 const emit = defineEmits(['confirm'])
 const confirmAddGoods = () => {
   const promises = selectedRows.value.map(product =>
-    updateGoods(product.id, { category_id: categoryId.value })
+    updateGoods(product.id, { categoryId: categoryId.value })
   )
   Promise.all(promises)
     .then(() => {

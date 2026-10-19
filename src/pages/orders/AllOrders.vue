@@ -1,17 +1,17 @@
 <template>
   <div class="order-container">
-    <a-table class="title" :data-source="list" :pagination="{pageSize:13}"
+    <a-table class="title" :data-source="list" :pagination="pagination" @change="onPageChange"
              :row-selection="{selectedRowKeys,onChange:onOrderSelectChange}" row-key="id">
       <a-table-column title="编号" dataIndex="id"></a-table-column>
-      <a-table-column title="订单编号" dataIndex="order_no"></a-table-column>
-      <a-table-column title="提交时间" dataIndex="created_at"></a-table-column>
-      <a-table-column title="用户账号" dataIndex="user_id"></a-table-column>
-      <a-table-column title="订单总金额" dataIndex="pay_amount"></a-table-column>
-      <a-table-column title="支付方式" dataIndex="pay_type"></a-table-column>
-      <a-table-column title="订单状态" dataIndex="order_status">
+      <a-table-column title="订单编号" dataIndex="orderNo"></a-table-column>
+      <a-table-column title="提交时间" dataIndex="createdAt"></a-table-column>
+      <a-table-column title="用户账号" dataIndex="userId"></a-table-column>
+      <a-table-column title="订单总金额" dataIndex="payAmount"></a-table-column>
+      <a-table-column title="支付方式" dataIndex="payType"></a-table-column>
+      <a-table-column title="订单状态" dataIndex="orderStatus">
         <template #default="{record}">
-          <a-tag :color="orderStatus.color[record.order_status] || 'default'">
-            {{ orderStatus.map[record.order_status] || record.order_status }}
+          <a-tag :color="orderStatus.color[record.orderStatus] || 'default'">
+            {{ orderStatus.map[record.orderStatus] || record.orderStatus }}
           </a-tag>
         </template>
       </a-table-column>
@@ -33,9 +33,15 @@ import {ref} from 'vue'
 defineProps({
   list: {type: Array, default: () => []},
   orderStatus: {type: Object, default: () => ({ map: {}, color: {} })},
+  pagination: {type: Object, default: () => ({})},
 })
 
-const emit = defineEmits(['view', 'delete', 'batchDelete'])
+const emit = defineEmits(['view', 'delete', 'batchDelete', 'pageChange'])
+
+// 分页变化时通知父组件加载对应页
+const onPageChange = (pag) => {
+  emit('pageChange', pag.current)
+}
 
 //====================== 复选框 ====================
 const selectedRowKeys = ref([])

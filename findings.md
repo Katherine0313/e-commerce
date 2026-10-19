@@ -35,6 +35,26 @@
 | 放弃「antd 样式按需」 | stepin 用 `AntdvLessPlugin`（动态主题）+ `antd.variable.less` 实现运行时换主题，删全量 less 会破坏换肤，只能靠缓存而非减体积 |
 | 放弃「上传图挪出 public」 | 生产 nginx 反代 /image 到后端，dist 图片拷贝本就无人访问；迁移收益≈0，且引入 dev 404、生产迁移成本 |
 
+## 后台管理端对接（2026-10-19）
+
+### 统一驼峰契约
+- 后端 Java VO 驼峰，前端字段从旧 Node 的 snake_case 改成 camelCase，前后端 + C 端（小程序）三套对齐，不用 @JsonNaming 翻译层。
+- 后台接口路径走 `/api/admin/**`（JwtInterceptor 按此分流 admin 身份）。
+
+### 分页策略（按模块）
+- 商品列表：后端真分页（page/pageSize → PageVO{list,total}），前端受控分页器。
+- 订单列表：4 个状态 tab 独立请求后端分页（status + page），不做前端 filter。
+- 发货页：3 个状态 tab 全量（status 筛选 + pageSize 给足），订单量少不分页。
+
+### 状态契约
+- 订单状态从旧 Node 字符串（pending_pay）改为数字 code（1-6），前端 filter/tag 用数字；后端 OrderStatusEnum 提供 adminDescMap()/colorMap()。
+
+### 时间字段
+- 后端 LocalDateTime 加 @JsonFormat(pattern="yyyy-MM-dd HH:mm:ss")，避免 ISO 格式（T 分隔）前端不好读。
+
+### 公共组件
+- date-range-select.vue：时间字段下拉（下单/支付/发货时间）+ 日期范围，change 吐 {dateField,startDate,endDate}，reset() 供刷新清空；订单/发货/售后复用。
+
 ## 遇到的问题
 | 问题 | 解决方案 |
 |------|---------|

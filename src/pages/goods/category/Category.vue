@@ -1,9 +1,9 @@
 <template>
   <a-table :data-source="categoryData" row-key="id" class="category-table">
-    <a-table-column title="商品分类" dataIndex="label"></a-table-column>
+    <a-table-column title="商品分类" dataIndex="name"></a-table-column>
     <a-table-column title="排序">
       <template #default="{ record }">
-        <span class="sort-order">{{ isParentCategory(record) ? record.sort_index : '' }}</span>
+        <span class="sort-order">{{ isParentCategory(record) ? record.sort : '' }}</span>
         <a-button type="text"
                   title="上移"
                   aria-label="上移"
@@ -18,7 +18,7 @@
     </a-table-column>
     <a-table-column title="关联产品数">
       <template #default="{ record }">
-        <span v-if="!record.children || !record.children.length">{{ record.product_count ?? 0 }}</span>
+        <span v-if="!record.children || !record.children.length">{{ record.productCount ?? 0 }}</span>
       </template>
     </a-table-column>
     <a-table-column title="是否在网店显示">
@@ -130,7 +130,7 @@ onActivated(() => {
 const handleDeleteCategory = (record) => {
   Modal.confirm({
     title: '确认删除',
-    content: `确认删除商品分类「 ${record.label} 」吗？`,
+    content: `确认删除商品分类「 ${record.name} 」吗？`,
     onOk: () => {
       deleteCategory(record.id)
           .then(() => {
@@ -153,9 +153,6 @@ const handleDeleteCategory = (record) => {
   text-align: center;
 }
 
-.category-table{
-  max-width: 90%;
-}
 /*行元素*/
 .category-table :deep(.ant-table-tbody > tr > td) {
   font-size: 14px;

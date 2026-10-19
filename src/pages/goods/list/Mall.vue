@@ -28,7 +28,7 @@
             <div class="price-main">
               <span class="price-label">平台加补后</span>
               <span class="price-symbol">￥</span>
-              <span class="price-value">{{ product.sales_price }}</span>
+              <span class="price-value">{{ product.salesPrice }}</span>
             </div>
             <!-- 标签被「在网店显示」关掉后接口返回 null，这里不判断会留一个空胶囊 -->
             <div class="tag" v-if="product.tag_name">{{ product.tag_name }}</div>
@@ -117,7 +117,7 @@
           </div>
 
           <!-- 最终支付价格 -->
-          <div class="final-price" v-if="product.sales_price">
+          <div class="final-price" v-if="product.salesPrice">
             合计：<span>￥{{ finalPrice }}</span>
           </div>
 
@@ -193,13 +193,13 @@ const selectedBattery = ref(false)     // 电池无忧
 
 // 保障服务价格：售价的 1%
 const insurance1 = computed(() => {
-  if (!product.value.sales_price) return ''
-  return (product.value.sales_price * 0.01).toFixed(2)
+  if (!product.value.salesPrice) return ''
+  return (product.value.salesPrice * 0.01).toFixed(2)
 })
 // 保障服务价格：售价的 2%
 const insurance2 = computed(() => {
-  if (!product.value.sales_price) return ''
-  return (product.value.sales_price * 0.02).toFixed(2)
+  if (!product.value.salesPrice) return ''
+  return (product.value.salesPrice * 0.02).toFixed(2)
 })
 
 // 选中的增值保障明细（JSON 数组，随购物车/订单一起存）
@@ -220,9 +220,9 @@ const insuranceFee = computed(() => {
   return fee.toFixed(2)
 })
 
-// 最终支付价格 = 商品售价 + 单件保障费（与后端 sales_price 计费口径一致）
+// 最终支付价格 = 商品售价 + 单件保障费（与后端 salesPrice 计费口径一致）
 const finalPrice = computed(() => {
-  const base = Number(product.value.sales_price) || 0
+  const base = Number(product.value.salesPrice) || 0
   return (base + Number(insuranceFee.value)).toFixed(2)
 })
 // Vite base 路径，确保图片在开发和生产环境都能正确加载
@@ -239,7 +239,7 @@ const handleAddToCart = () => {
       {
         name: product.value.name,
         image: product.value.image,
-        price: Number(product.value.sales_price) || 0,   // 纯商品售价（不含保障费）
+        price: Number(product.value.salesPrice) || 0,   // 纯商品售价（不含保障费）
         description: product.value.description,
         insurance_detail: insuranceDetail.value,       // 增值保障明细
         insurance_fee: Number(insuranceFee.value)      // 单件保障费
@@ -298,7 +298,7 @@ const handlePay = async () => {
       {
         name: product.value.name,
         image: product.value.image,
-        price: Number(product.value.sales_price) || 0,
+        price: Number(product.value.salesPrice) || 0,
         description: product.value.description,
         insurance_detail: insuranceDetail.value,
         insurance_fee: Number(insuranceFee.value),

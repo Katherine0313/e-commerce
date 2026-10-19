@@ -29,17 +29,17 @@
         <img v-lazy="record.image" width="80" @click.stop/>
       </template>
       <template v-if="column.key === 'category'">
-        {{ categoryMap[record.category_id] || record.category_id }}
+        {{ categoryMap[record.categoryId] || record.categoryId }}
       </template>
-      <template v-if="column.key === 'listing_status'">
-        <a-switch :checked="record.listing_status === 1" @change="(checked) => listingStatusChange(record, checked)" />
+      <template v-if="column.key === 'listingStatus'">
+        <a-switch :checked="record.listingStatus === 1" @change="(checked) => listingStatusChange(record, checked)" />
       </template>
       <!-- 格式化时间戳：ISO → YYYY-MM-DD HH:mm:ss -->
-      <template v-if="column.key === 'created_at'">
-        {{ record.created_at ? dayjs(record.created_at).format('YYYY-MM-DD HH:mm:ss') : '-' }}
+      <template v-if="column.key === 'createdAt'">
+        {{ record.createdAt ? dayjs(record.createdAt).format('YYYY-MM-DD HH:mm:ss') : '-' }}
       </template>
-      <template v-if="column.key === 'updated_at'">
-        {{ record.updated_at ? dayjs(record.updated_at).format('YYYY-MM-DD HH:mm:ss') : '-' }}
+      <template v-if="column.key === 'updatedAt'">
+        {{ record.updatedAt ? dayjs(record.updatedAt).format('YYYY-MM-DD HH:mm:ss') : '-' }}
       </template>
       <template v-if="column.key === 'action'">
         <a-button @click="handleEdit(record)" type="primary" style="margin-right:5px">编辑
@@ -77,8 +77,8 @@ const loadData = () => {
     pageSize: pagination.value.pageSize,
   })
       .then(res => {
-        data.value = res.data.data
-        pagination.value.total = res.data.total
+        data.value = res.data.data.list
+        pagination.value.total = res.data.data.total
       })
       .catch(err => {
         message.error('网络连接超时，请检查网络后再试')
@@ -98,7 +98,7 @@ const buildCategoryMap = (tree) => {
   const map = {}
   const walk = (nodes) => {
     nodes.forEach(node => {
-      map[node.id] = node.label
+      map[node.id] = node.name
       if (node.children) walk(node.children)
     })
   }
@@ -140,13 +140,13 @@ const columns = [
   },
   {
     title: "商品分类",
-    dataIndex: "category_id",
+    dataIndex: "categoryId",
     key: "category"
   },
   {
     title: "商品价格",
-    dataIndex: "sales_price",
-    key: "sales_price"
+    dataIndex: "salesPrice",
+    key: "salesPrice"
   },
   {
     title: "商品库存",
@@ -155,19 +155,19 @@ const columns = [
   },
   {
     title: "上下架状态",
-    dataIndex: "listing_status",
-    key: "listing_status",
+    dataIndex: "listingStatus",
+    key: "listingStatus",
   },
   {
     title: "创建时间",
-    dataIndex: "created_at",
-    key: "created_at",
+    dataIndex: "createdAt",
+    key: "createdAt",
     width: 150
   },
   {
     title: "更新时间",
-    dataIndex: "updated_at",
-    key: "updated_at",
+    dataIndex: "updatedAt",
+    key: "updatedAt",
     width: 150
   },
   {
@@ -231,11 +231,11 @@ const handleDelete = (record) => {
 // 开关状态的回调
 const listingStatusChange = (record, checked) => {
   const newStatus = checked ? 1 : 0
-  record.listing_status = newStatus
-  updateGoods(record.id, { listing_status: newStatus })
+  record.listingStatus = newStatus
+  updateGoods(record.id, { listingStatus: newStatus })
     .then(() => message.success(checked ? '已上架' : '已下架'))
     .catch(() => {
-      record.listing_status = checked ? 0 : 1
+      record.listingStatus = checked ? 0 : 1
       message.error('状态更新失败')
     })
 }

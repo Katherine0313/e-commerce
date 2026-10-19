@@ -2,7 +2,7 @@
   <a-form :model="salesInfoForm" :rules="salesInfoRules" ref="salesInfoFormRef"
           :label-col="{span:3,style:{paddingRight:'5px'}}">
     <a-form-item label="上架状态">
-      <a-radio-group v-model:value="salesInfoForm.listing_status">
+      <a-radio-group v-model:value="salesInfoForm.listingStatus">
         <a-radio :value="1">上架</a-radio>
         <a-radio :value="0">下架</a-radio>
       </a-radio-group>
@@ -11,29 +11,29 @@
       <a-table :data-source="specList" class="spec-list" :pagination="false" :scroll="{x:1000}">
         <a-table-column title="销售价">
           <template #default>
-            <a-form-item name="sales_price">
-              <a-input-number v-model:value="salesInfoForm.sales_price" addon-before="￥" :min="0" :precision="2" />
+            <a-form-item name="salesPrice">
+              <a-input-number v-model:value="salesInfoForm.salesPrice" addon-before="￥" :min="0" :precision="2" />
             </a-form-item>
           </template>
         </a-table-column>
         <a-table-column title="市场价">
           <template #default>
-            <a-form-item name="market_price">
-              <a-input-number v-model:value="salesInfoForm.market_price" addon-before="￥" :min="0" :precision="2" />
+            <a-form-item name="marketPrice">
+              <a-input-number v-model:value="salesInfoForm.marketPrice" addon-before="￥" :min="0" :precision="2" />
             </a-form-item>
           </template>
         </a-table-column>
         <a-table-column title="成本价">
           <template #default>
-            <a-form-item name="cost_price">
-              <a-input-number v-model:value="salesInfoForm.cost_price" addon-before="￥" :min="0" :precision="2" />
+            <a-form-item name="costPrice">
+              <a-input-number v-model:value="salesInfoForm.costPrice" addon-before="￥" :min="0" :precision="2" />
             </a-form-item>
           </template>
         </a-table-column>
         <a-table-column title="商品编码">
           <template #default>
-            <a-form-item name="product_code">
-              <a-input v-model:value="salesInfoForm.product_code" />
+            <a-form-item name="productCode">
+              <a-input v-model:value="salesInfoForm.productCode" />
             </a-form-item>
           </template>
         </a-table-column>
@@ -70,21 +70,21 @@ const specList = ref([{}])
 const salesInfoFormRef = ref()
 // 定义表单，用于存放每个表单项的数据
 const salesInfoForm = ref({
-  listing_status: 1,
-  sales_price: null,
-  market_price: null,
-  cost_price:null,
-  product_code:'',
+  listingStatus: 1,
+  salesPrice: null,
+  marketPrice: null,
+  costPrice:null,
+  productCode:'',
   stock:null,
   weight:null,
   volume:null
 })
 // 定义校验规则
 const salesInfoRules = {
-  sales_price:[{required:true,message:'请填写销售价',trigger:'blur'}],
-  market_price:[{required:true,message:'请填写市场价',trigger:'blur'}],
-  cost_price:[{required:true,message:'请填写成本价',trigger:'blur'}],
-  product_code:[{required:true,message:'请填写商品编码',trigger:'blur'}],
+  salesPrice:[{required:true,message:'请填写销售价',trigger:'blur'}],
+  marketPrice:[{required:true,message:'请填写市场价',trigger:'blur'}],
+  costPrice:[{required:true,message:'请填写成本价',trigger:'blur'}],
+  productCode:[{required:true,message:'请填写商品编码',trigger:'blur'}],
   stock:[{required:true,message:'请填写库存',trigger:'blur'}],
 }
 // 暴露规则校验方法给父组件用

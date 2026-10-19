@@ -1,5 +1,5 @@
 <template>
-<a-modal title="编辑商品" v-model:visible="editOpen" :width="900" wrap-class-name="drag-modal-editgoods">
+<a-modal title="编辑商品" v-model:visible="editOpen" :width="800" wrap-class-name="drag-modal-editgoods">
   <div class="add-goods-container">
     <a-card title="商品信息">
       <a-form :model="addGoodsForm" :rules="addGoodsRules" ref="addGoodsFormRef"
@@ -8,8 +8,8 @@
           <a-cascader
               :key="editingId"
               :options="categoryTree"
-              :field-names="{ value: 'id', label: 'label', children: 'children' }"
-              v-model:value="addGoodsForm.category_id"
+              :field-names="{ value: 'id', label: 'name', children: 'children' }"
+              v-model:value="addGoodsForm.categoryId"
               :change-on-select="false"
               placeholder="请选择商品分类"
           />
@@ -22,8 +22,8 @@
             <a-select-option v-for="brand in brandOptions" :value="brand" :key="brand" label="option"></a-select-option>
           </a-select>
         </a-form-item>
-        <a-form-item label="商品副标题" name="sub_title">
-          <a-input v-model:value="addGoodsForm.sub_title" placeholder="请输入商品副标题" />
+        <a-form-item label="商品副标题" name="subTitle">
+          <a-input v-model:value="addGoodsForm.subTitle" placeholder="请输入商品副标题" />
         </a-form-item>
         <a-form-item label="商品简介">
           <a-textarea v-model:value="addGoodsForm.description" show-count maxLength="200" />
@@ -90,9 +90,9 @@ const addGoodsForm = ref({
   body: '',
   // brand用undefined,否则placeholder不显示
   brand: undefined,
-  sub_title: '',
+  subTitle: '',
   description: '',
-  category_id: [],
+  categoryId: [],
 })
 
 // ====================== 把值存到表单里 ======================
@@ -102,7 +102,7 @@ const open = (record) => {
   // 1. 回填商品基本信息
   addGoodsForm.value.name = record.name
   addGoodsForm.value.brand = record.brand
-  addGoodsForm.value.sub_title = record.sub_title
+  addGoodsForm.value.subTitle = record.subTitle
   addGoodsForm.value.description = record.description
   addGoodsForm.value.image = record.image
   addGoodsForm.value.body = record.body
@@ -114,13 +114,13 @@ const open = (record) => {
   editOpen.value = true
   // 3. 等弹窗渲染后回填（cascader 需要 DOM 就绪再设值）
   nextTick(() => {
-    addGoodsForm.value.category_id = findCategoryPath(categoryTree.value, record.category_id) || []
+    addGoodsForm.value.categoryId = findCategoryPath(categoryTree.value, record.categoryId) || []
     if (salesInfoRef.value?.salesInfoForm) {
-      salesInfoRef.value.salesInfoForm.listing_status = record.listing_status ?? 1
-      salesInfoRef.value.salesInfoForm.sales_price = record.sales_price
-      salesInfoRef.value.salesInfoForm.market_price = record.sales_price
-      salesInfoRef.value.salesInfoForm.cost_price = record.cost_price
-      salesInfoRef.value.salesInfoForm.product_code = record.product_code
+      salesInfoRef.value.salesInfoForm.listingStatus = record.listingStatus ?? 1
+      salesInfoRef.value.salesInfoForm.salesPrice = record.salesPrice
+      salesInfoRef.value.salesInfoForm.marketPrice = record.marketPrice
+      salesInfoRef.value.salesInfoForm.costPrice = record.costPrice
+      salesInfoRef.value.salesInfoForm.productCode = record.productCode
       salesInfoRef.value.salesInfoForm.stock = record.stock
       salesInfoRef.value.salesInfoForm.weight = record.weight
       salesInfoRef.value.salesInfoForm.volume = record.volume
@@ -172,10 +172,10 @@ const handleSubmit = () => {
       })
       .then(() => {
         // 3. 级联框的值是路径数组(如[1,101])，后端需要单个 number，取最后一级 id
-        const path = addGoodsForm.value.category_id || []
+        const path = addGoodsForm.value.categoryId || []
         const goodsData = {
           ...addGoodsForm.value,
-          category_id: path.length ? Number(path[path.length - 1]) : null,
+          categoryId: path.length ? Number(path[path.length - 1]) : null,
           ...salesInfoRef.value?.salesInfoForm,
         }
         // 4. 调用更新商品接口
@@ -209,7 +209,7 @@ const cancel = () => {
 
 // 校验规则
 const addGoodsRules = {
-  category_id: [
+  categoryId: [
     {required: true, type: 'array', message: '商品分类不能为空', trigger: 'change'}
   ],
   name: [
@@ -218,7 +218,7 @@ const addGoodsRules = {
   brand: [
     {required: true, message: '商品品牌不能为空', trigger: 'change'}
   ],
-  sub_title: [
+  subTitle: [
     {required: true, message: '商品副标题不能为空', trigger: 'blur'}
   ]
 }

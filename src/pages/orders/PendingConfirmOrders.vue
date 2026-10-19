@@ -1,17 +1,17 @@
 <template>
   <div class="order-container">
-    <a-table class="title" :data-source="list" :pagination="{pageSize:13}"
+    <a-table class="title" :data-source="list" :pagination="pagination" @change="onPageChange"
              :row-selection="{selectedRowKeys,onChange:onOrderSelectChange}" row-key="id">
       <a-table-column title="编号" dataIndex="id"></a-table-column>
-      <a-table-column title="订单编号" dataIndex="order_no"></a-table-column>
-      <a-table-column title="提交时间" dataIndex="created_at"></a-table-column>
-      <a-table-column title="用户账号" dataIndex="user_id"></a-table-column>
-      <a-table-column title="订单总金额" dataIndex="pay_amount"></a-table-column>
-      <a-table-column title="支付方式" dataIndex="pay_type"></a-table-column>
-      <a-table-column title="订单状态" dataIndex="order_status">
+      <a-table-column title="订单编号" dataIndex="orderNo"></a-table-column>
+      <a-table-column title="支付时间" dataIndex="payAt"></a-table-column>
+      <a-table-column title="用户账号" dataIndex="userId"></a-table-column>
+      <a-table-column title="订单总金额" dataIndex="payAmount"></a-table-column>
+      <a-table-column title="支付方式" dataIndex="payType"></a-table-column>
+      <a-table-column title="订单状态" dataIndex="orderStatus">
         <template #default="{record}">
-          <a-tag :color="orderStatus.color[record.order_status] || 'default'">
-            {{ orderStatus.map[record.order_status] || record.order_status }}
+          <a-tag :color="orderStatus.color[record.orderStatus] || 'default'">
+            {{ orderStatus.map[record.orderStatus] || record.orderStatus }}
           </a-tag>
         </template>
       </a-table-column>
@@ -33,17 +33,17 @@
     <a-modal v-model:visible="confirmVisible" title="订单确认审核" width="900px" @ok="submitConfirm"
              @cancel="confirmVisible = false">
       <a-descriptions :column="2" bordered size="small" style="margin-bottom: 16px;">
-        <a-descriptions-item label="订单编号">{{ currentOrder?.order_no }}</a-descriptions-item>
+        <a-descriptions-item label="订单编号">{{ currentOrder?.orderNo }}</a-descriptions-item>
         <a-descriptions-item label="客户名称">{{ currentOrder?.consignee }}</a-descriptions-item>
         <a-descriptions-item label="收货地址">{{ currentOrder?.region }} {{
-            currentOrder?.detail_address
+            currentOrder?.detailAddress
           }}
         </a-descriptions-item>
-        <a-descriptions-item label="实付金额">¥{{ currentOrder?.pay_amount }}</a-descriptions-item>
+        <a-descriptions-item label="实付金额">¥{{ currentOrder?.payAmount }}</a-descriptions-item>
       </a-descriptions>
       <a-table :dataSource="currentOrder?.items" row-key="product_id" :pagination="false" size="small"
                style="margin-bottom: 16px;" class="title">
-        <a-table-column title="商品名称" dataIndex="product_name"></a-table-column>
+        <a-table-column title="商品名称" dataIndex="productName"></a-table-column>
         <a-table-column title="商品图片">
           <template #default="{record}">
             <img v-lazy="record.image" width="80"/>
@@ -87,9 +87,15 @@ import {isAdmin} from '@/utils/auth.js'
 defineProps({
   list: {type: Array, default: () => []},
   orderStatus: {type: Object, default: () => ({ map: {}, color: {} })},
+  pagination: {type: Object, default: () => ({})},
 })
 
-const emit = defineEmits(['view', 'delete', 'batchDelete', 'refresh'])
+const emit = defineEmits(['view', 'delete', 'batchDelete', 'refresh', 'pageChange'])
+
+// 分页变化时通知父组件加载对应页
+const onPageChange = (pag) => {
+  emit('pageChange', pag.current)
+}
 
 // 是否为管理员（商家）：审批类操作仅商家可见
 const isAdminUser = isAdmin()

@@ -44,7 +44,7 @@
           </a-space>
           <a-cascader placeholder="商品分类"
                       :options="categoryTree"
-                      :field-names="{ value: 'id', label: 'label', children: 'children' }"
+                      :field-names="{ value: 'id', label: 'name', children: 'children' }"
                       v-model:value="selectedCategory"
                       :change-on-select="false"
                       @change="handleCategoryChange" />
@@ -60,7 +60,7 @@
               </template>
             </a-table-column>
             <a-table-column data-index="name"></a-table-column>
-            <a-table-column data-index="sub_title"></a-table-column>
+            <a-table-column data-index="subTitle"></a-table-column>
           </a-table>
         </div>
       </div>
@@ -236,13 +236,13 @@ const loadGoodsList = () => {
       return Promise.all([
         getGoodsList({
           search: search.value,
-          category_id: selectedCategory.value[selectedCategory.value.length - 1]
+          categoryId: selectedCategory.value[selectedCategory.value.length - 1]
         }),
         ...tagPromises
       ])
     })
     .then(([goodsRes, ...tagResults]) => {
-      const allGoods = goodsRes.data.data
+      const allGoods = goodsRes.data.data.list
       const boundIds = new Set()
       tagResults.forEach(r => {
         (r.data.data || []).forEach(p => boundIds.add(p.id))

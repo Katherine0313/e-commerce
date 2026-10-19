@@ -26,7 +26,6 @@
         <a-input
             v-model:value="form.password"
             autocomplete="new-password"
-            placeholder="请输入登录密码: admin123"
             class="login-input"
             type="password"
         />
@@ -84,7 +83,7 @@ const sandboxLoading = ref(false);
 const isDev = import.meta.env.DEV
 const form = reactive({
   username: 'admin',
-  password: '',
+  password: 'admin123',
 });
 onMounted(() => {
   // 401 拦截器跳回本页时留下的原因（例如「体验店铺已过期，请重新体验」）
@@ -101,6 +100,7 @@ const submitLogin = () => {
         if(res.data.success){
           // 存储token
           const token = res.data.data.token
+          console.log(res.data)
           // 存储token（写入 localStorage）
           setToken(token)
           // 登录进去的可能是模板店或沙箱店，强制重拉店铺信息给顶栏用

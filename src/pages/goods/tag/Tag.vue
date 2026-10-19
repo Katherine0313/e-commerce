@@ -17,7 +17,7 @@
   <!-- 表格，首行复选框由 row-selection 控制 -->
   <a-table :row-key="(record) => record.id" :data-source="tagList" class="tag-table" :row-selection="{}">
     <a-table-column title="标签名称" data-index="name" />
-    <a-table-column title="关联产品数" data-index="product_count" align="center" />
+    <a-table-column title="关联产品数" data-index="productCount" align="center" />
     <a-table-column title="在网店显示" align="center">
       <template #default="{record}">
         <a-switch :checked="record.status === 1"

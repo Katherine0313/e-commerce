@@ -16,8 +16,8 @@
         </a-form-item>
       </div>
       <div v-if="addCategoryForm.group === '2'">
-        <a-form-item label="上级分类" name="parent_id">
-          <a-select v-model:value="addCategoryForm.parent_id" placeholder="请选择父级分类">
+        <a-form-item label="上级分类" name="parentId">
+          <a-select v-model:value="addCategoryForm.parentId" placeholder="请选择父级分类">
             <a-select-option
                 v-for="item in parentList"
                 :key="item.id"
@@ -54,7 +54,7 @@ const addCategoryForm = ref({
   group: '1',
   name: '',
   status: true,
-  parent_id: undefined,
+  parentId: undefined,
   recommend: false,
 })
 // 定义父级分类列表
@@ -67,7 +67,7 @@ const resetCategoryForm = () => {
     group: '1',
     name: '',
     status: true,
-    parent_id: undefined,
+    parentId: undefined,
     recommend: false,
   }
   categoryFormRef.value?.clearValidate()
@@ -81,7 +81,7 @@ const addCategoryModal = () => {
       .then(res => {
         if (res.data.success) {
           // 过滤子级分类，留下父级分类
-          parentList.value = res.data.data.filter(c => c.parent_id === null)
+          parentList.value = res.data.data.filter(c => c.parentId === null)
         }
       })
       // 要区分校验失败和请求失败
@@ -104,7 +104,7 @@ const categoryFormRef = ref(null)
 // 定义校验规则
 const categoryFormRules = {
   name: [{required: true, message: '分类名称不能为空', trigger: 'blur'}],
-  parent_id: [{required: true, message: '请选择上级分类', trigger: 'blur'}],
+  parentId: [{required: true, message: '请选择上级分类', trigger: 'blur'}],
 }
 // 弹窗中表单的提交
 const handleCategorySubmit = () => {
@@ -112,7 +112,7 @@ const handleCategorySubmit = () => {
       .then(res => {
         const data = {
           name: addCategoryForm.value.name,
-          parent_id: addCategoryForm.value.group === '1' ? null : addCategoryForm.value.parent_id,
+          parentId: addCategoryForm.value.group === '1' ? null : addCategoryForm.value.parentId,
           status: addCategoryForm.value.status ? 1 : 0,
           recommend: addCategoryForm.value.recommend ? 1 : 0
         }

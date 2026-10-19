@@ -11,10 +11,8 @@
         >
         </a-input-search>
       </a-form-item>
-      <a-form-item label="下单时间" style="font-size:16px;margin:0 40px;">
-        <a-range-picker v-model:value="dateRange" :show-time="{ format: 'HH:mm' }" style="padding:5px;"
-                        class="range-center" @change="onDateRangeChange"
-                        :placeholder="['开始日期','结束日期']" />
+      <a-form-item style="font-size:16px;margin:0 40px;">
+        <DateRangeSelect ref="dateRangeRef" @change="onDateFilterChange" />
       </a-form-item>
       <a-form-item>
         <a-button style="font-size:15px; height:32px; width:100px;"
@@ -22,36 +20,44 @@
         </a-button>
       </a-form-item>
     </a-form>
-    <a-tabs v-model:activeKey="activeKey" size="large">
+    <a-tabs v-model:activeKey="activeKey" size="large" @change="onTabChange">
       <a-tab-pane key="1" tab="全部订单">
-        <AllOrders :list="orderList"
-                    :order-status="order_status"
+        <AllOrders :list="tabs.all.list"
+                    :order-status="orderStatus"
+                    :pagination="tabs.all.pagination"
+                    @page-change="(p) => loadTab('all', p)"
                     @view="handleDetailOrdersOpen"
                     @delete="handleDeleteOrder"
                     @batchDelete="handleBatchDeleteOrders"
         />
       </a-tab-pane>
       <a-tab-pane key="2" tab="待付款" force-render>
-        <PendingPayOrders :list="pendingPayOrders"
-                    :order-status="order_status"
+        <PendingPayOrders :list="tabs.pendingPay.list"
+                    :order-status="orderStatus"
+                    :pagination="tabs.pendingPay.pagination"
+                    @page-change="(p) => loadTab('pendingPay', p)"
                     @view="handleDetailOrdersOpen"
                     @delete="handleDeleteOrder"
                     @batchDelete="handleBatchDeleteOrders"
-                    @refresh="loadOrders"
+                    @refresh="reloadCurrent"
         />
       </a-tab-pane>
       <a-tab-pane key="3" tab="待确认">
-        <PendingConfirmOrders :list="pendingConfirmOrders"
-                    :order-status="order_status"
+        <PendingConfirmOrders :list="tabs.pendingConfirm.list"
+                    :order-status="orderStatus"
+                    :pagination="tabs.pendingConfirm.pagination"
+                    @page-change="(p) => loadTab('pendingConfirm', p)"
                     @view="handleDetailOrdersOpen"
                     @delete="handleDeleteOrder"
                     @batchDelete="handleBatchDeleteOrders"
-                    @refresh="loadOrders"
+                    @refresh="reloadCurrent"
         />
       </a-tab-pane>
       <a-tab-pane key="7" tab="已取消">
-        <CancelledOrders :list="cancelledOrders"
-                    :order-status="order_status"
+        <CancelledOrders :list="tabs.cancelled.list"
+                    :order-status="orderStatus"
+                    :pagination="tabs.cancelled.pagination"
+                    @page-change="(p) => loadTab('cancelled', p)"
                     @view="handleDetailOrdersOpen"
                     @delete="handleDeleteOrder"
                     @batchDelete="handleBatchDeleteOrders"
@@ -62,8 +68,9 @@
   </div>
 </template>
 <script setup>
-import {ref, onMounted, onActivated, computed} from 'vue';
+import {ref, onMounted, onActivated, reactive} from 'vue';
 import {getAllOrders, getOrderStatus, deleteOrder, deleteOrders} from '@/api/orders.js'
+import DateRangeSelect from '@/components/date-range-select.vue'
 import AllOrders from './AllOrders.vue'
 import PendingPayOrders from './PendingPayOrders.vue'
 import PendingConfirmOrders from './PendingConfirmOrders.vue'
@@ -73,24 +80,48 @@ import DetailOrders from "@/pages/orders/DetailOrders.vue";
 
 const activeKey = ref('1');
 
-// 加载获取全部列表的方法
-const loadOrders = (params = {}) => {
-  getAllOrders(params)
+// 4 个 tab 的独立数据：status（后端筛选）+ list（当前页）+ pagination（分页器）
+const tabs = reactive({
+  all: { status: null, list: [], pagination: { current: 1, pageSize: 13, total: 0 } },
+  pendingPay: { status: 1, list: [], pagination: { current: 1, pageSize: 13, total: 0 } },
+  pendingConfirm: { status: 2, list: [], pagination: { current: 1, pageSize: 13, total: 0 } },
+  cancelled: { status: 6, list: [], pagination: { current: 1, pageSize: 13, total: 0 } },
+})
+// tab key -> tab 名映射
+const keyMap = { '1': 'all', '2': 'pendingPay', '3': 'pendingConfirm', '7': 'cancelled' }
+
+// 加载某个 tab 的指定页（后端分页 + 状态筛选）
+const loadTab = (tabName, page = 1) => {
+  const tab = tabs[tabName]
+  getAllOrders({
+    status: tab.status,
+    page,
+    pageSize: tab.pagination.pageSize,
+    keyword: searchKeyWord.value || '',
+    dateField: dateFilter.value.dateField,
+    startDate: dateFilter.value.startDate || undefined,
+    endDate: dateFilter.value.endDate || undefined,
+  })
       .then(res => {
-        orderList.value = res.data.data
-        console.log(res)
+        tab.list = res.data.data.list
+        tab.pagination.total = res.data.data.total
+        tab.pagination.current = page
       })
       .catch(err => {
         console.log(err)
       })
 }
+// 加载当前激活的 tab
+const reloadCurrent = () => loadTab(keyMap[activeKey.value])
+// tab 切换时加载对应 tab 第 1 页
+const onTabChange = (key) => loadTab(keyMap[key])
 
-// 加载标签状态的方法
-const order_status = ref()
+// 加载订单状态常量（map/color）
+const orderStatus = ref()
 const loadOrderStatus = () => {
   getOrderStatus()
       .then(res => {
-        order_status.value = res.data.data
+        orderStatus.value = res.data.data
       })
       .catch(err => {
         console.log(err)
@@ -99,19 +130,16 @@ const loadOrderStatus = () => {
 onMounted(() => {
   loadOrderStatus()
 })
-// 每次进入都执行：订单数据会变，需要刷新
+// 每次进入页面刷新当前 tab
 onActivated(() => {
-  loadOrders()
+  reloadCurrent()
 })
-// 定义表格的响应式数组，用于存放表格的数据
-const orderList = ref([])
-// 定义子组件DetailOrders.vue的实例
+
+// 定义子组件 DetailOrders 的实例
 const detailOrdersRef = ref(null)
-// 查看订单按钮
 const handleDetailOrdersOpen = (id) => {
   detailOrdersRef.value.detailOrdersVisibleOpen(id)
 }
-
 
 // ================ 删除订单 ===================
 const handleDeleteOrder = (id) => {
@@ -122,7 +150,7 @@ const handleDeleteOrder = (id) => {
       deleteOrder(id)
           .then(() => {
             message.success('删除成功')
-            loadOrders()
+            reloadCurrent()
           })
           .catch(err => {
             message.error('网络连接超时，请检查网络后再试')
@@ -136,7 +164,7 @@ const handleBatchDeleteOrders = (ids) => {
   deleteOrders(ids)
       .then(() => {
         message.success('订单已删除')
-        loadOrders()
+        reloadCurrent()
       })
       .catch(err => {
         console.log(err)
@@ -145,38 +173,24 @@ const handleBatchDeleteOrders = (ids) => {
 }
 // =======================================
 
-const pendingPayOrders = computed(() =>
-    orderList.value.filter(item => item.order_status === 'pending_pay')
-)
-const pendingConfirmOrders = computed(() =>
-    orderList.value.filter(item => item.order_status === 'pending_confirm')
-)
-const cancelledOrders = computed(() =>
-    orderList.value.filter(item => item.order_status === 'cancel')
-)
 // ======================== 搜索订单 ========================
 const searchKeyWord = ref('')
 const onOrderSearch = (value) => {
-  loadOrders({search: value || ''})
+  searchKeyWord.value = value || ''
+  reloadCurrent()
 }
 // ======================== 日期筛选 ========================
-const dateRange = ref([])
-const onDateRangeChange = (dates) => {
-  if (dates && dates.length === 2) {
-    loadOrders({
-      start_date: dates[0].format('YYYY-MM-DD HH:mm'),
-      end_date: dates[1].format('YYYY-MM-DD HH:mm'),
-    })
-    console.log('change触发:', dates)
-  } else {
-    loadOrders() // 清空日期时重新加载全部
-  }
+const dateRangeRef = ref(null)
+const dateFilter = ref({ dateField: 'created_at', startDate: '', endDate: '' })
+const onDateFilterChange = (filter) => {
+  dateFilter.value = filter
+  reloadCurrent()
 }
-// 刷新
+// 刷新：清空搜索/日期，重新加载当前 tab
 const reloadOrders = () => {
-  loadOrders()
   searchKeyWord.value = ''
-  dateRange.value = []
+  dateRangeRef.value?.reset()
+  reloadCurrent()
 }
 </script>
 

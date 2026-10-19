@@ -8,7 +8,7 @@
             <div class="name">
               <span style="margin-right:15px;">{{ orderInfo.consignee }}</span><span>{{ orderInfo.phone }}</span>
             </div>
-            <div class="address">{{ orderInfo.region }} {{ orderInfo.detail_address }}</div>
+            <div class="address">{{ orderInfo.region }} {{ orderInfo.detailAddress }}</div>
           </div>
           <a-button @click="handleEditAddress">编辑</a-button>
         </div>
@@ -17,15 +17,15 @@
     <a-card>
       <a-table :row-selection="{}" class="title" :data-source="detailOrders">
         <a-table-column title="编号" dataIndex="id"></a-table-column>
-        <a-table-column title="产品信息" dataIndex="product_name"></a-table-column>
+        <a-table-column title="产品信息" dataIndex="productName"></a-table-column>
         <a-table-column>
           <template #default="{record}">
             <img v-lazy="record.image" width="100" />
           </template>
         </a-table-column>
-        <a-table-column title="单价" dataIndex="sales_price"></a-table-column>
+        <a-table-column title="单价" dataIndex="salesPrice"></a-table-column>
         <a-table-column title="数量" dataIndex="quantity"></a-table-column>
-        <a-table-column title="单品小计" dataIndex="sub_total"></a-table-column>
+        <a-table-column title="单品小计" dataIndex="subTotal"></a-table-column>
       </a-table>
     </a-card>
   </a-modal>

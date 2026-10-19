@@ -80,12 +80,36 @@
 |------|---------|
 | （暂无） | |
 
+## 会话：2026-10-19
+
+### 当前状态
+- **阶段：** 后台管理端对接（商品/分类/标签/订单，完成）
+
+### 已执行操作
+- 统一驼峰契约：前后端 + C 端三套字段对齐（snake_case → camelCase），后端不用 @JsonNaming 翻译层。
+- 商品：api/products.js 路径加 /admin；List/EditModal/AddGoods/SalesInfo/Mall 字段驼峰 + 列表读 data.list。
+- 分类：api 路径加 /admin；Category（label→name、sort_index→sort、product_count→productCount）、AddCategory（parent_id→parentId）、RelateGoods/AddGoodsModal 字段适配 + 读 data.list。
+- 标签：api/tags.js 路径加 /admin + productIds 驼峰；Tag/TagModal 字段适配。
+- 订单：api/orders.js 拆分前后台（下单/支付/详情走 /api/orders，其余走 /api/admin/orders）；10 个订单页面字段驼峰 + 状态字符串→数字 code。
+- 订单列表分页：OrderList 4 tab（全部/待付款/待确认/已取消）独立请求后端分页（status+page）；Ship 发货页 3 tab 全量（订单少不分页）。
+- 日期筛选：抽公共组件 date-range-select.vue（时间字段下拉 + 日期范围，默认下单/支付/发货时间），OrderList/Ship 复用；后端 dateField 白名单。
+
+### 创建/修改的文件
+- 新建：src/components/date-range-select.vue
+- 修改：api/products.js、api/tags.js、api/orders.js；goods/*、orders/* 共 20 余个页面
+
+### 错误
+| 错误 | 解决方案 |
+|------|---------|
+| 订单列表 filter 报 not a function | getAllOrders 改分页后读 data.list |
+| 日期筛选不生效 | 前端参数名 snake_case 改 camelCase 对齐后端 @RequestParam |
+
 ## 五问重启检查
 | 问题 | 答案 |
 |------|------|
-| 我在哪里？ | 阶段 7 - 测试与验证 |
-| 我要去哪里？ | 阶段 5 - 交付 |
-| 目标是什么？ | 解决列表/详情图片卡顿，降低图片体积与首屏加载量 |
+| 我在哪里？ | 后台管理端对接（商品/分类/标签/订单完成） |
+| 我要去哪里？ | 库存预警、售后、工作台对接 |
+| 目标是什么？ | e-commerce 前端对接 Spring 后端 /api/admin/**，统一驼峰 |
 | 我学到了什么？ | 见 findings.md |
 | 我做了什么？ | 见上方「已执行操作」 |
 
