@@ -72,8 +72,10 @@
 ### 阶段 9：后台管理端对接
 - [x] 商品/分类/标签 CRUD 对接（路径 /api/admin/** + 统一驼峰契约）
 - [x] 订单模块对接（列表 4 tab 后端分页 + 状态数字 code + 日期筛选）
-- [x] 公共时间选择器组件 date-range-select.vue（订单/发货复用，售后待接）
-- [ ] 库存预警、售后、工作台（dashboard/shops/upload）对接
+- [x] 公共时间选择器组件 date-range-select.vue（订单/发货/售后复用）
+- [x] 库存预警对接（api/stock.js 路径 /api/admin/stock + StockList 页 + 工作台 Projects 字段驼峰）
+- [x] 售后对接（api/afterSale.js 审核/删除走 /api/admin/after-sales + 6 售后页字段蛇形→驼形 + 列表搜索/日期筛选）
+- [ ] 工作台（dashboard/shops/upload）对接
 - **状态：** in_progress
 
 ## 关键问题

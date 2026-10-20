@@ -8,26 +8,24 @@ import { message } from 'ant-design-vue';
 import { getAllOrders, getOrderStatus } from '@/api/orders.js';
 import { getAfterSales } from '@/api/afterSale.js';
 import { getDashboard } from '@/api/products.js';
-import { getStockList, getStockStatus } from '@/api/stock.js';
+import { getUserStatistics } from '@/api/user.js';
 import { loadShop, shop } from '@/utils/shop.js';
 import { formatThousand } from '@/utils/formatter.js';
-import { isAlertOn, stockStatusOf } from '@/utils/stock.js';
 
 // ==================== 口径常量 ====================
-// 计入「销售额」的状态：待付款还没付钱、已取消不产生成交，都排除
-const PAID_STATUS = ['pending_confirm', 'pending_ship', 'shipped', 'finished'];
-// 计入「订单量」时排除的状态
-const COUNTED_EXCLUDE = ['cancel'];
+// 计入「销售额」的状态（OrderStatusEnum 数字 code）：待付款(1)还没付钱、已取消(6)不产生成交，都排除
+const PAID_STATUS = [2, 3, 4, 5]; // 待确认/待发货/已发货/已完成
+// 计入「订单量」时排除的状态（数字 code）
+const COUNTED_EXCLUDE = [6]; // 已取消
 // 待商家处理的售后状态
 const AFTER_SALE_TODO = 'reviewing';
 const RECENT_ORDER_LIMIT = 6; // 订单记录卡取几笔
-const ALERT_LIMIT = 8; // 库存异常表最多几行
 const TREND_DAYS = 7; // 柱状图天数
 const TREND_MONTHS = 12; // 折线图月数
 
 // ==================== 纯函数 ====================
 /** pay_amount 是 REAL 列但可能以字符串返回，统一转数字（formatThousand 内部要 toFixed） */
-export const toAmount = (o) => Number(o?.pay_amount) || 0;
+export const toAmount = (o) => Number(o?.payAmount) || 0;
 
 /** created_at 正常是 'YYYY-MM-DD HH:mm:ss'，兜底兼容 Unix 秒 */
 const toDate = (v) => {
@@ -37,31 +35,28 @@ const toDate = (v) => {
 
 /** 订单的日期键 'YYYY-MM-DD' */
 export const dayKey = (o) => {
-  const d = toDate(o?.created_at);
+  const d = toDate(o?.createdAt);
   return d && d.isValid() ? d.format('YYYY-MM-DD') : '';
 };
 
 /** 订单的月份键 'YYYY-MM' */
 const monthKeyOf = (o) => {
-  const d = toDate(o?.created_at);
+  const d = toDate(o?.createdAt);
   return d && d.isValid() ? d.format('YYYY-MM') : '';
 };
 
 /** 排序用的时间戳 */
 const timeOf = (o) => {
-  const d = toDate(o?.created_at);
+  const d = toDate(o?.createdAt);
   return d && d.isValid() ? d.valueOf() : 0;
 };
 
-export const isPaidOrder = (o) => PAID_STATUS.includes(o.order_status);
-export const isCountedOrder = (o) => !COUNTED_EXCLUDE.includes(o.order_status);
-
-/** 异常状态（低库存预警 / 高库存积压），normal 和算不出来的都不进表 */
-export const isAbnormalStock = (k) => k === 'low' || k === 'high';
+export const isPaidOrder = (o) => PAID_STATUS.includes(o.orderStatus);
+export const isCountedOrder = (o) => !COUNTED_EXCLUDE.includes(o.orderStatus);
 
 /** 订单状态 → 时间线样式类（沿用模板里已有的 completed / process / canceled 三档） */
 export const orderStatusClass = (s) =>
-  s === 'finished' ? 'completed' : s === 'cancel' ? 'canceled' : 'process';
+  s === 5 ? 'completed' : s === 6 ? 'canceled' : 'process';
 
 /** 求和，取不到值按 0 兜底，避免 NaN 扩散 */
 const sumBy = (list, pick) =>
@@ -119,10 +114,9 @@ export function useWorkplaceData() {
   // ---------------- 原始状态 ----------------
   const orders = ref([]); // 本店全部订单（非 admin 时是本人订单，后端已过滤 is_deleted）
   const orderStatus = ref({ map: {}, color: {} }); // 订单状态字典
-  const stockStatusDict = ref({ map: {}, color: {} }); // 库存状态字典（high/normal/low）
   const productStat = ref({ totalProducts: 0, totalStock: 0, totalValue: 0 });
-  const stockRows = ref([]); // /api/stock 全量
   const afterSaleTodo = ref(0);
+  const userGrowth = ref({ months: [], newUsers: [], totalUsers: [] }); // 用户增长（月、新增、累计）
 
   // ---------------- 时间窗口 ----------------
   // dayOffsetKey(0)=今天；-1 得到明天，作为右开端点，等价于「含今天」
@@ -207,22 +201,23 @@ export function useWorkplaceData() {
   );
 
   // ---------------- 近 12 个月（折线图）----------------
+  // 只统计订单量：待付款（1）与已付款（2/3/4/5），不算营业额
   const monthlySeries = computed(() => [
     {
-      name: '销售额',
-      data: groupByMonth(orders.value.filter(isPaidOrder), TREND_MONTHS, toAmount),
+      name: '待付款订单',
+      data: groupByMonth(orders.value.filter((o) => o.orderStatus === 1), TREND_MONTHS, () => 1),
     },
     {
-      name: '订单',
-      data: groupByMonth(orders.value.filter(isCountedOrder), TREND_MONTHS, () => 1),
+      name: '已付款订单',
+      data: groupByMonth(orders.value.filter(isPaidOrder), TREND_MONTHS, () => 1),
     },
   ]);
 
   const monthGrowth = computed(
     () =>
       growth(
-        sumBy(ordersOfMonth(0).filter(isPaidOrder), toAmount),
-        sumBy(ordersOfMonth(1).filter(isPaidOrder), toAmount)
+        ordersOfMonth(0).filter(isCountedOrder).length,
+        ordersOfMonth(1).filter(isCountedOrder).length
       ) ?? NO_GROWTH
   );
 
@@ -243,52 +238,21 @@ export function useWorkplaceData() {
         id: o.id,
         amount: toAmount(o),
         // remark 是买家备注，大多为空，用收货人更稳
-        title: o.consignee || o.order_no || `订单 ${o.id}`,
-        time: toDate(o.created_at)?.format('MM/DD HH:mm') || '-',
+        title: o.consignee || o.orderNo || `订单 ${o.id}`,
+        time: toDate(o.createdAt)?.format('MM/DD HH:mm') || '-',
         statusText:
-          orderStatus.value.map?.[o.order_status] || o.order_status || '-',
-        statusClass: orderStatusClass(o.order_status),
+          orderStatus.value.map?.[o.orderStatus] || o.orderStatus || '-',
+        statusClass: orderStatusClass(o.orderStatus),
       }))
-  );
-
-  // ---------------- 库存异常（卡片 + 表）----------------
-  // 三档里只把异常（low 低库存预警 / high 高库存积压）列进表，正常和不可计算的都不占位
-  const abnormalStock = computed(() =>
-    stockRows.value
-      .map((r) => ({ ...r, statusKey: stockStatusOf(r) }))
-      .filter((r) => isAbnormalStock(r.statusKey))
-      .map((r) => ({
-        ...r,
-        // 低库存看「差多少到下限」，高库存看「超了多少上限」，都用来排序
-        gap:
-          r.statusKey === 'low'
-            ? Number(r.min_stock) - Number(r.stock)
-            : Number(r.stock) - Number(r.max_stock),
-      }))
-      // 预警排在积压前面；同档内缺口越大越靠前
-      .sort((a, b) =>
-        a.statusKey === b.statusKey
-          ? b.gap - a.gap
-          : a.statusKey === 'low'
-          ? -1
-          : 1
-      )
-  );
-  const alertRows = computed(() => abnormalStock.value.slice(0, ALERT_LIMIT));
-  const alertTotal = computed(
-    () => abnormalStock.value.filter((r) => r.statusKey === 'low').length
-  );
-  const overstockTotal = computed(
-    () => abnormalStock.value.filter((r) => r.statusKey === 'high').length
   );
 
   // ---------------- 今日待办 ----------------
   const todo = computed(() => ({
     pendingConfirm: orders.value.filter(
-      (o) => o.order_status === 'pending_confirm'
+      (o) => o.orderStatus === 2
     ).length,
     pendingShip: orders.value.filter(
-      (o) => o.order_status === 'pending_ship'
+      (o) => o.orderStatus === 3
     ).length,
     afterSale: afterSaleTodo.value,
   }));
@@ -318,9 +282,12 @@ export function useWorkplaceData() {
         iconClass: 'text-purple-100',
       },
       {
-        title: '库存预警',
-        value: formatThousand(alertTotal.value, 0),
-        icon: 'alert-filled',
+        title: '用户总量',
+        value: formatThousand(
+          userGrowth.value.totalUsers[userGrowth.value.totalUsers.length - 1] || 0,
+          0
+        ),
+        icon: 'team-outlined',
         iconClass: 'text-primary-100',
       },
     ];
@@ -334,12 +301,6 @@ export function useWorkplaceData() {
         orderStatus.value = res.data.data || { map: {}, color: {} };
       })
       .catch((err) => console.error('订单状态字典加载失败', err));
-    // 库存状态标签/颜色也走字典，不硬编码在模板里
-    getStockStatus()
-      .then((res) => {
-        stockStatusDict.value = res.data.data || { map: {}, color: {} };
-      })
-      .catch((err) => console.error('库存状态字典加载失败', err));
     // 复用 utils/shop 的模块级缓存，App.vue 启动时已拉过 → 这里通常不发请求
     loadShop();
   }
@@ -347,9 +308,11 @@ export function useWorkplaceData() {
   /** 业务数据：每次进入工作台都刷新 */
   function loadAll() {
     return Promise.all([
-      getAllOrders()
+      // 工作台要全量订单做近7天/近12月统计，后端是分页接口，pageSize 传大值一次拉全
+      getAllOrders({ pageSize: 1000 })
         .then((res) => {
-          orders.value = res.data.data || [];
+          // 后端返回分页结构 { list, total, page, pageSize }，取 list 数组
+          orders.value = res.data.data?.list || [];
         })
         .catch((err) => {
           // 401/403/404/500 已由 request.js 拦截器统一提示，这里只兜网络错误
@@ -361,16 +324,22 @@ export function useWorkplaceData() {
           productStat.value = res.data.data || productStat.value;
         })
         .catch((err) => console.error('商品统计加载失败', err)),
-      getStockList()
-        .then((res) => {
-          stockRows.value = res.data.data || [];
-        })
-        .catch((err) => console.error('库存数据加载失败', err)),
       getAfterSales({ status: AFTER_SALE_TODO })
         .then((res) => {
           afterSaleTodo.value = (res.data.data || []).length;
         })
         .catch((err) => console.error('售后数据加载失败', err)),
+      getUserStatistics()
+        .then((res) => {
+          const data = res.data.data || {};
+          const months = data.months || [];
+          const newUsers = data.newUsers || [];
+          // 用户总量 = 累计新增
+          let acc = 0;
+          const totalUsers = newUsers.map((n) => (acc += Number(n) || 0));
+          userGrowth.value = { months, newUsers, totalUsers };
+        })
+        .catch((err) => console.error('用户统计加载失败', err)),
     ]);
   }
 
@@ -387,10 +356,7 @@ export function useWorkplaceData() {
     monthGrowth,
     orderMonthGrowth,
     recentOrders,
-    alertRows,
-    alertTotal,
-    overstockTotal,
-    stockStatusDict,
+    userGrowth,
     loadStatic,
     loadAll,
   };

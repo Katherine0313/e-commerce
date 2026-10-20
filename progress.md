@@ -104,11 +104,31 @@
 | 订单列表 filter 报 not a function | getAllOrders 改分页后读 data.list |
 | 日期筛选不生效 | 前端参数名 snake_case 改 camelCase 对齐后端 @RequestParam |
 
+## 会话：2026-10-20
+
+### 当前状态
+- **阶段：** 后台管理端对接（库存预警、售后完成，工作台未做）
+
+### 已执行操作
+- 库存预警：api/stock.js 路径 /api/stock → /api/admin/stock；StockList.vue 字段蛇形→驼形（stockId/alertEnabled/minStock/maxStock/productId）；utils/stock.js + useWorkplaceData.js + Projects.vue 字段对齐。
+- 售后：api/afterSale.js 审核/删除走 /api/admin/after-sales；6 售后页面（only-refund/return_refund/exchange 的 detail/review）字段蛇形→驼形（afterSaleNo/createdAt/afterSaleType/orderNo/payTypeDesc/payAt/payAmount 等）；售后列表搜索/日期筛选参数。
+- 订单支付方式：6 个订单表格 dataIndex payType → payTypeDesc（英文 code 改中文）。
+- 分页：PageVO 后端加 page/pageSize，OrderList 从响应读 pageSize 不写死。
+
+### 创建/修改的文件
+- 修改：api/stock.js、api/afterSale.js、utils/stock.js；stock/StockList.vue、workplace/useWorkplaceData.js、workplace/Projects.vue、orders/OrderList.vue + 4 订单表格、after-sales/* 共 10 余个页面
+
+### 错误
+| 错误 | 解决方案 |
+|------|---------|
+| 订单列表支付方式显示英文 | dataIndex payType → payTypeDesc |
+| 售后页面字段蛇形后端读不到 | 前端字段统一驼形对齐后端 VO |
+
 ## 五问重启检查
 | 问题 | 答案 |
 |------|------|
-| 我在哪里？ | 后台管理端对接（商品/分类/标签/订单完成） |
-| 我要去哪里？ | 库存预警、售后、工作台对接 |
+| 我在哪里？ | 后台管理端对接（库存预警、售后完成，工作台未做） |
+| 我要去哪里？ | 工作台（dashboard/shops/upload）对接 |
 | 目标是什么？ | e-commerce 前端对接 Spring 后端 /api/admin/**，统一驼峰 |
 | 我学到了什么？ | 见 findings.md |
 | 我做了什么？ | 见上方「已执行操作」 |

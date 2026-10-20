@@ -10,10 +10,10 @@
             {{ shopInfo?.name || '未获取到店铺信息' }}
           </div>
           <div class="mt-xs">
-            <a-tag :color="shopInfo?.is_template ? 'blue' : 'green'">
-              {{ shopInfo?.is_template ? '模板体验店' : '独立沙箱店' }}
+            <a-tag :color="shopInfo?.isTemplate ? 'blue' : 'green'">
+              {{ shopInfo?.isTemplate ? '模板体验店' : '独立沙箱店' }}
             </a-tag>
-            <!-- 模板店永不过期，expires_at 为空时不显示 -->
+            <!-- 模板店永不过期，expiresAt 为空时不显示 -->
             <span v-if="expire" class="text-subtext text-xs"
               >有效期至 {{ expire }}</span
             >
@@ -58,7 +58,7 @@
   import { useRouter } from 'vue-router';
   import dayjs from 'dayjs';
   const props = defineProps({
-    // { name, is_template, created_at, expires_at }
+    // { name, isTemplate, createdAt, expiresAt }
     shopInfo: { type: Object, default: null },
     todo: {
       type: Object,
@@ -86,10 +86,10 @@
       to: '/after-sales/after-sale-list',
     },
   ]);
-  // expires_at 是 Unix 秒；模板店没有到期时间
+  // expiresAt 是 'yyyy-MM-dd HH:mm:ss' 字符串；模板店没有到期时间
   const expire = computed(() => {
-    const ts = props.shopInfo?.expires_at;
-    return ts ? dayjs(Number(ts) * 1000).format('YYYY-MM-DD HH:mm') : '';
+    const ts = props.shopInfo?.expiresAt;
+    return ts ? dayjs(ts).format('YYYY-MM-DD HH:mm') : '';
   });
 </script>
 <style lang="less" scoped>

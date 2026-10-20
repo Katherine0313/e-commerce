@@ -43,7 +43,7 @@
 
 ### 分页策略（按模块）
 - 商品列表：后端真分页（page/pageSize → PageVO{list,total}），前端受控分页器。
-- 订单列表：4 个状态 tab 独立请求后端分页（status + page），不做前端 filter。
+- 订单列表：4 个状态 tab 独立请求后端分页（status + page），不做前端 filter；PageVO 含 page/pageSize，前端从响应读 pageSize 不写死。
 - 发货页：3 个状态 tab 全量（status 筛选 + pageSize 给足），订单量少不分页。
 
 ### 状态契约
@@ -54,6 +54,11 @@
 
 ### 公共组件
 - date-range-select.vue：时间字段下拉（下单/支付/发货时间）+ 日期范围，change 吐 {dateField,startDate,endDate}，reset() 供刷新清空；订单/发货/售后复用。
+
+### 库存预警 / 售后对接（2026-10-20）
+- 库存预警：路径 /api/admin/stock（列表/状态常量/创建 upsert），字段统一驼峰（stockId/alertEnabled/minStock/maxStock/productId）。
+- 售后：C 端申请/列表/详情/状态常量/提交退货 + 后台审核/删除（/api/admin/after-sales）；前端售后页字段蛇形→驼形（afterSaleNo/createdAt/afterSaleType/payTypeDesc 等）。
+- 支付方式：payType 存英文 code，payTypeDesc 中文，前端表格用 payTypeDesc 展示（不是 payType）。
 
 ## 遇到的问题
 | 问题 | 解决方案 |

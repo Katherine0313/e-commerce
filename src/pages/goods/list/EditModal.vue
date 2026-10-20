@@ -74,7 +74,7 @@ import {compressImage} from '@/utils/compressImage'
 const editOpen = ref(false)
 const editingId = ref(null)  // 正在编辑的商品 id
 const fileList = ref([])
-const uploadAction = import.meta.env.VITE_API_BASE_URL + '/api/upload'
+const uploadAction = import.meta.env.VITE_API_BASE_URL + '/api/admin/upload'
 useDragModal('drag-modal-editgoods')
 const salesInfoRef =ref(null)
 // 添加商品对话框表单实例ref，用于触发校验、重置

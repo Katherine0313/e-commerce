@@ -5,7 +5,7 @@
       <a-table-column title="订单编号" dataIndex="orderNo"></a-table-column>
       <a-table-column title="发货时间" dataIndex="shipAt"></a-table-column>
       <a-table-column title="实收金额" dataIndex="payAmount"></a-table-column>
-      <a-table-column title="支付方式" dataIndex="payType"></a-table-column>
+      <a-table-column title="支付方式" dataIndex="payTypeDesc"></a-table-column>
       <a-table-column title="客户" dataIndex="consignee"></a-table-column>
       <a-table-column title="配送方式" dataIndex="courier"></a-table-column>
       <a-table-column title="快递单号" dataIndex="trackingNumber"></a-table-column>
@@ -224,7 +224,7 @@ const handleExpress = (record) => {
       })
 }
 // ================== 申请售后 ==================
-const uploadAction = import.meta.env.VITE_API_BASE_URL + '/api/upload'
+const uploadAction = import.meta.env.VITE_API_BASE_URL + '/api/admin/upload?type=after-sale'
 const uploadHeaders = {Authorization: 'Bearer ' + getToken()}
 
 const afterSaleVisible = ref(false)

@@ -7,7 +7,7 @@
       <a-table-column title="支付时间" dataIndex="payAt"></a-table-column>
       <a-table-column title="用户账号" dataIndex="userId"></a-table-column>
       <a-table-column title="订单总金额" dataIndex="payAmount"></a-table-column>
-      <a-table-column title="支付方式" dataIndex="payType"></a-table-column>
+      <a-table-column title="支付方式" dataIndex="payTypeDesc"></a-table-column>
       <a-table-column title="订单状态" dataIndex="orderStatus">
         <template #default="{record}">
           <a-tag :color="orderStatus.color[record.orderStatus] || 'default'">
@@ -41,7 +41,7 @@
         </a-descriptions-item>
         <a-descriptions-item label="实付金额">¥{{ currentOrder?.payAmount }}</a-descriptions-item>
       </a-descriptions>
-      <a-table :dataSource="currentOrder?.items" row-key="product_id" :pagination="false" size="small"
+      <a-table :dataSource="currentOrder?.items" row-key="productId" :pagination="false" size="small"
                style="margin-bottom: 16px;" class="title">
         <a-table-column title="商品名称" dataIndex="productName"></a-table-column>
         <a-table-column title="商品图片">

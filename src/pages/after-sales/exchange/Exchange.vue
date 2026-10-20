@@ -1,12 +1,12 @@
 <template>
   <a-table class="title":dataSource="exchangeList">
     <a-table-column title="编号" dataIndex="id"></a-table-column>
-    <a-table-column title="订单编号" dataIndex="order_no"></a-table-column>
-    <a-table-column title="创建时间" dataIndex="created_at"></a-table-column>
-    <a-table-column title="订单状态" dataIndex="order_status">
+    <a-table-column title="订单编号" dataIndex="orderNo"></a-table-column>
+    <a-table-column title="创建时间" dataIndex="createdAt"></a-table-column>
+    <a-table-column title="订单状态" dataIndex="orderStatus">
       <template #default="{record}">
-        <a-tag :color="orderStatus.color[record.order_status] || 'default'">
-          {{ orderStatus.map[record.order_status] || record.order_status }}
+        <a-tag :color="orderStatus.color[record.orderStatus] || 'default'">
+          {{ orderStatus.map[record.orderStatus] || record.orderStatus }}
         </a-tag>
       </template>
     </a-table-column>
@@ -61,7 +61,7 @@ const loadData = (override = {}) => {
 watch(filterParams, () => loadData(), { deep: true })
 // =============== 过滤订单 ==================
 const exchangeList = computed(() =>
-    afterSaleList.value.filter(item => item.after_sale_type == 'exchange')
+    afterSaleList.value.filter(item => item.afterSaleType == 'exchange')
 )
 // =============== 获取订单状态 =================
 const orderStatus = ref({ map: {}, color: {} })
@@ -95,7 +95,7 @@ onMounted(() => {
 const handleDelete = (record) => {
   Modal.confirm({
     title: '删除售后记录',
-    content: `请问确认订单 ${record.order_no} 吗？`,
+    content: `请问确认订单 ${record.orderNo} 吗？`,
     onOk() {
       deleteAfterSale(record.id)
           .then(() => {

@@ -80,23 +80,22 @@ import DetailOrders from "@/pages/orders/DetailOrders.vue";
 
 const activeKey = ref('1');
 
-// 4 个 tab 的独立数据：status（后端筛选）+ list（当前页）+ pagination（分页器）
+// 4 个 tab 的独立数据：status（后端筛选）+ list（当前页）+ pagination（分页器，pageSize 从后端响应读）
 const tabs = reactive({
-  all: { status: null, list: [], pagination: { current: 1, pageSize: 13, total: 0 } },
-  pendingPay: { status: 1, list: [], pagination: { current: 1, pageSize: 13, total: 0 } },
-  pendingConfirm: { status: 2, list: [], pagination: { current: 1, pageSize: 13, total: 0 } },
-  cancelled: { status: 6, list: [], pagination: { current: 1, pageSize: 13, total: 0 } },
+  all: { status: null, list: [], pagination: { current: 1, total: 0 } },
+  pendingPay: { status: 1, list: [], pagination: { current: 1, total: 0 } },
+  pendingConfirm: { status: 2, list: [], pagination: { current: 1, total: 0 } },
+  cancelled: { status: 6, list: [], pagination: { current: 1, total: 0 } },
 })
 // tab key -> tab 名映射
 const keyMap = { '1': 'all', '2': 'pendingPay', '3': 'pendingConfirm', '7': 'cancelled' }
 
-// 加载某个 tab 的指定页（后端分页 + 状态筛选）
+// 加载某个 tab 的指定页（后端分页，pageSize 从响应读，前端不写死）
 const loadTab = (tabName, page = 1) => {
   const tab = tabs[tabName]
   getAllOrders({
     status: tab.status,
     page,
-    pageSize: tab.pagination.pageSize,
     keyword: searchKeyWord.value || '',
     dateField: dateFilter.value.dateField,
     startDate: dateFilter.value.startDate || undefined,
@@ -105,7 +104,8 @@ const loadTab = (tabName, page = 1) => {
       .then(res => {
         tab.list = res.data.data.list
         tab.pagination.total = res.data.data.total
-        tab.pagination.current = page
+        tab.pagination.pageSize = res.data.data.pageSize
+        tab.pagination.current = res.data.data.page
       })
       .catch(err => {
         console.log(err)

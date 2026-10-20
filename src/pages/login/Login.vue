@@ -71,6 +71,7 @@ import useThemeStore from 'stepin/es/theme-editor/store';
 import {login} from '@/api/auth.js'
 import {createSandbox} from '@/api/shop.js'
 import {setToken} from '@/utils/token'
+import {connectOrderNotify} from '@/utils/orderNotify'
 import {loadShop} from '@/utils/shop'
 import router from '@/router'
 // const {setBgSeriesColors} = useThemeStore();
@@ -103,6 +104,7 @@ const submitLogin = () => {
           console.log(res.data)
           // 存储token（写入 localStorage）
           setToken(token)
+          connectOrderNotify()
           // 登录进去的可能是模板店或沙箱店，强制重拉店铺信息给顶栏用
           loadShop(true)
           message.success('登录成功')
@@ -123,6 +125,7 @@ const startSandbox = () => {
       .then(res => {
         if(res.data.success){
           setToken(res.data.data.token)
+          connectOrderNotify()
           // 换到新店铺了，强制重拉店铺信息（顶栏/店铺卡片要显示新的沙箱店名）
           loadShop(true)
           message.success('体验店铺已开通：' + res.data.data.shop.name)

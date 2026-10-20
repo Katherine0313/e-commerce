@@ -1,124 +1,27 @@
 <script setup>
-  import { reactive } from 'vue';
+  import { computed } from 'vue';
+  import { useRouter } from 'vue-router';
   import { StepinHeaderAction } from 'stepin';
-  import Notice from '@/components/notice/Notice.vue';
   import DayNightSwitch from '@/components/switch/DayNightSwitch.vue';
   import { BellOutlined } from '@ant-design/icons-vue';
+  import { unreadOrderCount, clearUnreadOrders } from '@/utils/orderNotify';
   import Fullscreen from '../fullscreen/Fullscreen.vue';
-  import face1 from '@/assets/avatar/face-1.jpg';
-  import face2 from '@/assets/avatar/face-2.jpg';
-  import face3 from '@/assets/avatar/face-3.jpg';
-  import face4 from '@/assets/avatar/face-4.jpg';
+
   defineEmits(['showSetting']);
-  const noticeList = reactive([
-    {
-      title: '消息',
-      list: [
-        {
-          title: '影佑',
-          content: 'xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx',
-          img: face1,
-          time: 0,
-        },
-        {
-          title: '影佑',
-          content: 'xxxxxxxxxxxxxxxxxx',
-          img: face2,
-          time: 0,
-        },
-        {
-          title: '影佑',
-          content: 'xxxxxxxxxxxxxxxxxx',
-          img: face3,
-          time: 0,
-        },
-        {
-          title: '影佑',
-          content: 'xxxxxxxxxxxxxxxxxx',
-          img: face4,
-          time: 0,
-        },
-      ],
-    },
-    {
-      title: '动态',
-      list: [
-        {
-          title: '影佑',
-          content: 'xxxxxxxxxxxxxxxxxx',
-          img: 'https://i2.hdslb.com/bfs/face/80b6731ccf865ca7a4ac17e6e8848fd0e34c1b91.jpg',
-          time: 0,
-        },
-        {
-          title: '影佑',
-          content: 'xxxxxxxxxxxxxxxxxx',
-          img: 'https://i2.hdslb.com/bfs/face/80b6731ccf865ca7a4ac17e6e8848fd0e34c1b91.jpg',
-          time: 0,
-        },
-        {
-          title: '影佑',
-          content: 'xxxxxxxxxxxxxxxxxx',
-          img: 'https://i2.hdslb.com/bfs/face/80b6731ccf865ca7a4ac17e6e8848fd0e34c1b91.jpg',
-          time: 0,
-        },
-        {
-          title: '影佑',
-          content: 'xxxxxxxxxxxxxxxxxx',
-          img: 'https://i2.hdslb.com/bfs/face/80b6731ccf865ca7a4ac17e6e8848fd0e34c1b91.jpg',
-          time: 0,
-        },
-      ],
-    },
-    {
-      title: '通知',
-      list: [
-        {
-          title: '影佑',
-          content: 'xxxxxxxxxxxxxxxxxx',
-          img: 'https://i2.hdslb.com/bfs/face/80b6731ccf865ca7a4ac17e6e8848fd0e34c1b91.jpg',
-          time: 0,
-        },
-        {
-          title: '影佑',
-          content: 'xxxxxxxxxxxxxxxxxx',
-          img: 'https://i2.hdslb.com/bfs/face/80b6731ccf865ca7a4ac17e6e8848fd0e34c1b91.jpg',
-          time: 0,
-        },
-        {
-          title: '影佑',
-          content: 'xxxxxxxxxxxxxxxxxx',
-          img: 'https://i2.hdslb.com/bfs/face/80b6731ccf865ca7a4ac17e6e8848fd0e34c1b91.jpg',
-          time: 0,
-        },
-        {
-          title: '影佑',
-          content: 'xxxxxxxxxxxxxxxxxx',
-          img: 'https://i2.hdslb.com/bfs/face/80b6731ccf865ca7a4ac17e6e8848fd0e34c1b91.jpg',
-          time: 0,
-        },
-      ],
-    },
-  ]);
+
+  const router = useRouter();
+  // 顶栏铃铛未读角标：来自来单提醒 WebSocket 计数
+  const unread = computed(() => unreadOrderCount.value);
+
+  // 点击铃铛：清空未读，跳订单列表查看新订单
+  const goOrders = () => {
+    clearUnreadOrders();
+    router.push('/orders/order-list');
+  };
 </script>
 <template>
   <StepinHeaderAction>
-    <a-input placeholder="开始搜索...">
-      <template #prefix>
-        <SearchOutlined />
-      </template>
-    </a-input>
-  </StepinHeaderAction>
-  <StepinHeaderAction>
     <DayNightSwitch />
-  </StepinHeaderAction>
-  <StepinHeaderAction>
-    <a
-      class="action-item"
-      href="#"
-      target="_blank"
-    >
-      <GithubOutlined />
-    </a>
   </StepinHeaderAction>
   <StepinHeaderAction>
     <a
@@ -134,17 +37,13 @@
       <SettingOutlined />
     </div>
   </StepinHeaderAction>
-
-  <a-popover placement="bottomRight">
-    <StepinHeaderAction>
-      <div class="action-item notice">
+  <StepinHeaderAction>
+    <div class="action-item notice" @click="goOrders">
+      <a-badge :count="unread" :overflow-count="99">
         <BellOutlined />
-      </div>
-    </StepinHeaderAction>
-    <template #content>
-      <Notice :data-source="noticeList" />
-    </template>
-  </a-popover>
+      </a-badge>
+    </div>
+  </StepinHeaderAction>
   <StepinHeaderAction>
     <Fullscreen
       class="-mx-xs -my-sm h-[56px] px-xs py-sm flex items-center"
@@ -152,8 +51,6 @@
     />
   </StepinHeaderAction>
 </template>
-<script>
-</script>
 <style scoped lang="less">
   .gitee-logo {
     width: 20px;
@@ -173,6 +70,7 @@
 
     &.notice {
       font-size: 18px;
+      cursor: pointer;
     }
   }
 </style>

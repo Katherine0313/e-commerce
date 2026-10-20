@@ -7,7 +7,7 @@
       <a-table-column title="提交时间" dataIndex="createdAt"></a-table-column>
       <a-table-column title="用户账号" dataIndex="userId"></a-table-column>
       <a-table-column title="订单总金额" dataIndex="payAmount"></a-table-column>
-      <a-table-column title="支付方式" dataIndex="payType"></a-table-column>
+      <a-table-column title="支付方式" dataIndex="payTypeDesc"></a-table-column>
       <a-table-column title="订单状态" dataIndex="orderStatus">
         <template #default="{record}">
           <a-tag :color="orderStatus.color[record.orderStatus] || 'default'">

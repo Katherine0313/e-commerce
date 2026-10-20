@@ -77,7 +77,7 @@
         :up="weekGrowth.up"
         :down="weekGrowth.down"
       />
-      <sales-overview
+      <order-stats
         class="col-span-12 xlx:col-span-6 xxlx:col-span-7 drop-shadow-sm"
         :series="monthlySeries"
         :change="monthGrowth.change"
@@ -86,12 +86,9 @@
       />
     </div>
     <div class="project-list grid grid-cols-12 gap-4">
-      <projects
+      <user-growth
         class="col-span-12 xlx:col-span-7 xxlx:col-span-8 drop-shadow-sm"
-        :rows="alertRows"
-        :total="alertTotal"
-        :overstock="overstockTotal"
-        :dict="stockStatusDict"
+        :data="userGrowth"
       />
       <order-history
         class="col-span-12 xlx:col-span-5 xxlx:col-span-4 drop-shadow-sm"
@@ -110,8 +107,8 @@
   import dayjs from 'dayjs';
   import MiniStatisticCard from '@/components/statistic/MiniStatisticCard.vue';
   import ActiveUsers from './ActiveUsers.vue';
-  import SalesOverview from './SalesOverview.vue';
-  import Projects from './Projects.vue';
+  import OrderStats from './OrderStats.vue';
+  import UserGrowth from './UserGrowth.vue';
   import OrderHistory from './OrderHistory.vue';
   import AboutUs from './AboutUs.vue';
   import { useUnbounded } from '@/utils/useTheme';
@@ -134,10 +131,7 @@
     monthGrowth,
     orderMonthGrowth,
     recentOrders,
-    alertRows,
-    alertTotal,
-    overstockTotal,
-    stockStatusDict,
+    userGrowth,
     loadStatic,
     loadAll,
   } = useWorkplaceData();

@@ -59,14 +59,14 @@ const onDateRangeChange = (dates) => {
   if (dates && dates.length === 2) {
     filterParams.value = {
       ...filterParams.value,
-      date_field: 'created_at',
-      start_date: dates[0].format('YYYY-MM-DD HH:mm'),
-      end_date: dates[1].format('YYYY-MM-DD HH:mm'),
+      dateField: 'created_at',
+      startDate: dates[0].format('YYYY-MM-DD HH:mm'),
+      endDate: dates[1].format('YYYY-MM-DD HH:mm'),
     }
     console.log('change触发:', dates)
   } else {
-    // 清空日期时移除 date_field / start_date / end_date
-    const { date_field, start_date, end_date, ...rest } = filterParams.value
+    // 清空日期时移除 dateField / startDate / endDate
+    const { dateField, startDate, endDate, ...rest } = filterParams.value
     filterParams.value = rest
   }
 }

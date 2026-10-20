@@ -50,7 +50,7 @@ const editorConfig = {
           const compressed = await compressImage(file)
           const formData = new FormData()
           formData.append('file', compressed)
-          const res = await axios.post('/api/upload?type=body', formData)
+          const res = await axios.post('/api/admin/upload?type=body', formData)
           insertFn(res.data.data.url, '', res.data.data.url)
         } catch (err) {
           // 上传失败（如文件类型不被允许）：把后端返回的具体原因提示给用户

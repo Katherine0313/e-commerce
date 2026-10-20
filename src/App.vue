@@ -31,9 +31,10 @@ import {HeaderActions, PageFooter} from '@/components/layout';
 import Setting from './components/setting';
 import {LoginModal} from '@/pages/login';
 import {configTheme, themeList} from '@/theme';
-import {removeToken} from '@/utils/token';
+import {getToken, removeToken} from '@/utils/token';
 import {logout} from '@/api/auth.js';
 import {getCurrentUser} from '@/utils/auth';
+import {connectOrderNotify, disconnectOrderNotify} from '@/utils/orderNotify';
 import {expireText, loadShop, shop} from '@/utils/shop';
 import {StepinView} from "stepin";
 
@@ -45,6 +46,10 @@ const router = useRouter();
 // 拉当前店铺信息（沙箱店名、剩余有效期）
 onMounted(() => {
   loadShop(false)
+  // 已登录（刷新页面）则自动建连来单提醒
+  if (getToken()) {
+    connectOrderNotify()
+  }
 });
 
 // 账号 + 有效期文案：模板店永不过期，就只显示账号
@@ -89,6 +94,7 @@ const user = computed(() => ({
             })
             .finally(() => {
               removeToken()
+              disconnectOrderNotify()
               // 退出后清掉店铺信息，避免下一个登录的人看到上一个店铺的店名
               shop.value = null
               router.push('/front/login')

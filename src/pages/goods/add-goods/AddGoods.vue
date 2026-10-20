@@ -82,7 +82,7 @@ const salesInfoRef = ref(null)
 const brandOptions = ref([])
 // 定义层级分类的数据源
 const categoryTree = ref([])
-const uploadAction = import.meta.env.VITE_API_BASE_URL + '/api/upload'
+const uploadAction = import.meta.env.VITE_API_BASE_URL + '/api/admin/upload'
 // 加载商品数据，分页复用，便于统一维护
 const loadData = () => {
   // handlePageChange事件触发时，加载的商品要对应到点击的那一页，所以

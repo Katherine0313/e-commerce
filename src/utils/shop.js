@@ -6,7 +6,7 @@ import {ref} from 'vue'
 import {getCurrentShop} from '@/api/shop.js'
 import {getToken} from '@/utils/token'
 
-/** 当前店铺：{ id, name, is_template, created_at, expires_at }，拉不到时为 null */
+/** 当前店铺：{ id, name, isTemplate, createdAt, expiresAt }，拉不到时为 null */
 export const shop = ref(null)
 
 // 进行中的请求，防止多个组件同时挂载时重复发请求
@@ -37,12 +37,12 @@ export function loadShop(force) {
   return pending
 }
 
-/** 剩余有效期文案（模板店永不过期，返回空串） */
+/** 剩余有效期文案（模板店永不过期，返回空串）；expiresAt 是 'yyyy-MM-dd HH:mm:ss' 字符串 */
 export function expireText() {
-  if (!shop.value || !shop.value.expires_at) return ''
-  const left = shop.value.expires_at - Math.floor(Date.now() / 1000)
+  if (!shop.value || !shop.value.expiresAt) return ''
+  const left = new Date(shop.value.expiresAt.replace(' ', 'T')).getTime() - Date.now()
   if (left <= 0) return '已过期'
-  const hours = Math.floor(left / 3600)
-  const minutes = Math.floor((left % 3600) / 60)
+  const hours = Math.floor(left / 3600000)
+  const minutes = Math.floor((left % 3600000) / 60000)
   return hours > 0 ? `剩余 ${hours} 小时 ${minutes} 分` : `剩余 ${minutes} 分钟`
 }

@@ -4,9 +4,9 @@
     <div class="item">
       <div class="item-title">售后信息</div>
       <a-descriptions bordered :column="2" :label-style="{ width: '160px' }">
-        <a-descriptions-item label="售后单号">{{ currentOrder?.after_sale_no }}</a-descriptions-item>
-        <a-descriptions-item label="申请时间">{{ currentOrder?.created_at }}</a-descriptions-item>
-        <a-descriptions-item label="售后类型"> {{ afterSaleStatus.typeMap[currentOrder?.after_sale_type] }}
+        <a-descriptions-item label="售后单号">{{ currentOrder?.afterSaleNo }}</a-descriptions-item>
+        <a-descriptions-item label="申请时间">{{ currentOrder?.createdAt }}</a-descriptions-item>
+        <a-descriptions-item label="售后类型"> {{ afterSaleStatus.typeMap[currentOrder?.afterSaleType] }}
         </a-descriptions-item>
         <a-descriptions-item label="售后原因">{{
             afterSaleStatus.reasonMap[currentOrder?.reason]
@@ -21,41 +21,41 @@
         <a-descriptions-item label="收货人">{{ currentOrder?.consignee }}</a-descriptions-item>
         <a-descriptions-item label="手机号码">{{ currentOrder?.phone }}</a-descriptions-item>
         <a-descriptions-item label="收货地址" :span="2">
-          {{ (currentOrder?.region || '') + ' ' + (currentOrder?.detail_address || '') }}
+          {{ (currentOrder?.region || '') + ' ' + (currentOrder?.detailAddress || '') }}
         </a-descriptions-item>
       </a-descriptions>
     </div>
     <div class="item">
       <div class="item-title">订单信息</div>
       <a-descriptions bordered :column="2" :label-style="{ width: '160px' }">
-        <a-descriptions-item label="订单号">{{ currentOrder?.order_no }}</a-descriptions-item>
-        <a-descriptions-item label="支付时间">{{ currentOrder?.pay_at }}</a-descriptions-item>
-        <a-descriptions-item label="支付方式">{{ currentOrder?.pay_type }}</a-descriptions-item>
-        <a-descriptions-item label="实付总额">￥{{ currentOrder?.pay_amount }}</a-descriptions-item>
+        <a-descriptions-item label="订单号">{{ currentOrder?.orderNo }}</a-descriptions-item>
+        <a-descriptions-item label="支付时间">{{ currentOrder?.payAt }}</a-descriptions-item>
+        <a-descriptions-item label="支付方式">{{ currentOrder?.payTypeDesc }}</a-descriptions-item>
+        <a-descriptions-item label="实付总额">￥{{ currentOrder?.payAmount }}</a-descriptions-item>
       </a-descriptions>
     </div>
     <div class="item">
       <div class="item-title">商品信息</div>
-      <a-table :dataSource="items" row-key="product_id" :pagination="false" size="small"
+      <a-table :dataSource="items" row-key="productId" :pagination="false" size="small"
                style="margin-bottom: 16px;" class="table-title">
-        <a-table-column title="商品名称" dataIndex="product_name"></a-table-column>
+        <a-table-column title="商品名称" dataIndex="productName"></a-table-column>
         <a-table-column title="商品图片">
           <template #default="{record}">
             <img v-lazy="record.image" width="80" />
           </template>
         </a-table-column>
         <a-table-column title="单价" width="100">
-          <template #default="{ record }">￥{{ record.sales_price }}</template>
+          <template #default="{ record }">￥{{ record.salesPrice }}</template>
         </a-table-column>
         <a-table-column title="增值保障" width="100">
           <template #default="{ record }">
-            <span v-if="Number(record.insurance_fee) > 0">￥{{ record.insurance_fee }}</span>
+            <span v-if="Number(record.insuranceFee) > 0">￥{{ record.insuranceFee }}</span>
             <span v-else>-</span>
           </template>
         </a-table-column>
         <a-table-column title="购买数量" dataIndex="quantity" width="100"></a-table-column>
         <a-table-column title="单品小计">
-          <template #default="{ record }">￥{{ record.refund_amount }}</template>
+          <template #default="{ record }">￥{{ record.refundAmount }}</template>
         </a-table-column>
       </a-table>
     </div>
@@ -63,7 +63,7 @@
       <div class="item-title">售后进度</div>
       <div style="margin-top:15px">
         <a-steps :current="stepCurrent" size="small">
-          <a-step title="申请售后" :description="currentOrder?.created_at" />
+          <a-step title="申请售后" :description="currentOrder?.createdAt" />
           <a-step title="商家审核"
                   :status="currentOrder?.status === 'rejected' ? 'error' : undefined"
                   :description="stepDescription(1)"></a-step>
@@ -73,7 +73,7 @@
         </a-steps>
       </div>
     </div>
-    <div class="item" v-if="!currentOrder?.return_at && currentOrder?.status === 'returning'">
+    <div class="item" v-if="!currentOrder?.returnAt && currentOrder?.status === 'returning'">
       <div class="item-title">选择退货方式</div>
       <div class="return">
         <div class="head"><span>官方退货</span><span>|</span><span>丢损必赔</span><span>|</span><span>免填地址</span>
@@ -114,7 +114,7 @@
       </div>
     </div>
     <template #footer>
-      <a-button v-if="currentOrder?.status === 'returning' && !currentOrder?.return_at"
+      <a-button v-if="currentOrder?.status === 'returning' && !currentOrder?.returnAt"
                 :disabled="returnWay === 'pickup' && !selectedTime"
                 type="primary" @click="handleAfterSaleReturn"
                 >
@@ -155,16 +155,16 @@ const stepDescription = (index) => {
   const o = currentOrder.value
   const status = o?.status
   const done = ['refunded', 'exchanged', 'returned']
-  if (index === 0) return o?.created_at || ''
+  if (index === 0) return o?.createdAt || ''
   if (index === 1) {           // 商家审核
     if (status === 'reviewing') return '审核中'
-    if (status === 'rejected') return o?.rejected_at || '不通过'
-    return o?.review_at || '已完成'
+    if (status === 'rejected') return o?.rejectedAt || '不通过'
+    return o?.reviewAt || '已完成'
   }
   if (index === 2) {           // 买家退货
     if (status === 'rejected') return '—'
     // 买家已提交退货方式（含换货仍停在 returning 的情况）→ 显示提交时间
-    if (o?.return_at) return o.return_at
+    if (o?.returnAt) return o.returnAt
     if (status === 'returning' || status === 'returning_exchange') return '退货中'
     return '已完成'
   }
@@ -213,13 +213,13 @@ defineExpose({exchangeDetailOpen})
 const handleAfterSaleReturn = () => {
   if (!currentOrder.value?.id) return
   submitAfterSaleReturn(currentOrder.value.id, {
-    return_way: returnWay.value,
-    return_time_slot: returnWay.value === 'pickup' ? selectedTime.value : null,
+    returnWay: returnWay.value,
+    returnTimeSlot: returnWay.value === 'pickup' ? selectedTime.value : null,
   })
       .then(res => {
         if (res.data?.success) {
           message.success('退货方式提交成功')
-          loadDetailOrders(currentOrder.value.id)   // 重新拉详情，return_at 有值，整块自动隐藏
+          loadDetailOrders(currentOrder.value.id)   // 重新拉详情，returnAt 有值，整块自动隐藏
         } else {
           message.error(res.data?.message || '提交失败')
         }

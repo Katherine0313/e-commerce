@@ -5,7 +5,7 @@ export function createSandbox() {
   return axios.post('/api/shops/sandbox')
 }
 
-// 获取当前店铺信息
+// 获取当前店铺信息（后台管理端，admin 令牌）
 export function getCurrentShop() {
-  return axios.get('/api/shops/current')
+  return axios.get('/api/admin/shops/current')
 }

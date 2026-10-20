@@ -5,7 +5,7 @@
     </a-input-search>
   </div>
   <a-table :dataSource="stockList" class="title" :row-selection="{}">
-    <a-table-column title="编号" dataIndex="stock_id"></a-table-column>
+    <a-table-column title="编号" dataIndex="stockId"></a-table-column>
     <a-table-column title="商品信息" dataIndex="name"></a-table-column>
     <a-table-column>
       <template #default="{record}">
@@ -23,8 +23,8 @@
     </a-table-column>
     <a-table-column title="预警状态">
       <template #default="{record}">
-        <a-tag :color="isAlertOn(record.alert_enabled) ? 'green' : 'default'">
-          {{ isAlertOn(record.alert_enabled) ? '已开' : '未开'}}</a-tag>
+        <a-tag :color="isAlertOn(record.alertEnabled) ? 'green' : 'default'">
+          {{ isAlertOn(record.alertEnabled) ? '已开' : '未开'}}</a-tag>
       </template>
     </a-table-column>
     <a-table-column title="操作">
@@ -36,14 +36,14 @@
   <a-modal v-model:visible="stockVisible" @ok="submitStockForm">
     <a-form :model="stockForm" ref="stockFormRef" :rules="stockRules">
       <a-form-item label="库存预警">
-        <a-switch v-model:checked="stockForm.alert_enabled" />
+        <a-switch v-model:checked="stockForm.alertEnabled" />
       </a-form-item>
-        <template v-if="stockForm.alert_enabled">
-          <a-form-item label="库存下限" name="min_stock" required>
-            <a-input-number v-model:value="stockForm.min_stock" />
+        <template v-if="stockForm.alertEnabled">
+          <a-form-item label="库存下限" name="minStock" required>
+            <a-input-number v-model:value="stockForm.minStock" />
           </a-form-item>
-          <a-form-item label="库存上限" name="max_stock" required>
-            <a-input-number v-model:value="stockForm.max_stock" />
+          <a-form-item label="库存上限" name="maxStock" required>
+            <a-input-number v-model:value="stockForm.maxStock" />
           </a-form-item>
         </template>
     </a-form>
@@ -74,7 +74,7 @@ const loadStockList = () => {
       .then(res => {
         stockList.value = res.data.data.map(item => ({
           ...item,
-          alert_enabled: item.alert_enabled === 1,
+          alertEnabled: item.alertEnabled === 1,
           // 状态是算出来的，不是接口字段，见 utils/stock.js
           statusKey: stockStatusOf(item),
         }))
@@ -94,23 +94,23 @@ const stockForm = ref()
 const handleStockVisible = (record) => {
   stockVisible.value = true
   stockForm.value = {
-    product_id: record.product_id,
-    alert_enabled: record.alert_enabled,
-    min_stock: record.min_stock,
-    max_stock: record.max_stock,
+    productId: record.productId,
+    alertEnabled: record.alertEnabled,
+    minStock: record.minStock,
+    maxStock: record.maxStock,
   }
 }
 // ================== 校验规则 ==================
 const stockFormRef = ref(null)
-// min/max 校验交给 v-if 控制：alert_enabled=false 时表单项不渲染，规则不参与校验
+// min/max 校验交给 v-if 控制：alertEnabled=false 时表单项不渲染，规则不参与校验
 const stockRules = {
-  min_stock: [{ required: true, message: '请填写库存下限', trigger: 'blur' }],
-  // max_stock 加一条跨字段校验：必须大于 min_stock，否则报错
-  max_stock: [
+  minStock: [{ required: true, message: '请填写库存下限', trigger: 'blur' }],
+  // maxStock 加一条跨字段校验：必须大于 minStock，否则报错
+  maxStock: [
     { required: true, message: '请填写库存上限', trigger: 'blur' },
     {
       validator: (rule, value) => {
-        if (stockForm.value.min_stock != null && value != null && stockForm.value.min_stock >= value) {
+        if (stockForm.value.minStock != null && value != null && stockForm.value.minStock >= value) {
           return Promise.reject('库存下限必须小于上限')
         }
         return Promise.resolve()
@@ -124,10 +124,10 @@ const submitStockForm = () => {
   stockFormRef.value.validate()
       .then(()=>{
         createStock({
-          product_id: stockForm.value.product_id,
-          alert_enabled: stockForm.value.alert_enabled ? 1 : 0,
-          min_stock: stockForm.value.min_stock,
-          max_stock: stockForm.value.max_stock,
+          productId: stockForm.value.productId,
+          alertEnabled: stockForm.value.alertEnabled ? 1 : 0,
+          minStock: stockForm.value.minStock,
+          maxStock: stockForm.value.maxStock,
         })
       })
       .then(() => {
