@@ -68,14 +68,14 @@
       </mini-statistic-card>
     </div>
     <div class="overview grid grid-cols-12 gap-4">
-      <active-users
+      <monthly-sales
         class="col-span-12 xlx:col-span-6 xxlx:col-span-5 drop-shadow-sm"
-        :list="weekDailySales"
-        :stats="weekStats"
-        :summary="weekSummary"
-        :change="weekGrowth.change"
-        :up="weekGrowth.up"
-        :down="weekGrowth.down"
+        :list="monthlySales"
+        :stats="monthStats"
+        :summary="monthSummary"
+        :change="monthSalesGrowth.change"
+        :up="monthSalesGrowth.up"
+        :down="monthSalesGrowth.down"
       />
       <order-stats
         class="col-span-12 xlx:col-span-6 xxlx:col-span-7 drop-shadow-sm"
@@ -106,7 +106,7 @@
   import { computed, onActivated, onMounted } from 'vue';
   import dayjs from 'dayjs';
   import MiniStatisticCard from '@/components/statistic/MiniStatisticCard.vue';
-  import ActiveUsers from './ActiveUsers.vue';
+  import MonthlySales from './MonthlySales.vue';
   import OrderStats from './OrderStats.vue';
   import UserGrowth from './UserGrowth.vue';
   import OrderHistory from './OrderHistory.vue';
@@ -123,10 +123,10 @@
     headline,
     cards,
     todo,
-    weekDailySales,
-    weekGrowth,
-    weekStats,
-    weekSummary,
+    monthlySales,
+    monthSalesGrowth,
+    monthStats,
+    monthSummary,
     monthlySeries,
     monthGrowth,
     orderMonthGrowth,

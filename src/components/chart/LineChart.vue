@@ -14,6 +14,9 @@
     // [{ name: '销售额', data: [['9月', 1234], ...] }, { name: '订单', data: [...] }]
     // 不传时默认 []，组件进入空态，不会报错
     series: { type: Array, default: () => [] },
+    // 是否双轴：两条线量级差异大时用（如销售额+订单量、用户总量+新增）；
+    // 同类量级（如待付款/已付款订单）不设，共用左轴，纵坐标刻度才一致
+    dualAxis: { type: Boolean, default: false },
   });
   const container = ref();
   let chart = null;
@@ -25,7 +28,7 @@
 
   // 提成函数供 init 和 watch 复用同一份配置
   function buildOption() {
-    const multi = props.series.length > 1;
+    const multi = props.dualAxis && props.series.length > 1;
     return {
       color: ['#005af9', '#985af9'],
       grid: [

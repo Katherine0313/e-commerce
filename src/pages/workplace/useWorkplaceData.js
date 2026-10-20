@@ -20,7 +20,6 @@ const COUNTED_EXCLUDE = [6]; // 已取消
 // 待商家处理的售后状态
 const AFTER_SALE_TODO = 'reviewing';
 const RECENT_ORDER_LIMIT = 6; // 订单记录卡取几笔
-const TREND_DAYS = 7; // 柱状图天数
 const TREND_MONTHS = 12; // 折线图月数
 
 // ==================== 纯函数 ====================
@@ -74,22 +73,6 @@ export function growth(current, previous) {
 // 拿不到环比时的占位，模板里直接展开就行
 const NO_GROWTH = Object.freeze({ change: '', up: false, down: false });
 
-/** 近 N 天（含今天）按天分组，无数据的天补 0。返回 [['M/DD', 值], ...]，正是 BarChart 需要的格式 */
-export function groupByDay(list, days, pick) {
-  const keys = [];
-  const bucket = new Map();
-  for (let i = days - 1; i >= 0; i--) {
-    const key = dayjs().subtract(i, 'day').format('YYYY-MM-DD');
-    keys.push(key);
-    bucket.set(key, 0);
-  }
-  list.forEach((o) => {
-    const k = dayKey(o);
-    if (bucket.has(k)) bucket.set(k, bucket.get(k) + (Number(pick(o)) || 0));
-  });
-  return keys.map((k) => [dayjs(k).format('M/DD'), round2(bucket.get(k))]);
-}
-
 /** 近 N 个自然月（含本月）按月分组。返回 [['9月', 值], ...] */
 export function groupByMonth(list, months, pick) {
   const keys = [];
@@ -119,22 +102,11 @@ export function useWorkplaceData() {
   const userGrowth = ref({ months: [], newUsers: [], totalUsers: [] }); // 用户增长（月、新增、累计）
 
   // ---------------- 时间窗口 ----------------
-  // dayOffsetKey(0)=今天；-1 得到明天，作为右开端点，等价于「含今天」
+  // dayOffsetKey(0)=今天
   const dayOffsetKey = (daysAgo) =>
     dayjs().subtract(daysAgo, 'day').format('YYYY-MM-DD');
   const TODAY = dayOffsetKey(0);
-  const TOMORROW = dayOffsetKey(-1);
-  const WEEK_START = dayOffsetKey(TREND_DAYS - 1); // 近 7 天起点
-  const PREV_WEEK_START = dayOffsetKey(TREND_DAYS * 2 - 1);
-  const PREV_WEEK_END = dayOffsetKey(TREND_DAYS);
 
-  // 'YYYY-MM-DD' 是零填充的，字符串比较即时间比较
-  const inRange = (o, startKey, endKeyEx) => {
-    const k = dayKey(o);
-    return !!k && k >= startKey && k < endKeyEx;
-  };
-  const ordersIn = (startKey, endKeyEx) =>
-    orders.value.filter((o) => inRange(o, startKey, endKeyEx));
   const ordersOfDay = (key) => orders.value.filter((o) => dayKey(o) === key);
   const monthPrefix = (offset) => dayjs().subtract(offset, 'month').format('YYYY-MM');
   const ordersOfMonth = (offset) =>
@@ -157,47 +129,61 @@ export function useWorkplaceData() {
     count: ordersOfDay(dayOffsetKey(1)).filter(isCountedOrder).length,
   }));
 
-  // ---------------- 近 7 天（柱状图）----------------
-  const weekOrders = computed(() => ordersIn(WEEK_START, TOMORROW));
-
-  const weekDailySales = computed(() =>
-    groupByDay(weekOrders.value.filter(isPaidOrder), TREND_DAYS, toAmount)
+  // ---------------- 近 12 个月（柱状图）----------------
+  // 近 12 月（含本月）订单
+  const monthOrders = computed(() =>
+    orders.value.filter((o) => {
+      const k = monthKeyOf(o);
+      return !!k && k >= monthPrefix(TREND_MONTHS - 1);
+    })
+  );
+  // 前 12 月（用于环比）
+  const prevMonthOrders = computed(() =>
+    orders.value.filter((o) => {
+      const k = monthKeyOf(o);
+      return (
+        !!k &&
+        k >= monthPrefix(TREND_MONTHS * 2 - 1) &&
+        k < monthPrefix(TREND_MONTHS - 1)
+      );
+    })
   );
 
-  const weekRaw = computed(() => {
-    const sales = sumBy(weekOrders.value.filter(isPaidOrder), toAmount);
-    const count = weekOrders.value.filter(isCountedOrder).length;
+  const monthlySales = computed(() =>
+    groupByMonth(monthOrders.value.filter(isPaidOrder), TREND_MONTHS, toAmount)
+  );
+
+  const monthRaw = computed(() => {
+    const sales = sumBy(monthOrders.value.filter(isPaidOrder), toAmount);
+    const count = monthOrders.value.filter(isCountedOrder).length;
     return { sales, count, perOrder: count ? sales / count : 0 };
   });
 
-  const weekGrowth = computed(
+  const monthSalesGrowth = computed(
     () =>
       growth(
-        weekRaw.value.sales,
-        sumBy(
-          ordersIn(PREV_WEEK_START, PREV_WEEK_END).filter(isPaidOrder),
-          toAmount
-        )
+        monthRaw.value.sales,
+        sumBy(prevMonthOrders.value.filter(isPaidOrder), toAmount)
       ) ?? NO_GROWTH
   );
 
-  const weekStats = computed(() => [
-    { title: '近7天销售额', value: `￥${formatThousand(weekRaw.value.sales, 2)}` },
-    { title: '近7天订单量', value: formatThousand(weekRaw.value.count, 0) },
+  const monthStats = computed(() => [
+    { title: '近12月销售额', value: `￥${formatThousand(monthRaw.value.sales, 2)}` },
+    { title: '近12月订单量', value: formatThousand(monthRaw.value.count, 0) },
     {
-      title: '日均销售额',
-      value: `￥${formatThousand(weekRaw.value.sales / TREND_DAYS, 2)}`,
+      title: '月均销售额',
+      value: `￥${formatThousand(monthRaw.value.sales / TREND_MONTHS, 2)}`,
     },
-    { title: '客单价', value: `￥${formatThousand(weekRaw.value.perOrder, 2)}` },
+    { title: '客单价', value: `￥${formatThousand(monthRaw.value.perOrder, 2)}` },
   ]);
 
-  const weekSummary = computed(() =>
-    weekRaw.value.count
-      ? `近 ${TREND_DAYS} 天共成交 ${weekRaw.value.count} 笔订单，日均销售额 ￥${formatThousand(
-          weekRaw.value.sales / TREND_DAYS,
+  const monthSummary = computed(() =>
+    monthRaw.value.count
+      ? `近 ${TREND_MONTHS} 个月共成交 ${monthRaw.value.count} 笔订单，月均销售额 ￥${formatThousand(
+          monthRaw.value.sales / TREND_MONTHS,
           2
         )}。`
-      : `近 ${TREND_DAYS} 天暂无成交订单。`
+      : `近 ${TREND_MONTHS} 个月暂无成交订单。`
   );
 
   // ---------------- 近 12 个月（折线图）----------------
@@ -348,10 +334,10 @@ export function useWorkplaceData() {
     headline,
     cards,
     todo,
-    weekDailySales,
-    weekGrowth,
-    weekStats,
-    weekSummary,
+    monthlySales,
+    monthSalesGrowth,
+    monthStats,
+    monthSummary,
     monthlySeries,
     monthGrowth,
     orderMonthGrowth,

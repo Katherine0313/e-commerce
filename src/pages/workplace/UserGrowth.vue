@@ -1,7 +1,7 @@
 <template>
   <div class="user-growth card p-lg">
     <OverviewTitle title="用户增长" subtitle="近 12 个月" />
-    <line-chart :series="series" />
+    <line-chart :series="series" dual-axis />
   </div>
 </template>
 <script>
