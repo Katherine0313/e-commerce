@@ -12,6 +12,7 @@
             afterSaleStatus.reasonMap[currentOrder?.reason]
           }}
         </a-descriptions-item>
+        <a-descriptions-item label="货物状态">{{ currentOrder?.goodsStatusDesc || '—' }}</a-descriptions-item>
         <a-descriptions-item label="补充说明" :span="2">{{ currentOrder?.remark }}</a-descriptions-item>
       </a-descriptions>
     </div>
@@ -31,7 +32,7 @@
         <a-descriptions-item label="订单号">{{ currentOrder?.orderNo }}</a-descriptions-item>
         <a-descriptions-item label="支付时间">{{ currentOrder?.payAt }}</a-descriptions-item>
         <a-descriptions-item label="支付方式">{{ currentOrder?.payTypeDesc }}</a-descriptions-item>
-        <a-descriptions-item label="实付总额">￥{{ currentOrder?.payAmount }}</a-descriptions-item>
+        <a-descriptions-item label="退款金额">￥{{ refundTotal.toFixed(2) }}</a-descriptions-item>
       </a-descriptions>
     </div>
     <div class="item">
@@ -96,6 +97,10 @@ const onlyRefundReviewVisible = ref(false)
 const currentOrder = ref()
 // =================== 加载订单详情 ============
 const items = ref([])
+// 退款金额 = 售后明细单品小计之和（单品售后=该商品小计）
+const refundTotal = computed(() =>
+  (items.value || []).reduce((sum, i) => sum + (Number(i.refundAmount) || 0), 0)
+)
 const loadDetailOrders = (id) => {
   getAfterSale(id)
       .then(res => {

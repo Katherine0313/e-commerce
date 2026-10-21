@@ -187,7 +187,7 @@ export function useWorkplaceData() {
   );
 
   // ---------------- 近 12 个月（折线图）----------------
-  // 只统计订单量：待付款（1）与已付款（2/3/4/5），不算营业额
+  // 只统计订单量：待付款（1）、已付款（2/3/4/5）、已取消（6），不算营业额
   const monthlySeries = computed(() => [
     {
       name: '待付款订单',
@@ -196,6 +196,10 @@ export function useWorkplaceData() {
     {
       name: '已付款订单',
       data: groupByMonth(orders.value.filter(isPaidOrder), TREND_MONTHS, () => 1),
+    },
+    {
+      name: '取消订单',
+      data: groupByMonth(orders.value.filter((o) => o.orderStatus === 6), TREND_MONTHS, () => 1),
     },
   ]);
 

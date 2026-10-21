@@ -3,7 +3,7 @@
     class="mini-statistic-card overflow-hidden relative min-h-[112px] bg-container inline-flex items-center justify-between drop-shadow-sm p-md border-border rounded-lg"
   >
     <div class="statistic-main flex-1">
-      <div class="statistic-title text-subtext text-xs">{{ title }}</div>
+      <div class="statistic-title text-subtext text-base">{{ title }}</div>
       <div class="statistic-content flex items-baseline">
         <span class="value text-title text-xxl font-bold">{{ value }}</span>
         <!-- 原来这里写死 '+30%'。改成 prop：不传/空串就不渲染，

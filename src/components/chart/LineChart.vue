@@ -30,7 +30,7 @@
   function buildOption() {
     const multi = props.dualAxis && props.series.length > 1;
     return {
-      color: ['#005af9', '#985af9'],
+      color: ['#005af9', '#985af9', '#f5222d'],
       grid: [
         {
           top: 100,

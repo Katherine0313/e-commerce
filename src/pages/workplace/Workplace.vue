@@ -35,12 +35,11 @@
           :value="headline.orders"
         ></a-statistic>
         <a-statistic
-          class="w-20"
           :valueStyle="{ fontWeight: 500 }"
           title="销售额"
         >
           <template #formatter>
-            <div>
+            <div class="whitespace-nowrap">
               <span class="text-base">￥</span
               >{{ formatThousand(headline.amount, 2) }}
             </div>
@@ -61,7 +60,7 @@
       >
         <template #icon>
           <component
-            :class="`text-[96px] translate-x-[25%] translate-y-[25%] opacity-75 ${item.iconClass}`"
+            :class="`text-[50px] -translate-x-2 -translate-y-2 opacity-75 ${item.iconClass}`"
             v-bind:is="item.icon"
           />
         </template>
