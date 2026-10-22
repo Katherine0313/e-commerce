@@ -10,8 +10,10 @@ let ws = null
 let reconnectTimer = null
 let reconnectCount = 0
 let manuallyClosed = false
-const MAX_RECONNECT = 10
-const RECONNECT_DELAY = 3000
+let heartbeatTimer = null
+let reconnectDelay = 3000
+const MAX_RECONNECT_DELAY = 30000
+const HEARTBEAT_INTERVAL = 25000
 
 // 未读新订单数：WebSocket 收到一条 +1，用户点开顶栏铃铛查看后清零（见 clearUnreadOrders）
 export const unreadOrderCount = ref(0)
@@ -40,30 +42,85 @@ export function connectOrderNotify() {
   // 用局部变量持有本次连接，避免旧连接的 onclose 延迟触发时把新连接的 ws 引用误清
   const socket = new WebSocket(url)
   ws = socket
+  // 握手卡住超过 10 秒就主动关闭重连，避免一直停在 CONNECTING
+  const connectTimer = setTimeout(() => {
+    if (socket.readyState === WebSocket.CONNECTING) {
+      socket.close()
+    }
+  }, 10000)
   socket.onopen = () => {
+    clearTimeout(connectTimer)
+    const wasReconnect = reconnectCount > 0
     reconnectCount = 0
+    reconnectDelay = 3000
+    startHeartbeat()
+    // 重连成功补一次对账：断线期间漏掉的推送不会补弹窗，但工作台统计能立即刷新
+    if (wasReconnect) orderNotifyTick.value += 1
     console.log('来单提醒连接成功')
   }
   socket.onmessage = (event) => handleMessage(event.data)
   socket.onclose = () => {
+    clearTimeout(connectTimer)
+    stopHeartbeat()
     // 只有当前 ws 还是这个 socket 时才清空
     if (ws === socket) {
       ws = null
     }
     clearTimeout(reconnectTimer)
-    // 主动断开或重连次数用尽则不再重连
-    if (manuallyClosed || reconnectCount >= MAX_RECONNECT) return
+    // 主动断开或已登出（token 被清）才停止重连；其余情况一直按退避重连（最长 30s）
+    if (manuallyClosed) return
+    if (!getToken()) {
+      manuallyClosed = true
+      return
+    }
     reconnectCount += 1
-    reconnectTimer = setTimeout(connectOrderNotify, RECONNECT_DELAY)
+    reconnectTimer = setTimeout(connectOrderNotify, reconnectDelay)
+    reconnectDelay = Math.min(reconnectDelay * 2, MAX_RECONNECT_DELAY)
   }
   socket.onerror = () => {
     // onerror 后通常会触发 onclose，交给 onclose 统一处理重连
   }
 }
 
+/** 心跳：定时发 ping，既保持连接活跃，也能尽早发现半开连接 */
+function startHeartbeat() {
+  stopHeartbeat()
+  heartbeatTimer = setInterval(() => {
+    if (ws && ws.readyState === WebSocket.OPEN) {
+      try {
+        ws.send(JSON.stringify({ type: 'ping' }))
+      } catch (e) {
+        // 发送失败交给 onclose 重连
+      }
+    }
+  }, HEARTBEAT_INTERVAL)
+}
+
+function stopHeartbeat() {
+  clearInterval(heartbeatTimer)
+  heartbeatTimer = null
+}
+
+/** 页面回到前台 / 网络恢复时，连接已断就立即重连（定时器在后台标签页会被节流） */
+function reconnectIfClosed() {
+  if (manuallyClosed) return
+  if (!ws || ws.readyState >= 2) {
+    clearTimeout(reconnectTimer)
+    connectOrderNotify()
+  }
+}
+
+if (typeof document !== 'undefined') {
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible') reconnectIfClosed()
+  })
+  window.addEventListener('online', reconnectIfClosed)
+}
+
 /** 断开连接（登出用），不再自动重连 */
 export function disconnectOrderNotify() {
   manuallyClosed = true
+  stopHeartbeat()
   clearTimeout(reconnectTimer)
   if (ws) {
     ws.close()
@@ -90,13 +147,70 @@ function handleMessage(data) {
   orderNotifyTick.value += 1
   // 来单提醒：antd notification 在本框架下渲染不出来，改用纯 DOM 实现右上角通知
   showOrderNotification(msg.orderId)
-  // 语音播报（用户登录后已交互过，能正常出声；失败静默忽略）
+  // 语音播报
+  speakNotice(msg.content)
+}
+
+// ==================== 语音播报 ====================
+let zhVoice = null
+let speechUnlocked = false
+
+/** 缓存中文语音（getVoices 首次可能为空，voiceschanged 后才有） */
+function loadVoices() {
+  if (!window.speechSynthesis) return
+  const voices = window.speechSynthesis.getVoices() || []
+  zhVoice =
+    voices.find((v) => v.lang && v.lang.toLowerCase().startsWith('zh')) ||
+    null
+}
+
+/**
+ * 浏览器自动播放策略：页面刷新后没有用户交互时 speechSynthesis 会被静默拒绝，
+ * 表现就是「弹窗有、没声音」，重新登录（点击过页面）后才恢复。
+ * 首次点击/按键时播一条静音语音预热，把语音引擎解锁。
+ */
+function unlockSpeech() {
+  if (speechUnlocked || !window.speechSynthesis) return
+  speechUnlocked = true
   try {
-    const utterance = new SpeechSynthesisUtterance(msg.content)
-    utterance.lang = 'zh-CN'
-    speechSynthesis.speak(utterance)
+    window.speechSynthesis.resume()
+    const utterance = new SpeechSynthesisUtterance(' ')
+    utterance.volume = 0
+    window.speechSynthesis.speak(utterance)
   } catch (e) {
-    // 忽略语音失败，不影响弹窗
+    // 忽略：浏览器不支持就只保留弹窗
+  }
+}
+
+if (typeof window !== 'undefined' && window.speechSynthesis) {
+  loadVoices()
+  window.speechSynthesis.onvoiceschanged = loadVoices
+  document.addEventListener('pointerdown', unlockSpeech, {
+    passive: true,
+    once: true,
+  })
+  document.addEventListener('keydown', unlockSpeech, { once: true })
+}
+
+/** 语音播报：优先选中文语音，失败静默忽略 */
+function speakNotice(text) {
+  if (!window.speechSynthesis) return
+  try {
+    if (window.speechSynthesis.paused) {
+      window.speechSynthesis.resume()
+    }
+    // 清空上一条，避免多条提醒排队/卡住
+    window.speechSynthesis.cancel()
+    const utterance = new SpeechSynthesisUtterance(text)
+    utterance.lang = 'zh-CN'
+    utterance.volume = 1
+    if (zhVoice) {
+      utterance.voice = zhVoice
+    }
+    // Chrome 在 cancel() 后立刻 speak() 偶尔会吞掉，延迟一点更稳
+    setTimeout(() => window.speechSynthesis.speak(utterance), 60)
+  } catch (e) {
+    console.warn('语音播报失败', e)
   }
 }
 
