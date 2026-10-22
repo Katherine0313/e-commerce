@@ -9,6 +9,7 @@ import { getAllOrders, getOrderStatus } from '@/api/orders.js';
 import { getAfterSales } from '@/api/afterSale.js';
 import { getDashboard } from '@/api/products.js';
 import { getUserStatistics } from '@/api/user.js';
+import { getTurnover, getTurnoverReport } from '@/api/report.js';
 import { loadShop, shop } from '@/utils/shop.js';
 import { formatThousand } from '@/utils/formatter.js';
 
@@ -100,6 +101,10 @@ export function useWorkplaceData() {
   const productStat = ref({ totalProducts: 0, totalStock: 0, totalValue: 0 });
   const afterSaleTodo = ref(0);
   const userGrowth = ref({ months: [], newUsers: [], totalUsers: [] }); // 用户增长（月、新增、累计）
+  // 营业额（后端口径：pay_at 实收 − 退款），维度 yesterday / week / month
+  const turnover = ref({ timeDesc: '', turnover: 0 });
+  const turnoverReport = ref({ dateList: [], turnoverList: [] });
+  const turnoverPeriod = ref('week');
 
   // ---------------- 时间窗口 ----------------
   // dayOffsetKey(0)=今天
@@ -128,63 +133,6 @@ export function useWorkplaceData() {
     amount: sumBy(ordersOfDay(dayOffsetKey(1)).filter(isPaidOrder), toAmount),
     count: ordersOfDay(dayOffsetKey(1)).filter(isCountedOrder).length,
   }));
-
-  // ---------------- 近 12 个月（柱状图）----------------
-  // 近 12 月（含本月）订单
-  const monthOrders = computed(() =>
-    orders.value.filter((o) => {
-      const k = monthKeyOf(o);
-      return !!k && k >= monthPrefix(TREND_MONTHS - 1);
-    })
-  );
-  // 前 12 月（用于环比）
-  const prevMonthOrders = computed(() =>
-    orders.value.filter((o) => {
-      const k = monthKeyOf(o);
-      return (
-        !!k &&
-        k >= monthPrefix(TREND_MONTHS * 2 - 1) &&
-        k < monthPrefix(TREND_MONTHS - 1)
-      );
-    })
-  );
-
-  const monthlySales = computed(() =>
-    groupByMonth(monthOrders.value.filter(isPaidOrder), TREND_MONTHS, toAmount)
-  );
-
-  const monthRaw = computed(() => {
-    const sales = sumBy(monthOrders.value.filter(isPaidOrder), toAmount);
-    const count = monthOrders.value.filter(isCountedOrder).length;
-    return { sales, count, perOrder: count ? sales / count : 0 };
-  });
-
-  const monthSalesGrowth = computed(
-    () =>
-      growth(
-        monthRaw.value.sales,
-        sumBy(prevMonthOrders.value.filter(isPaidOrder), toAmount)
-      ) ?? NO_GROWTH
-  );
-
-  const monthStats = computed(() => [
-    { title: '近12月销售额', value: `￥${formatThousand(monthRaw.value.sales, 2)}` },
-    { title: '近12月订单量', value: formatThousand(monthRaw.value.count, 0) },
-    {
-      title: '月均销售额',
-      value: `￥${formatThousand(monthRaw.value.sales / TREND_MONTHS, 2)}`,
-    },
-    { title: '客单价', value: `￥${formatThousand(monthRaw.value.perOrder, 2)}` },
-  ]);
-
-  const monthSummary = computed(() =>
-    monthRaw.value.count
-      ? `近 ${TREND_MONTHS} 个月共成交 ${monthRaw.value.count} 笔订单，月均销售额 ￥${formatThousand(
-          monthRaw.value.sales / TREND_MONTHS,
-          2
-        )}。`
-      : `近 ${TREND_MONTHS} 个月暂无成交订单。`
-  );
 
   // ---------------- 近 12 个月（折线图）----------------
   // 只统计订单量：待付款（1）、已付款（2/3/4/5）、已取消（6），不算营业额
@@ -284,6 +232,24 @@ export function useWorkplaceData() {
   });
 
   // ---------------- 取数 ----------------
+  /** 营业额：卡片 + 折线。昨日只有一天，不请求折线 */
+  async function loadTurnover(period = turnoverPeriod.value) {
+    turnoverPeriod.value = period;
+    try {
+      const res = await getTurnover(period);
+      turnover.value = res.data.data || { timeDesc: '', turnover: 0 };
+      if (period === 'yesterday') {
+        turnoverReport.value = { dateList: [], turnoverList: [] };
+        return;
+      }
+      const reportRes = await getTurnoverReport(period);
+      turnoverReport.value =
+        reportRes.data.data || { dateList: [], turnoverList: [] };
+    } catch (err) {
+      console.error('营业额数据加载失败', err);
+    }
+  }
+
   /** 静态数据：字典 + 店铺信息。keep-alive 下 onMounted 只跑一次 */
   function loadStatic() {
     getOrderStatus()
@@ -330,6 +296,7 @@ export function useWorkplaceData() {
           userGrowth.value = { months, newUsers, totalUsers };
         })
         .catch((err) => console.error('用户统计加载失败', err)),
+      loadTurnover(turnoverPeriod.value),
     ]);
   }
 
@@ -338,10 +305,9 @@ export function useWorkplaceData() {
     headline,
     cards,
     todo,
-    monthlySales,
-    monthSalesGrowth,
-    monthStats,
-    monthSummary,
+    turnover,
+    turnoverReport,
+    turnoverPeriod,
     monthlySeries,
     monthGrowth,
     orderMonthGrowth,
@@ -349,5 +315,6 @@ export function useWorkplaceData() {
     userGrowth,
     loadStatic,
     loadAll,
+    loadTurnover,
   };
 }

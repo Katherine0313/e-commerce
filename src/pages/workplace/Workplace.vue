@@ -67,14 +67,12 @@
       </mini-statistic-card>
     </div>
     <div class="overview grid grid-cols-12 gap-4">
-      <monthly-sales
+      <turnover-panel
         class="col-span-12 xlx:col-span-6 xxlx:col-span-5 drop-shadow-sm"
-        :list="monthlySales"
-        :stats="monthStats"
-        :summary="monthSummary"
-        :change="monthSalesGrowth.change"
-        :up="monthSalesGrowth.up"
-        :down="monthSalesGrowth.down"
+        :turnover="turnover"
+        :report="turnoverReport"
+        :period="turnoverPeriod"
+        @change-period="loadTurnover"
       />
       <order-stats
         class="col-span-12 xlx:col-span-6 xxlx:col-span-7 drop-shadow-sm"
@@ -105,7 +103,7 @@
   import { computed, onActivated, onMounted } from 'vue';
   import dayjs from 'dayjs';
   import MiniStatisticCard from '@/components/statistic/MiniStatisticCard.vue';
-  import MonthlySales from './MonthlySales.vue';
+  import TurnoverPanel from './TurnoverPanel.vue';
   import OrderStats from './OrderStats.vue';
   import UserGrowth from './UserGrowth.vue';
   import OrderHistory from './OrderHistory.vue';
@@ -122,10 +120,9 @@
     headline,
     cards,
     todo,
-    monthlySales,
-    monthSalesGrowth,
-    monthStats,
-    monthSummary,
+    turnover,
+    turnoverReport,
+    turnoverPeriod,
     monthlySeries,
     monthGrowth,
     orderMonthGrowth,
@@ -133,6 +130,7 @@
     userGrowth,
     loadStatic,
     loadAll,
+    loadTurnover,
   } = useWorkplaceData();
 
   // 字典/店铺信息只拉一次；业务数据每次进入都刷新（首次挂载也会触发 onActivated）
