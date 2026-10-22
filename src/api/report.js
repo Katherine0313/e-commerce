@@ -11,3 +11,8 @@ export function getTurnover(period) {
 export function getTurnoverReport(period) {
   return axios.get('/api/admin/report/turnover-report', { params: { period } })
 }
+
+// 工作台统计卡：今日/昨日营业额与订单量、待发货数
+export function getDashboardStats() {
+  return axios.get('/api/admin/report/dashboard')
+}

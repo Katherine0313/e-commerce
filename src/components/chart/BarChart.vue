@@ -10,9 +10,12 @@
 <script setup>
   import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue';
   import * as echarts from 'echarts';
+  import { formatThousand } from '@/utils/formatter';
   const props = defineProps({
     color: Array,
     list: Array,
+    // 纵轴固定刻度间隔（营业额传 2000）
+    yAxisInterval: { type: Number, default: 0 },
   });
   const container = ref();
   let chart = null;
@@ -20,6 +23,18 @@
   const hasData = computed(
     () => Array.isArray(props.list) && props.list.length > 0
   );
+
+  // 营业额图：以 2000 为基数，按数据量级选 2000 的整数倍，刻度控制在 8 档左右
+  function yAxisInterval() {
+    const step = props.yAxisInterval;
+    if (!step) return undefined;
+    const values = (props.list || [])
+      .map((d) => Number(Array.isArray(d) ? d[1] : d))
+      .filter((v) => Number.isFinite(v));
+    const max = values.length ? Math.max(...values) : 0;
+    if (max <= 0) return step;
+    return Math.max(step, Math.ceil(max / step / 8) * step);
+  }
 
   // 提成函数供 init 和 watch 复用同一份配置
   function buildOption() {
@@ -52,6 +67,8 @@
           left: 56,
           right: 20,
           bottom: 40,
+          // 营业额是 6 位数，按纵轴标签实际宽度自动留白
+          containLabel: true,
         },
       ],
       xAxis: [
@@ -73,9 +90,15 @@
           name: '销售额',
           nameTextStyle: { color: 'rgba(0, 0, 0, 0)' },
           type: 'value',
+          interval: yAxisInterval(),
           axisTick: { show: false },
           axisLine: { show: false },
-          axisLabel: { color: '#fff' },
+          axisLabel: {
+            color: '#fff',
+            // 金额刻度加千分位
+            formatter: (value) =>
+              Number.isInteger(value) ? formatThousand(value) : value,
+          },
           splitLine: {
             lineStyle: {
               type: 'dashed',

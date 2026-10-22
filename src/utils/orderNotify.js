@@ -16,6 +16,9 @@ const RECONNECT_DELAY = 3000
 // 未读新订单数：WebSocket 收到一条 +1，用户点开顶栏铃铛查看后清零（见 clearUnreadOrders）
 export const unreadOrderCount = ref(0)
 
+// 新订单事件计数：工作台等页面 watch 它，收到推送后自动刷新统计，无需手动刷新页面
+export const orderNotifyTick = ref(0)
+
 /** 建立连接（已登录才有 token，没 token 直接返回） */
 export function connectOrderNotify() {
   const token = getToken()
@@ -83,6 +86,8 @@ function handleMessage(data) {
   }
   if (msg.type !== 1) return
   unreadOrderCount.value += 1
+  // 通知监听方（工作台）刷新统计
+  orderNotifyTick.value += 1
   // 来单提醒：antd notification 在本框架下渲染不出来，改用纯 DOM 实现右上角通知
   showOrderNotification(msg.orderId)
   // 语音播报（用户登录后已交互过，能正常出声；失败静默忽略）

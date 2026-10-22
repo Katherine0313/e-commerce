@@ -27,18 +27,19 @@
         formatThousand(turnover.turnover, 2)
       }}</span>
     </div>
-    <!-- 昨日只有一天，画单点没有意义，只展示汇总数字 -->
-    <div
+    <!-- 昨日用「前日 vs 昨日」双柱对比，比单点折线更有信息量 -->
+    <bar-chart
       v-if="period === 'yesterday'"
-      class="h-[200px] flex items-center justify-center"
-    >
-      <a-empty description="昨日仅展示汇总营业额" />
-    </div>
-    <line-chart v-else :series="series" />
+      :color="['#ffffff']"
+      :list="compareList"
+      :y-axis-interval="2000"
+    />
+    <line-chart v-else :series="series" :y-axis-interval="2000" />
   </div>
 </template>
 <script setup>
   import { computed } from 'vue';
+  import BarChart from '@/components/chart/BarChart.vue';
   import LineChart from '@/components/chart/LineChart.vue';
   import OverviewTitle from '@/components/statistic/OverviewTitle.vue';
   import { formatThousand } from '@/utils/formatter';
@@ -67,6 +68,16 @@
   const periodLabel = computed(
     () => PERIODS.find((p) => p.value === props.period)?.label || ''
   );
+
+  // 昨日维度的双柱：report.turnoverList = [前日, 昨日]
+  const compareList = computed(() => {
+    const values = props.report?.turnoverList || [];
+    if (values.length < 2) return [];
+    return [
+      ['前日', Number(values[0]) || 0],
+      ['昨日', Number(values[1]) || 0],
+    ];
+  });
 
   // dateList 是 yyyy-MM-dd，X 轴只显示 MM-dd
   const series = computed(() => [

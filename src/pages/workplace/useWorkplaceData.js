@@ -2,15 +2,16 @@
  * 工作台数据聚合：父组件一次拉取，通过 props 分发给子组件，避免订单数据被重复请求 4 次。
  * 口径常量集中在这里，以后改口径只改这一处。
  */
-import { computed, ref } from 'vue';
+import { computed, ref, watch } from 'vue';
 import dayjs from 'dayjs';
 import { message } from 'ant-design-vue';
 import { getAllOrders, getOrderStatus } from '@/api/orders.js';
 import { getAfterSales } from '@/api/afterSale.js';
 import { getDashboard } from '@/api/products.js';
 import { getUserStatistics } from '@/api/user.js';
-import { getTurnover, getTurnoverReport } from '@/api/report.js';
+import { getDashboardStats, getTurnover, getTurnoverReport } from '@/api/report.js';
 import { loadShop, shop } from '@/utils/shop.js';
+import { orderNotifyTick } from '@/utils/orderNotify.js';
 import { formatThousand } from '@/utils/formatter.js';
 
 // ==================== 口径常量 ====================
@@ -100,19 +101,25 @@ export function useWorkplaceData() {
   const orderStatus = ref({ map: {}, color: {} }); // 订单状态字典
   const productStat = ref({ totalProducts: 0, totalStock: 0, totalValue: 0 });
   const afterSaleTodo = ref(0);
-  const userGrowth = ref({ months: [], newUsers: [], totalUsers: [] }); // 用户增长（月、新增、累计）
+  // 用户增长图表用：totalUsers 是累计新增数组；totalUserCount 是后端返回的真实用户总量
+  const userGrowth = ref({ months: [], newUsers: [], totalUsers: [], totalUserCount: 0 });
   // 营业额（后端口径：pay_at 实收 − 退款），维度 yesterday / week / month
   const turnover = ref({ timeDesc: '', turnover: 0 });
   const turnoverReport = ref({ dateList: [], turnoverList: [] });
   const turnoverPeriod = ref('week');
+  // 工作台四张统计卡（order-service /api/admin/report/dashboard）
+  const dashboardStats = ref({
+    todayTurnover: 0,
+    yesterdayTurnover: 0,
+    todayOrders: 0,
+    yesterdayOrders: 0,
+    pendingShip: 0,
+  });
 
   // ---------------- 时间窗口 ----------------
   // dayOffsetKey(0)=今天
   const dayOffsetKey = (daysAgo) =>
     dayjs().subtract(daysAgo, 'day').format('YYYY-MM-DD');
-  const TODAY = dayOffsetKey(0);
-
-  const ordersOfDay = (key) => orders.value.filter((o) => dayKey(o) === key);
   const monthPrefix = (offset) => dayjs().subtract(offset, 'month').format('YYYY-MM');
   const ordersOfMonth = (offset) =>
     orders.value.filter((o) => monthKeyOf(o) === monthPrefix(offset));
@@ -122,16 +129,6 @@ export function useWorkplaceData() {
     products: Number(productStat.value.totalProducts) || 0,
     orders: orders.value.filter(isCountedOrder).length,
     amount: sumBy(orders.value.filter(isPaidOrder), toAmount),
-  }));
-
-  // ---------------- 今日 / 昨日 ----------------
-  const todayStat = computed(() => ({
-    amount: sumBy(ordersOfDay(TODAY).filter(isPaidOrder), toAmount),
-    count: ordersOfDay(TODAY).filter(isCountedOrder).length,
-  }));
-  const yesterdayStat = computed(() => ({
-    amount: sumBy(ordersOfDay(dayOffsetKey(1)).filter(isPaidOrder), toAmount),
-    count: ordersOfDay(dayOffsetKey(1)).filter(isCountedOrder).length,
   }));
 
   // ---------------- 近 12 个月（折线图）----------------
@@ -195,36 +192,33 @@ export function useWorkplaceData() {
     afterSale: afterSaleTodo.value,
   }));
 
-  // ---------------- 四张统计卡 ----------------
+  // ---------------- 四张统计卡（数据全部来自后端）----------------
   const cards = computed(() => {
-    // 待发货 / 库存预警是「当前快照」不是流量指标，算不出有意义的环比 → 不传 change
+    const d = dashboardStats.value;
     return [
       {
         title: '今日销售额',
-        value: `￥${formatThousand(todayStat.value.amount, 2)}`,
-        ...(growth(todayStat.value.amount, yesterdayStat.value.amount) || {}),
+        value: `￥${formatThousand(d.todayTurnover, 2)}`,
+        ...(growth(d.todayTurnover, d.yesterdayTurnover) || {}),
         icon: 'dollar-circle-filled',
         iconClass: 'text-blue-100',
       },
       {
         title: '今日订单量',
-        value: formatThousand(todayStat.value.count, 0),
-        ...(growth(todayStat.value.count, yesterdayStat.value.count) || {}),
+        value: formatThousand(d.todayOrders, 0),
+        ...(growth(d.todayOrders, d.yesterdayOrders) || {}),
         icon: 'shopping-filled',
         iconClass: 'text-green-100',
       },
       {
         title: '待发货订单',
-        value: formatThousand(todo.value.pendingShip, 0),
+        value: formatThousand(d.pendingShip, 0),
         icon: 'carry-out-filled',
         iconClass: 'text-purple-100',
       },
       {
         title: '用户总量',
-        value: formatThousand(
-          userGrowth.value.totalUsers[userGrowth.value.totalUsers.length - 1] || 0,
-          0
-        ),
+        value: formatThousand(userGrowth.value.totalUserCount, 0),
         icon: 'team-outlined',
         iconClass: 'text-primary-100',
       },
@@ -232,14 +226,26 @@ export function useWorkplaceData() {
   });
 
   // ---------------- 取数 ----------------
-  /** 营业额：卡片 + 折线。昨日只有一天，不请求折线 */
+  /** 营业额：卡片 + 图表。昨日用「前日 vs 昨日」双柱对比，复用近7天报表 */
   async function loadTurnover(period = turnoverPeriod.value) {
     turnoverPeriod.value = period;
     try {
       const res = await getTurnover(period);
       turnover.value = res.data.data || { timeDesc: '', turnover: 0 };
       if (period === 'yesterday') {
-        turnoverReport.value = { dateList: [], turnoverList: [] };
+        // 近7天报表含今天；前日/昨日按日期取，不依赖数组位置
+        const reportRes = await getTurnoverReport('week');
+        const data = reportRes.data.data || { dateList: [], turnoverList: [] };
+        const beforeKey = dayOffsetKey(2);
+        const yesterdayKey = dayOffsetKey(1);
+        const pick = (key) => {
+          const i = (data.dateList || []).indexOf(key);
+          return i >= 0 ? Number(data.turnoverList[i]) || 0 : 0;
+        };
+        turnoverReport.value = {
+          dateList: [beforeKey, yesterdayKey],
+          turnoverList: [pick(beforeKey), pick(yesterdayKey)],
+        };
         return;
       }
       const reportRes = await getTurnoverReport(period);
@@ -249,6 +255,22 @@ export function useWorkplaceData() {
       console.error('营业额数据加载失败', err);
     }
   }
+
+  /** 只刷新统计卡（来单事件触发，避免全量拉订单） */
+  async function refreshDashboardStats() {
+    try {
+      const res = await getDashboardStats();
+      dashboardStats.value = res.data.data || dashboardStats.value;
+    } catch (err) {
+      console.error('工作台统计加载失败', err);
+    }
+  }
+
+  /** 来单 WebSocket 推送后自动刷新统计卡 + 当前营业额，无需手动刷新页面 */
+  watch(orderNotifyTick, () => {
+    refreshDashboardStats();
+    loadTurnover(turnoverPeriod.value);
+  });
 
   /** 静态数据：字典 + 店铺信息。keep-alive 下 onMounted 只跑一次 */
   function loadStatic() {
@@ -290,12 +312,18 @@ export function useWorkplaceData() {
           const data = res.data.data || {};
           const months = data.months || [];
           const newUsers = data.newUsers || [];
-          // 用户总量 = 累计新增
+          // 图表用累计新增；卡片用后端返回的真实总量
           let acc = 0;
           const totalUsers = newUsers.map((n) => (acc += Number(n) || 0));
-          userGrowth.value = { months, newUsers, totalUsers };
+          userGrowth.value = {
+            months,
+            newUsers,
+            totalUsers,
+            totalUserCount: Number(data.totalUsers) || 0,
+          };
         })
         .catch((err) => console.error('用户统计加载失败', err)),
+      refreshDashboardStats(),
       loadTurnover(turnoverPeriod.value),
     ]);
   }
@@ -313,6 +341,7 @@ export function useWorkplaceData() {
     orderMonthGrowth,
     recentOrders,
     userGrowth,
+    dashboardStats,
     loadStatic,
     loadAll,
     loadTurnover,
