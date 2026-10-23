@@ -78,10 +78,9 @@
   </div>
 </template>
 <script setup>
-import {ref, createVNode} from 'vue'
+import {ref} from 'vue'
 import {getDetailOrders, confirmOrder, cancelOrder, updateOrder} from '@/api/orders.js'
-import {message, Modal} from 'ant-design-vue'
-import {ExclamationCircleOutlined} from '@ant-design/icons-vue'
+import {message} from 'ant-design-vue'
 import {isAdmin} from '@/utils/auth.js'
 
 defineProps({

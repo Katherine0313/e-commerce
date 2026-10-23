@@ -11,7 +11,7 @@
             afterSaleStatus.reasonMap[currentOrder?.reason]
           }}
         </a-descriptions-item>
-        <a-descriptions-item label="货物状态">{{ currentOrder?.goodsStatusDesc || '—' }}</a-descriptions-item>
+        <a-descriptions-item label="货物状态" :span="2">{{ currentOrder?.goodsStatusDesc || '—' }}</a-descriptions-item>
         <a-descriptions-item label="补充说明" :span="2">{{ currentOrder?.remark }}</a-descriptions-item>
       </a-descriptions>
     </div>

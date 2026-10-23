@@ -12,7 +12,7 @@
             afterSaleStatus.reasonMap[currentOrder?.reason]
           }}
         </a-descriptions-item>
-        <a-descriptions-item label="货物状态">{{ currentOrder?.goodsStatusDesc || '—' }}</a-descriptions-item>
+        <a-descriptions-item label="货物状态" :span="2">{{ currentOrder?.goodsStatusDesc || '—' }}</a-descriptions-item>
         <a-descriptions-item label="补充说明" :span="2">{{ currentOrder?.remark }}</a-descriptions-item>
       </a-descriptions>
     </div>
@@ -78,7 +78,7 @@
       <a-form-item label="售后审核" name="result">
         <a-select v-model:value="confirmForm.result" placeholder="请选择审核结果" style="width:200px">
           <a-select-option value="approve">审核通过</a-select-option>
-          <a-select-option value="refund">确认退款</a-select-option>
+          <a-select-option value="refund">同意退款</a-select-option>
           <a-select-option value="refunded">已退款</a-select-option>
           <a-select-option value="reject">拒绝售后</a-select-option>
         </a-select>
