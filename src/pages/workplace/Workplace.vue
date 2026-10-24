@@ -66,33 +66,49 @@
         </template>
       </mini-statistic-card>
     </div>
+    <!-- 统一下方所有报表的时间维度：营业额、订单统计、用户增长、销量排名 -->
+    <div class="report-toolbar flex items-center justify-end">
+      <a-radio-group
+        :value="reportPeriod"
+        button-style="solid"
+        size="small"
+        @change="(e) => setReportPeriod(e.target.value)"
+      >
+        <a-radio-button
+          v-for="item in PERIODS"
+          :key="item.value"
+          :value="item.value"
+        >
+          {{ item.label }}
+        </a-radio-button>
+      </a-radio-group>
+    </div>
     <div class="overview grid grid-cols-12 gap-4">
       <turnover-panel
         class="col-span-12 xlx:col-span-6 xxlx:col-span-5 drop-shadow-sm"
         :turnover="turnover"
         :report="turnoverReport"
-        :period="turnoverPeriod"
-        @change-period="loadTurnover"
+        :period="reportPeriod"
       />
       <order-stats
         class="col-span-12 xlx:col-span-6 xxlx:col-span-7 drop-shadow-sm"
-        :series="monthlySeries"
-        :change="monthGrowth.change"
-        :up="monthGrowth.up"
-        :down="monthGrowth.down"
+        :series="orderStatsSeries"
+        :period="reportPeriod"
+        :change="orderPeriodGrowth.change"
+        :up="orderPeriodGrowth.up"
+        :down="orderPeriodGrowth.down"
       />
     </div>
     <div class="project-list grid grid-cols-12 gap-4">
       <user-growth
         class="col-span-12 xlx:col-span-7 xxlx:col-span-8 drop-shadow-sm"
         :data="userGrowth"
+        :period="reportPeriod"
       />
-      <order-history
+      <sales-ranking
         class="col-span-12 xlx:col-span-5 xxlx:col-span-4 drop-shadow-sm"
-        :list="recentOrders"
-        :change="orderMonthGrowth.change"
-        :up="orderMonthGrowth.up"
-        :down="orderMonthGrowth.down"
+        :list="salesRanking"
+        :period="reportPeriod"
       />
     </div>
     <about-us :shop-info="shopInfo" :todo="todo" />
@@ -106,12 +122,12 @@
   import TurnoverPanel from './TurnoverPanel.vue';
   import OrderStats from './OrderStats.vue';
   import UserGrowth from './UserGrowth.vue';
-  import OrderHistory from './OrderHistory.vue';
+  import SalesRanking from './SalesRanking.vue';
   import AboutUs from './AboutUs.vue';
   import { useUnbounded } from '@/utils/useTheme';
   import { formatThousand } from '@/utils/formatter';
   import { getCurrentUser, isAdmin } from '@/utils/auth';
-  import { useWorkplaceData } from './useWorkplaceData';
+  import { PERIODS, useWorkplaceData } from './useWorkplaceData';
 
   useUnbounded();
 
@@ -122,15 +138,14 @@
     todo,
     turnover,
     turnoverReport,
-    turnoverPeriod,
-    monthlySeries,
-    monthGrowth,
-    orderMonthGrowth,
-    recentOrders,
+    reportPeriod,
+    orderStatsSeries,
+    orderPeriodGrowth,
+    salesRanking,
     userGrowth,
     loadStatic,
     loadAll,
-    loadTurnover,
+    setReportPeriod,
   } = useWorkplaceData();
 
   // 字典/店铺信息只拉一次；业务数据每次进入都刷新（首次挂载也会触发 onActivated）

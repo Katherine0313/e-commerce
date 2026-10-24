@@ -12,6 +12,11 @@ export function getTurnoverReport(period) {
   return axios.get('/api/admin/report/turnover-report', { params: { period } })
 }
 
+// 销量排名：period = yesterday | week | month，返回前 limit 名
+export function getSalesRanking(period, limit = 8) {
+  return axios.get('/api/admin/report/sales-ranking', { params: { period, limit } })
+}
+
 // 工作台统计卡：今日/昨日营业额与订单量、待发货数
 export function getDashboardStats() {
   return axios.get('/api/admin/report/dashboard')
