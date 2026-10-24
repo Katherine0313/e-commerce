@@ -67,11 +67,11 @@
       </mini-statistic-card>
     </div>
     <!-- 统一下方所有报表的时间维度：营业额、订单统计、用户增长、销量排名 -->
-    <div class="report-toolbar flex items-center justify-end">
+    <div class="report-toolbar flex items-center justify-center">
       <a-radio-group
+        class="period-selector"
         :value="reportPeriod"
         button-style="solid"
-        size="small"
         @change="(e) => setReportPeriod(e.target.value)"
       >
         <a-radio-button
@@ -180,5 +180,14 @@
 
 <style scoped lang="less">
   .workplace {
+    // 时间维度选择器：水平居中 + 按原 small 尺寸放大一倍
+    .report-toolbar {
+      :deep(.period-selector .ant-radio-button-wrapper) {
+        height: 40px;
+        line-height: 40px;
+        padding: 0 14px;
+        font-size: 20px;
+      }
+    }
   }
 </style>

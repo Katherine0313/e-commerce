@@ -21,11 +21,6 @@
         </div>
         <router-link to="/goods/list">查看店铺商品 ></router-link>
       </div>
-      <img
-        class="rounded-lg"
-        style="width: 200px"
-        src="@/assets/image/step.jpg"
-      />
     </div>
     <div
       style="min-height: 232px"
