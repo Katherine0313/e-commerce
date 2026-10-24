@@ -667,7 +667,7 @@ const handlePay = async () => {
 .btn-cart { /* 加入购物车：白底橙色描边胶囊 */
   flex: 1;
   height: 40px;
-  align-item:center;
+  align-items: center;
   border-radius: 999px;
   font-size: 17px;
   font-weight: 600;
@@ -687,7 +687,7 @@ const handlePay = async () => {
 .btn-buy { /* 立即购买：红橙渐变胶囊 */
   flex: 1;
   height: 40px;
-  align-item:center;
+  align-items: center;
   border-radius: 999px;
   font-size: 17px;
   font-weight: 600;
