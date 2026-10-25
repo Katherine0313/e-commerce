@@ -3,7 +3,7 @@
   import { useRouter } from 'vue-router';
   import { StepinHeaderAction } from 'stepin';
   import DayNightSwitch from '@/components/switch/DayNightSwitch.vue';
-  import { BellOutlined } from '@ant-design/icons-vue';
+  import { BellOutlined, GithubOutlined } from '@ant-design/icons-vue';
   import { unreadOrderCount, clearUnreadOrders } from '@/utils/orderNotify';
   import Fullscreen from '../fullscreen/Fullscreen.vue';
 
@@ -23,13 +23,15 @@
   <StepinHeaderAction class="header-action-daynight">
     <DayNightSwitch />
   </StepinHeaderAction>
-  <StepinHeaderAction class="header-action-gitee">
+  <!-- GitHub 入口，仓库地址待补充 -->
+  <StepinHeaderAction class="header-action-github">
     <a
       class="action-item"
       href="#"
       target="_blank"
+      rel="noopener"
     >
-      <img class="gitee-logo" src="@/assets/gitee.svg" />
+      <GithubOutlined />
     </a>
   </StepinHeaderAction>
   <StepinHeaderAction class="header-action-setting">
@@ -52,9 +54,6 @@
   </StepinHeaderAction>
 </template>
 <style scoped lang="less">
-  .gitee-logo {
-    width: 20px;
-  }
   .action-item {
     font-size: 20px;
     height: 100%;
@@ -69,8 +68,13 @@
     }
 
     &.notice {
-      font-size: 18px;
       cursor: pointer;
+
+      /* a-badge 自带 font-size:14px，必须穿透覆盖内部图标才会生效 */
+      :deep(.anticon) {
+        font-size: 24px;
+        line-height: 1;
+      }
     }
   }
 </style>
