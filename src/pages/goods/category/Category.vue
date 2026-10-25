@@ -1,6 +1,14 @@
 <template>
   <a-table :data-source="categoryData" row-key="id" class="category-table">
-    <a-table-column title="商品分类" dataIndex="name"></a-table-column>
+    <a-table-column title="商品分类" dataIndex="name">
+      <template #default="{ record }">
+        <div class="category-name-cell">
+          <span>{{ record.name }}</span>
+          <img v-if="record.image" :src="imageUrl(record.image)"
+               class="category-image" alt="分类图片"/>
+        </div>
+      </template>
+    </a-table-column>
     <a-table-column title="排序">
       <template #default="{ record }">
         <span class="sort-order">{{ isParentCategory(record) ? record.sort : '' }}</span>
@@ -77,6 +85,11 @@ const loadCategoryTree = () => {
         console.log(err)
       })
 }
+// 图片相对路径补接口域名：开发环境前后端不同源，生产为空走同源相对路径
+const imageUrl = (path) => {
+  if (!path) return ''
+  return /^https?:\/\//.test(path) ? path : (import.meta.env.VITE_API_BASE_URL || '') + path
+}
 // 一级分类蓝色箭头，二级分类绿色箭头
 // 判断是否是一级分类（后端只在根节点挂 children）
 const isParentCategory = (record) => Array.isArray(record.children)
@@ -147,6 +160,20 @@ const handleDeleteCategory = (record) => {
 </script>
 
 <style scoped>
+/* 名称和分类图片同格展示，图片紧跟名称 */
+.category-name-cell {
+  display: inline-flex;
+  gap: 10px;
+}
+
+.category-image {
+  width: 40px;
+  height: 40px;
+  object-fit: cover;
+  border-radius: 4px;
+  border: 1px solid #f0f0f0;
+}
+
 .sort-order {
   display: inline-block;
   min-width: 24px;
