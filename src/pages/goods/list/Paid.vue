@@ -499,6 +499,41 @@ defineExpose({paidVisibleOpen})
   box-shadow: 0 6px 20px rgba(255, 78, 42, .4);
   color: #fff;
 }
+
+/* ── 响应式：笔记本双栏可换行，手机单列 ── */
+@media (max-width: 1200px) {
+  .pay-body {
+    flex-wrap: wrap;
+  }
+  .pay-left {
+    flex: 1 1 420px;
+  }
+  .pay-right {
+    flex: 1 1 260px;
+  }
+}
+
+@media (max-width: 767px) {
+  .pay-body {
+    display: block;
+  }
+  .pay-right {
+    margin-top: 16px;
+  }
+  .pay-footer {
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+  .footer-btns {
+    width: 100%;
+  }
+  .goods-item {
+    flex-wrap: wrap;
+  }
+  .goods-sub {
+    margin-left: auto;
+  }
+}
 </style>
 
 <style>

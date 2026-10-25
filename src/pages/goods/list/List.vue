@@ -248,7 +248,12 @@ const listingStatusChange = (record, checked) => {
 .title{
 
   border-radius: 15px;
-  overflow: hidden; /* ✅关键：把内部超出外层圆角的内容裁剪掉 */
+  /* 不能再用 overflow:hidden：表格需要横向滚动，裁剪会挡住滚动区 */
+  overflow: visible;
+}
+.title :deep(.ant-table-container){
+  border-radius: 15px;
+  overflow: hidden;
 }
 /*行元素*/
 .title :deep(.ant-table-tbody >tr > td){
@@ -272,5 +277,11 @@ const listingStatusChange = (record, checked) => {
   max-width: 700px !important;
   max-height: calc(100vh - 120px) !important;
   object-fit: contain;
+}
+/* 手机：700px 会超出屏幕，按视口收窄 */
+@media (max-width: 767px) {
+  .ant-image-preview-img {
+    max-width: calc(100vw - 24px) !important;
+  }
 }
 </style>

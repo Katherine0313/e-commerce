@@ -31,7 +31,7 @@
         </a-radio-group>
       </div>
     </div>
-    <div class="mt-24 flex justify-evenly">
+    <div class="personal-cols mt-24 flex justify-evenly">
       <PlatformSetting class="flex-1" />
       <ProfileInfo class="flex-1 ml-lg" />
       <Conversation class="flex-1 ml-lg" />
@@ -62,6 +62,41 @@
         & > span:last-child .ant-breadcrumb-link {
           @apply text-text-inverse;
         }
+      }
+    }
+
+    // 笔记本：三栏按可用宽度自动换行
+    @media (max-width: 1200px) {
+      .personal-cols {
+        flex-wrap: wrap;
+        gap: 16px;
+      }
+      .personal-cols > * {
+        flex: 1 1 240px;
+        min-width: 0;
+        margin-left: 0 !important;
+      }
+    }
+
+    // 手机：Banner 高度自适应，个人信息条改为普通文档流，三栏纵向堆叠
+    @media (max-width: 767px) {
+      .banner {
+        height: auto;
+        min-height: 140px;
+        padding-bottom: 16px;
+      }
+      .banner .profile {
+        position: static;
+        width: 100%;
+        margin-top: 16px;
+        flex-wrap: wrap;
+        gap: 12px;
+      }
+      .personal-cols {
+        margin-top: 16px !important;
+      }
+      .personal-cols > * {
+        flex: 1 1 100%;
       }
     }
   }

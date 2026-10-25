@@ -1,10 +1,10 @@
 <template>
-  <div style="height: 240px" class="bar-chart">
+  <div class="bar-chart">
     <!-- list 是异步来的：数据没到之前不 init，否则会留下「有坐标轴、没有柱子」的空图表 -->
     <div v-if="!hasData" class="h-full flex items-center justify-center">
       <a-empty description="暂无数据" />
     </div>
-    <div v-else ref="container" style="height: 240px"></div>
+    <div v-else ref="container" class="bar-chart-canvas"></div>
   </div>
 </template>
 <script setup>
@@ -19,6 +19,8 @@
   });
   const container = ref();
   let chart = null;
+  // 容器尺寸变化（折叠侧栏/断点高度）时自动重绘
+  let resizeObserver = null;
   // 有数据才建图，空数据走空态
   const hasData = computed(
     () => Array.isArray(props.list) && props.list.length > 0
@@ -132,6 +134,8 @@
   }
   function dispose() {
     window.removeEventListener('resize', resize);
+    resizeObserver?.disconnect();
+    resizeObserver = null;
     // 原来漏了 dispose，keep-alive 关标签页后会泄漏 canvas
     chart?.dispose();
     chart = null;
@@ -143,6 +147,10 @@
     chart = echarts.init(container.value);
     render();
     window.addEventListener('resize', resize);
+    if (typeof ResizeObserver !== 'undefined') {
+      resizeObserver = new ResizeObserver(() => chart?.resize());
+      resizeObserver.observe(container.value);
+    }
   }
 
   onMounted(() => {
@@ -157,8 +165,24 @@
 </script>
 <style scoped lang="less">
   .bar-chart {
+    width: 100%;
+    height: 240px;
+
+    // canvas 跟随容器，断点只改外层高度
+    .bar-chart-canvas {
+      width: 100%;
+      height: 100%;
+    }
+
     :deep(canvas) {
       @apply rounded-lg;
+    }
+
+    @media (max-width: 1200px) {
+      height: 220px;
+    }
+    @media (max-width: 767px) {
+      height: 200px;
     }
   }
 </style>

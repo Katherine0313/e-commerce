@@ -2,7 +2,7 @@
   <a-modal v-model:visible="onlyRefundDetailVisible" title="售后详情" width="min(900px, 92vw)" class="detail">
     <div class="item">
       <div class="item-title">售后信息</div>
-      <a-descriptions bordered :column="2" :label-style="{ width: '160px' }">
+      <a-descriptions bordered :column="isMobile ? 1 : 2" :label-style="isMobile ? {} : { width: '160px' }">
         <a-descriptions-item label="售后单号">{{ currentOrder?.afterSaleNo }}</a-descriptions-item>
         <a-descriptions-item label="申请时间">{{ currentOrder?.createdAt }}</a-descriptions-item>
         <a-descriptions-item label="售后类型"> {{ afterSaleStatus.typeMap[currentOrder?.afterSaleType] }}
@@ -17,7 +17,7 @@
     </div>
     <div class="item">
       <div class="item-title">用户信息</div>
-      <a-descriptions bordered :column="2" :label-style="{ width: '160px' }">
+      <a-descriptions bordered :column="isMobile ? 1 : 2" :label-style="isMobile ? {} : { width: '160px' }">
         <a-descriptions-item label="收货人">{{ currentOrder?.consignee }}</a-descriptions-item>
         <a-descriptions-item label="手机号码">{{ currentOrder?.phone }}</a-descriptions-item>
         <a-descriptions-item label="收货地址" :span="2">
@@ -27,7 +27,7 @@
     </div>
     <div class="item">
       <div class="item-title">订单信息</div>
-      <a-descriptions bordered :column="2" :label-style="{ width: '160px' }">
+      <a-descriptions bordered :column="isMobile ? 1 : 2" :label-style="isMobile ? {} : { width: '160px' }">
         <a-descriptions-item label="订单号">{{ currentOrder?.orderNo }}</a-descriptions-item>
         <a-descriptions-item label="支付时间">{{ currentOrder?.payAt }}</a-descriptions-item>
         <a-descriptions-item label="支付方式">{{ currentOrder?.payTypeDesc }}</a-descriptions-item>
@@ -77,7 +77,10 @@
 <script setup>
 import {ref, computed} from "vue";
 import {getAfterSale} from '@/api/afterSale.js'
+import {useIsMobile} from '@/composables/useMediaQuery'
 
+// 手机端描述列表改单列，避免 160px 标签把内容挤没
+const isMobile = useIsMobile()
 const onlyRefundDetailVisible = ref(false)
 const currentOrder = ref()
 // 根据售后状态，算进度条走到第几步

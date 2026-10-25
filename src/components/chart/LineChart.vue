@@ -1,16 +1,17 @@
 <template>
-  <div style="width: 100%; height: 400px" class="line-chart">
+  <div class="line-chart">
     <!-- series 是异步来的：没数据不 init，避免空坐标系 -->
     <div v-if="!hasData" class="h-full flex items-center justify-center">
       <a-empty description="暂无数据" />
     </div>
-    <div v-else ref="container" style="width: 100%; height: 400px"></div>
+    <div v-else ref="container" class="line-chart-canvas"></div>
   </div>
 </template>
 <script setup>
   import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue';
   import * as echarts from 'echarts';
   import { formatThousand } from '@/utils/formatter';
+  import { useIsMobile } from '@/composables/useMediaQuery';
   const props = defineProps({
     // [{ name: '销售额', data: [['9月', 1234], ...] }, { name: '订单', data: [...] }]
     // 不传时默认 []，组件进入空态，不会报错
@@ -20,9 +21,14 @@
     dualAxis: { type: Boolean, default: false },
     // 纵轴固定刻度间隔（营业额传 2000，即 0/2000/4000...）
     yAxisInterval: { type: Number, default: 0 },
+    // 双轴时是否显示右侧刻度数字：隐藏后仍各自缩放，只是不显示右侧坐标文字
+    showRightAxisLabel: { type: Boolean, default: true },
   });
   const container = ref();
+  const isMobile = useIsMobile();
   let chart = null;
+  // 监听容器尺寸（折叠侧栏、切 tab、CSS 断点高度变化都不会触发 window.resize）
+  let resizeObserver = null;
   const hasData = computed(
     () =>
       Array.isArray(props.series) &&
@@ -50,11 +56,12 @@
       color: ['#005af9', '#985af9', '#f5222d'],
       grid: [
         {
-          top: 100,
+          // 手机端图例移到底部，顶部不再需要留 100px
+          top: isMobile.value ? 24 : 100,
           left: 32,
           // 右侧多留一点，避免最后一个日期标签被画布边缘裁掉
           right: 24,
-          bottom: 20,
+          bottom: isMobile.value ? 44 : 20,
           // 营业额是 6 位数，32px 放不下纵轴标签，交给 ECharts 按标签宽度自动留白
           containLabel: true,
         },
@@ -112,6 +119,8 @@
                 axisTick: { show: false },
                 axisLine: { show: false },
                 axisLabel: {
+                  // 关闭时不画右侧刻度文字，坐标轴本身仍参与缩放
+                  show: props.showRightAxisLabel,
                   formatter: (value) =>
                     Number.isInteger(value) ? formatThousand(value) : value,
                 },
@@ -120,12 +129,10 @@
             ]
           : []),
       ],
-      legend: {
-        show: true,
-        right: '8',
-        top: 0,
-        orient: 'vertical',
-      },
+      // 窄屏时右侧竖排图例会挤占绘图区，改成底部横排
+      legend: isMobile.value
+        ? { show: true, bottom: 0, left: 'center', orient: 'horizontal', itemGap: 12 }
+        : { show: true, right: '8', top: 0, orient: 'vertical' },
       tooltip: {
         show: true,
         trigger: 'axis',
@@ -154,6 +161,8 @@
   }
   function dispose() {
     window.removeEventListener('resize', resize);
+    resizeObserver?.disconnect();
+    resizeObserver = null;
     // 原来漏了 dispose，keep-alive 关标签页后会泄漏 canvas
     chart?.dispose();
     chart = null;
@@ -165,6 +174,10 @@
     chart = echarts.init(container.value);
     render();
     window.addEventListener('resize', resize);
+    if (typeof ResizeObserver !== 'undefined') {
+      resizeObserver = new ResizeObserver(() => chart?.resize());
+      resizeObserver.observe(container.value);
+    }
   }
 
   onMounted(() => {
@@ -174,6 +187,30 @@
   watch(hasData, (v) => (v ? init() : dispose()));
   // 长度不变只是数值变化时 hasData 不变，必须单独监听 series 重绘
   watch(() => props.series, render, { deep: true });
+  // 跨断点时图例方向不同，需要按新配置重绘
+  watch(isMobile, () => {
+    render();
+    resize();
+  });
   // keep-alive 下只有真正关闭标签页才触发，正好是释放图表的时机
   onBeforeUnmount(dispose);
 </script>
+<style scoped lang="less">
+  .line-chart {
+    width: 100%;
+    height: 400px;
+
+    // canvas 跟随容器，断点只改外层高度
+    .line-chart-canvas {
+      width: 100%;
+      height: 100%;
+    }
+
+    @media (max-width: 1200px) {
+      height: 340px;
+    }
+    @media (max-width: 767px) {
+      height: 260px;
+    }
+  }
+</style>

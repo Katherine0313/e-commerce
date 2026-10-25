@@ -56,5 +56,19 @@
     .front-content {
       min-height: calc(100vh - 78px);
     }
+
+    // 手机：减小 32px 的页面留白，右侧按钮允许换行
+    @media (max-width: 767px) {
+      .front-header {
+        flex-wrap: wrap;
+        gap: 8px;
+        padding: 12px;
+      }
+      .front-content {
+        padding-left: 12px;
+        padding-right: 12px;
+        min-height: calc(100dvh - 78px);
+      }
+    }
   }
 </style>

@@ -3,7 +3,7 @@
     <a-form
         :model="form"
         :wrapperCol="{ span: 24 }"
-        class="login-form w-[400px] p-lg xl:w-[440px] xl:p-xl"
+        class="login-form w-full max-w-[400px] p-lg xl:max-w-[440px] xl:p-xl"
     >
       <div class="third-platform">
         <div class="third-title">第三方登录：</div>
@@ -144,6 +144,14 @@ const startSandbox = () => {
 .login {
   min-height: max(100vh, 720px);
   margin-top: -78px;
+
+  // 手机：不再强制 720px 高，去掉补偿头部用的负 margin，左右留 12px
+  @media (max-width: 767px) {
+    min-height: calc(100vh - 140px);
+    min-height: calc(100dvh - 140px);
+    margin-top: 0;
+    padding: 12px;
+  }
 
   .login-form {
   @apply h-fit border-border rounded-sm text-text bg-container;

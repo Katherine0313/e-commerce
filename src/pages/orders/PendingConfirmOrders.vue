@@ -32,7 +32,7 @@
     <!--订单确认审核弹窗-->
     <a-modal v-model:visible="confirmVisible" title="订单确认审核" width="900px" @ok="submitConfirm"
              @cancel="confirmVisible = false">
-      <a-descriptions :column="2" bordered size="small" style="margin-bottom: 16px;">
+      <a-descriptions :column="isMobile ? 1 : 2" bordered size="small" style="margin-bottom: 16px;">
         <a-descriptions-item label="订单编号">{{ currentOrder?.orderNo }}</a-descriptions-item>
         <a-descriptions-item label="客户名称">{{ currentOrder?.consignee }}</a-descriptions-item>
         <a-descriptions-item label="收货地址">{{ currentOrder?.region }} {{
@@ -82,6 +82,10 @@ import {ref} from 'vue'
 import {getDetailOrders, confirmOrder, cancelOrder, updateOrder} from '@/api/orders.js'
 import {message} from 'ant-design-vue'
 import {isAdmin} from '@/utils/auth.js'
+import {useIsMobile} from '@/composables/useMediaQuery'
+
+// 手机端描述列表改单列
+const isMobile = useIsMobile()
 
 defineProps({
   list: {type: Array, default: () => []},

@@ -749,4 +749,53 @@ const handlePay = () => {
   opacity: .9;
   color: #fff;
 }
+
+/* ══════════════════════════════════════════════════════
+   响应式：笔记本双栏可换行，手机单列
+   ══════════════════════════════════════════════════════ */
+@media (max-width: 1200px) {
+  .settle-wrapper {
+    flex-wrap: wrap;
+  }
+  .settle-left {
+    max-width: 100%;
+    flex: 1 1 480px;
+  }
+  .settle-right {
+    width: 100%;
+    flex: 1 1 100%;
+    position: static;
+  }
+}
+
+@media (max-width: 767px) {
+  .settle-wrapper {
+    display: block;
+  }
+  .settle-header {
+    display: none;
+  }
+  .settle-right {
+    margin-top: 16px;
+  }
+  .settle-top {
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  .settle-item-card {
+    flex-wrap: wrap;
+    gap: 10px;
+    padding: 12px;
+  }
+  .item-info {
+    flex: 1 1 calc(100% - 110px);
+  }
+  .item-stepper {
+    order: 5;
+    margin-left: auto;
+  }
+  .item-subtotal {
+    order: 6;
+  }
+}
 </style>

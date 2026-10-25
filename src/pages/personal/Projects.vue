@@ -104,6 +104,29 @@
   }
 
   .projects {
+    // 笔记本：四张卡按可用宽度自动换行
+    @media (max-width: 1200px) {
+      .project-list {
+        flex-wrap: wrap;
+        gap: 16px;
+      }
+      .project-list > * {
+        flex: 1 1 240px;
+        min-width: 0;
+        margin-left: 0 !important;
+      }
+    }
+
+    // 手机：一行一张
+    @media (max-width: 767px) {
+      .project-list > * {
+        flex: 1 1 100%;
+      }
+      .project-list .project :deep(.ant-card-cover img) {
+        height: 160px;
+      }
+    }
+
     .project-list {
       .project {
         &:not(:first-child) {

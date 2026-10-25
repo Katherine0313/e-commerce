@@ -91,4 +91,15 @@ const onConfirm = () => {
 .place-select :deep(.ant-select-selector) {
   width: 120px;
 }
+
+/* 手机：三个下拉纵向排列并铺满 */
+@media (max-width: 767px) {
+  .place-select {
+    flex-direction: column;
+    padding-left: 0;
+  }
+  .place-select :deep(.ant-select-selector) {
+    width: 100%;
+  }
+}
 </style>

@@ -27,4 +27,23 @@
   font-size: 14px;
   text-align:center;
 }
+
+/* 手机：工具栏纵向排列，搜索框铺满 */
+@media (max-width: 767px) {
+  .ant-space {
+    display: flex;
+    flex-wrap: wrap;
+    width: 100%;
+  }
+  .ant-space-item {
+    width: 100%;
+    margin-right: 0 !important;
+  }
+  .ant-space-item .ant-btn {
+    margin-right: 0 !important;
+  }
+  .ant-input-search {
+    width: 100%;
+  }
+}
 </style>

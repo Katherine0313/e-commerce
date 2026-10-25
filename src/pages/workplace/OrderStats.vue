@@ -39,5 +39,12 @@
     :deep(.line-chart) {
       @apply -mt-10;
     }
+
+    // 手机端图例移到底部，负 margin 会压住标题
+    @media (max-width: 767px) {
+      :deep(.line-chart) {
+        margin-top: -8px;
+      }
+    }
   }
 </style>

@@ -1,8 +1,8 @@
 <template>
   <div class="user-growth card p-lg">
     <OverviewTitle title="用户增长" :subtitle="periodLabel" />
-    <!-- 用户总量和新增量级差很多，用双纵轴，避免新增曲线被压成贴底直线 -->
-    <line-chart :series="series" dual-axis />
+    <!-- 用户总量和新增量级差很多，用双纵轴避免新增曲线贴底；右轴刻度文字对用户无意义，隐藏 -->
+    <line-chart :series="series" dual-axis :show-right-axis-label="false" />
   </div>
 </template>
 <script>
@@ -55,6 +55,13 @@
   .user-growth {
     :deep(.line-chart) {
       @apply -mt-10;
+    }
+
+    // 手机端图例移到底部，负 margin 会压住标题
+    @media (max-width: 767px) {
+      :deep(.line-chart) {
+        margin-top: -8px;
+      }
     }
   }
 </style>

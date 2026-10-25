@@ -1,12 +1,15 @@
 <template>
   <stepin-view
+      :class="{ 'is-mobile': isMobile, 'mobile-drawer-open': drawerOpen }"
       system-name="杰米多多"
       logo-src="@/assets/vite.svg"
       :user="user"
       :nav-mode="navMode"
+      :collapsed="effectiveCollapsed"
       :themeList="themeList"
       v-model:show-setting="showSetting"
       @themeSelect="configTheme"
+      @update:collapsed="onCollapsedChange"
   >
     <template #headerActions>
       <HeaderActions @showSetting="showSetting = true" />
@@ -20,12 +23,18 @@
       </a-tab-pane>
     </template>
   </stepin-view>
+  <!-- 手机抽屉遮罩：放在 stepin-view 外，避免被布局的 overflow 裁掉 -->
+  <div
+    v-if="isMobile && drawerOpen"
+    class="mobile-drawer-mask"
+    @click="closeDrawer"
+  ></div>
   <login-modal :unless="['/login']" />
 </template>
 
 <script setup>
-import {computed, onMounted, reactive, ref} from 'vue';
-import {useRouter} from 'vue-router';
+import {computed, onBeforeUnmount, onMounted, reactive, ref, watch} from 'vue';
+import {useRoute, useRouter} from 'vue-router';
 import avatar from '@/assets/avatar/zongjie.webp';
 import {HeaderActions, PageFooter} from '@/components/layout';
 import Setting from './components/setting';
@@ -36,12 +45,48 @@ import {logout} from '@/api/auth.js';
 import {getCurrentUser} from '@/utils/auth';
 import {connectOrderNotify, disconnectOrderNotify} from '@/utils/orderNotify';
 import {expireText, loadShop, shop} from '@/utils/shop';
+import {useIsMobile} from '@/composables/useMediaQuery';
 import {StepinView} from "stepin";
 
 const navMode = ref('side');
 // const useTabs = ref(false);
 const showSetting = ref(false);
 const router = useRouter();
+const route = useRoute();
+// 手机断点（≤767px）
+const isMobile = useIsMobile();
+// 桌面侧栏折叠状态；stepin 只有 64px 图标态，没有隐藏态
+const collapsed = ref(false);
+// 手机抽屉状态：与 collapsed 分开管理，抽屉里要显示完整菜单
+const drawerOpen = ref(false);
+const effectiveCollapsed = computed(() =>
+    isMobile.value ? false : collapsed.value
+);
+
+// 顶栏 trigger 点击：手机开关抽屉，桌面走原有折叠
+const onCollapsedChange = (val) => {
+  if (isMobile.value) {
+    drawerOpen.value = !drawerOpen.value;
+    return;
+  }
+  collapsed.value = val;
+};
+const closeDrawer = () => {
+  drawerOpen.value = false;
+};
+
+// 路由切换、放大回桌面时自动收起抽屉
+watch(() => route.fullPath, closeDrawer);
+watch(isMobile, (mobile) => {
+  if (!mobile) closeDrawer();
+});
+
+// ESC 关闭抽屉
+const onKeydown = (e) => {
+  if (e.key === 'Escape') closeDrawer();
+};
+onMounted(() => window.addEventListener('keydown', onKeydown));
+onBeforeUnmount(() => window.removeEventListener('keydown', onKeydown));
 
 // 拉当前店铺信息（沙箱店名、剩余有效期）
 onMounted(() => {

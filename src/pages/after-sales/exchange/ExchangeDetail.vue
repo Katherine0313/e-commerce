@@ -3,7 +3,7 @@
            width="min(900px, 92vw)" class="detail">
     <div class="item">
       <div class="item-title">售后信息</div>
-      <a-descriptions bordered :column="2" :label-style="{ width: '160px' }">
+      <a-descriptions bordered :column="isMobile ? 1 : 2" :label-style="isMobile ? {} : { width: '160px' }">
         <a-descriptions-item label="售后单号">{{ currentOrder?.afterSaleNo }}</a-descriptions-item>
         <a-descriptions-item label="申请时间">{{ currentOrder?.createdAt }}</a-descriptions-item>
         <a-descriptions-item label="售后类型"> {{ afterSaleStatus.typeMap[currentOrder?.afterSaleType] }}
@@ -18,7 +18,7 @@
     </div>
     <div class="item">
       <div class="item-title">用户信息</div>
-      <a-descriptions bordered :column="2" :label-style="{ width: '160px' }">
+      <a-descriptions bordered :column="isMobile ? 1 : 2" :label-style="isMobile ? {} : { width: '160px' }">
         <a-descriptions-item label="收货人">{{ currentOrder?.consignee }}</a-descriptions-item>
         <a-descriptions-item label="手机号码">{{ currentOrder?.phone }}</a-descriptions-item>
         <a-descriptions-item label="收货地址" :span="2">
@@ -28,7 +28,7 @@
     </div>
     <div class="item">
       <div class="item-title">订单信息</div>
-      <a-descriptions bordered :column="2" :label-style="{ width: '160px' }">
+      <a-descriptions bordered :column="isMobile ? 1 : 2" :label-style="isMobile ? {} : { width: '160px' }">
         <a-descriptions-item label="订单号">{{ currentOrder?.orderNo }}</a-descriptions-item>
         <a-descriptions-item label="支付时间">{{ currentOrder?.payAt }}</a-descriptions-item>
         <a-descriptions-item label="支付方式">{{ currentOrder?.payTypeDesc }}</a-descriptions-item>
@@ -128,7 +128,10 @@
 import {ref, computed} from "vue";
 import {message} from 'ant-design-vue'
 import {getAfterSale, submitAfterSaleReturn} from '@/api/afterSale.js'
+import {useIsMobile} from '@/composables/useMediaQuery'
 
+// 手机端描述列表改单列，避免 160px 标签把内容挤没
+const isMobile = useIsMobile()
 const exchangeDetailVisible = ref(false)
 const currentOrder = ref()
 // 选中的取件时间段：'' / 'morning' / 'afternoon'
@@ -327,6 +330,28 @@ const handleAfterSaleReturn = () => {
 .return .content .time {
   display: flex;
   justify-content: space-around;
+}
+
+/* 手机：退货方式左右两栏改上下，时间段各占一半 */
+@media (max-width: 767px) {
+  .return .head {
+    font-size: 16px;
+  }
+  .return .content {
+    flex-direction: column;
+  }
+  .return .content .l {
+    width: 100%;
+    border-right: none;
+    border-bottom: 1px solid #ccc;
+  }
+  .return .content .r {
+    width: 100%;
+  }
+  .return .content .time .list-l,
+  .return .content .time .list-r {
+    width: calc(50% - 6px);
+  }
 }
 
 /*圆圈*/

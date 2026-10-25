@@ -738,6 +738,70 @@ const handlePay = async () => {
   color: #FF4E2A;
   font-weight: bold;
 }
+
+/* ══════════════════════════════════════════════════════
+   响应式：笔记本双栏可换行，手机单列
+   ══════════════════════════════════════════════════════ */
+@media (max-width: 1200px) {
+  .mall-container {
+    flex-wrap: wrap;
+  }
+  .mall-container .l {
+    flex: 1 1 320px;
+    max-width: 100%;
+  }
+  .mall-container .r {
+    position: static;
+    flex: 1 1 320px;
+  }
+}
+
+@media (max-width: 767px) {
+  .mall-container {
+    display: block;
+  }
+  .mall-container .l,
+  .mall-container .r {
+    max-width: 100%;
+  }
+  .mall-container .r {
+    margin-top: 16px;
+  }
+  .detail-title {
+    margin: 20px 0;
+    font-size: 22px;
+  }
+  .detail-title::before,
+  .detail-title::after {
+    max-width: 40px;
+  }
+  .detail-title::before {
+    margin-right: 12px;
+  }
+  .detail-title::after {
+    margin-left: 12px;
+  }
+  .product-title {
+    font-size: 22px;
+  }
+  .price-value {
+    font-size: 30px;
+  }
+  .subsidy-banner,
+  .assurance-row,
+  .insurance-cards,
+  .buy-row {
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  .insurance-card {
+    flex: 1 1 96px;
+  }
+  .btn-cart,
+  .btn-buy {
+    flex: 1 1 140px;
+  }
+}
 </style>
 <!-- 购物车弹窗样式，必须非 scoped —— a-modal 渲染在 body 下 -->
 <style>
@@ -775,5 +839,12 @@ const handlePay = async () => {
 .cart-btn .ant-btn {
   width: 120px;
   height: 40px;
+}
+
+/* 手机：预览弹窗只留 8px 边距 */
+@media (max-width: 767px) {
+  .preview-modal .ant-modal-content {
+    max-width: calc(100vw - 16px);
+  }
 }
 </style>

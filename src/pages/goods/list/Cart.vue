@@ -748,4 +748,60 @@ const cancelSettlement = () => {
   font-size: 14px;
   color: #ccc;
 }
+
+/* ══════════════════════════════════════════════════════
+   响应式：笔记本双栏可换行，手机单列
+   ══════════════════════════════════════════════════════ */
+@media (max-width: 1200px) {
+  .cart-wrapper {
+    flex-wrap: wrap;
+  }
+  .cart-left {
+    flex: 1 1 480px;
+  }
+  .cart-right {
+    width: auto;
+    flex: 1 1 260px;
+    position: static;
+  }
+}
+
+@media (max-width: 767px) {
+  .cart-wrapper {
+    display: block;
+  }
+  /* 手机上表头与卡片行结构对不上，直接隐藏表头 */
+  .cart-header {
+    display: none;
+  }
+  .cart-right {
+    width: 100%;
+    margin-top: 16px;
+  }
+  .cart-item-card {
+    flex-wrap: wrap;
+    gap: 10px;
+    padding: 12px;
+  }
+  .item-info {
+    flex: 1 1 calc(100% - 110px);
+  }
+  .item-stepper {
+    order: 5;
+    margin-left: auto;
+  }
+  .item-subtotal {
+    order: 6;
+  }
+  .item-actions {
+    order: 7;
+    width: 100%;
+    flex-direction: row;
+    justify-content: flex-end;
+  }
+  .cart-action-bar {
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+}
 </style>

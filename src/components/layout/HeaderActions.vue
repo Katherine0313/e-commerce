@@ -20,10 +20,10 @@
   };
 </script>
 <template>
-  <StepinHeaderAction>
+  <StepinHeaderAction class="header-action-daynight">
     <DayNightSwitch />
   </StepinHeaderAction>
-  <StepinHeaderAction>
+  <StepinHeaderAction class="header-action-gitee">
     <a
       class="action-item"
       href="#"
@@ -32,19 +32,19 @@
       <img class="gitee-logo" src="@/assets/gitee.svg" />
     </a>
   </StepinHeaderAction>
-  <StepinHeaderAction>
+  <StepinHeaderAction class="header-action-setting">
     <div class="action-item setting" @click="$emit('showSetting')">
       <SettingOutlined />
     </div>
   </StepinHeaderAction>
-  <StepinHeaderAction>
+  <StepinHeaderAction class="header-action-notice">
     <div class="action-item notice" @click="goOrders">
       <a-badge :count="unread" :overflow-count="99">
         <BellOutlined />
       </a-badge>
     </div>
   </StepinHeaderAction>
-  <StepinHeaderAction>
+  <StepinHeaderAction class="header-action-fullscreen">
     <Fullscreen
       class="-mx-xs -my-sm h-[56px] px-xs py-sm flex items-center"
       target=".stepin-layout"

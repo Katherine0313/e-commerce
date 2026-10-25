@@ -119,4 +119,18 @@ const onConsigneeSaved = () => {
 .consignee:hover {
   border: 2px solid #FF4E2A;
 }
+
+/* 手机：收货人信息纵向排列，避免姓名/电话/地址挤成一行 */
+@media (max-width: 767px) {
+  .consignee {
+    max-width: 100%;
+    padding: 8px;
+  }
+  .consignee .info {
+    width: 100%;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+}
 </style>

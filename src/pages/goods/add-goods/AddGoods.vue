@@ -243,4 +243,43 @@ const uploadHeaders = {
   font-weight: bold;
 }
 
+/* 笔记本：600px 左边距会把按钮挤出屏幕，改为右对齐 */
+@media (max-width: 1200px) {
+  .addGoods-btn {
+    justify-content: flex-end;
+    margin-left: 0;
+  }
+}
+
+/* 手机：表单标签改为上下结构，固定宽度字段铺满 */
+@media (max-width: 767px) {
+  .add-goods-container {
+    max-width: 100%;
+    width: 100%;
+  }
+
+  .add-goods-container :deep(.ant-form-item-row) {
+    display: block;
+  }
+
+  .add-goods-container :deep(.ant-form-item-label),
+  .add-goods-container :deep(.ant-form-item-control) {
+    width: 100%;
+    max-width: none;
+    flex: none;
+    text-align: left;
+  }
+
+  .add-goods-container :deep(.ant-cascader),
+  .add-goods-container :deep(.ant-input),
+  .add-goods-container :deep(.ant-select) {
+    width: 100% !important;
+    max-width: 100% !important;
+  }
+
+  .addGoods-btn {
+    margin: 16px 0 0;
+    justify-content: flex-end;
+  }
+}
 </style>

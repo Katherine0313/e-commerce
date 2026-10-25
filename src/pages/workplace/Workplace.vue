@@ -8,7 +8,7 @@
       message="当前为普通用户账号，订单相关指标仅统计您本人的订单；使用商家（管理员）账号可查看全店数据。"
     />
     <div
-      class="bg-container p-base rounded-b-lg rounded-tr-lg pt-8 flex items-end justify-between"
+      class="hero bg-container p-base rounded-b-lg rounded-tr-lg pt-8 flex items-end justify-between"
     >
       <div class="flex items-center">
         <!-- JWT 里只有 {username, role}，没有头像字段，沿用顶栏同一张默认图 -->
@@ -21,7 +21,7 @@
           <div class="text-subtext font-bold text-sm">{{ roleText }}</div>
         </div>
       </div>
-      <div class="flex items-start">
+      <div class="hero-stats flex items-start">
         <a-statistic
           class="w-20"
           :valueStyle="{ fontWeight: 500 }"
@@ -47,7 +47,7 @@
         </a-statistic>
       </div>
     </div>
-    <div class="grid grid-cols-12 gap-6">
+    <div class="card-grid grid grid-cols-12 gap-6">
       <mini-statistic-card
         class="card col-span-12 mdx:col-span-6 xlx:col-span-3"
         v-for="(item, i) in cards"
@@ -187,6 +187,65 @@
         line-height: 40px;
         padding: 0 14px;
         font-size: 20px;
+      }
+    }
+
+    // 笔记本：顶部信息栏允许换行；指标卡/报表按可用宽度自动分列
+    @media (max-width: 1200px) {
+      .hero {
+        flex-wrap: wrap;
+        gap: 16px;
+      }
+      .hero-stats {
+        margin-left: auto;
+      }
+      .card-grid {
+        grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+        gap: 16px;
+      }
+      .overview,
+      .project-list {
+        grid-template-columns: repeat(auto-fit, minmax(420px, 1fr));
+        gap: 16px;
+      }
+      // 子项原本写的是 col-span-12 / xlx:col-span-*，重置后才能交给 auto-fit
+      .card-grid > *,
+      .overview > *,
+      .project-list > * {
+        grid-column: auto !important;
+        min-width: 0;
+      }
+    }
+
+    // 手机：顶部信息栏纵向排列，时间选择器缩回正常大小
+    @media (max-width: 767px) {
+      .hero {
+        flex-direction: column;
+        align-items: stretch;
+        padding-top: 20px;
+      }
+      .hero-stats {
+        width: 100%;
+        justify-content: space-between;
+        margin-left: 0;
+      }
+      .hero-stats :deep(.ant-statistic) {
+        flex: 1;
+      }
+      .card-grid {
+        grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+        gap: 12px;
+      }
+      .overview,
+      .project-list {
+        grid-template-columns: 1fr;
+        gap: 12px;
+      }
+      :deep(.period-selector .ant-radio-button-wrapper) {
+        height: 32px;
+        line-height: 32px;
+        padding: 0 10px;
+        font-size: 14px;
       }
     }
   }
