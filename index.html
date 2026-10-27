@@ -5,99 +5,81 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%2032%2032'%3E%3Crect%20width='32'%20height='32'%20rx='7'%20fill='%23003f8c'/%3E%3Ctext%20x='16'%20y='23'%20font-size='18'%20font-weight='bold'%20text-anchor='middle'%20fill='%23ffca29'%20font-family='sans-serif'%3EJ%3C/text%3E%3C/svg%3E" />
     <title>杰米多多电商后台管理系统</title>
+    <!-- 首屏加载层样式放在 head：Vue 挂载后不会被移除，避免白屏 -->
+    <style>
+      html,
+      body {
+        margin: 0;
+        min-height: 100%;
+        background: linear-gradient(160deg, #2a78cc 0%, #3284dd 46%, #1a5aa8 100%);
+      }
+      #boot-loader {
+        position: fixed;
+        inset: 0;
+        z-index: 9999;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 14px;
+        background: linear-gradient(160deg, #2a78cc 0%, #3284dd 46%, #1a5aa8 100%);
+        color: #f2f7ff;
+        font-family: system-ui, 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+        transition: opacity 0.25s ease;
+      }
+      #boot-loader.is-done {
+        opacity: 0;
+        pointer-events: none;
+      }
+      .boot-mark {
+        display: grid;
+        place-items: center;
+        width: 46px;
+        height: 46px;
+        border-radius: 13px;
+        background: linear-gradient(135deg, #ffe38f, #ffca29 60%, #e9a800);
+        box-shadow: 0 10px 24px -8px rgba(255, 202, 41, 0.75);
+        color: #0d1b36;
+        font-family: Georgia, 'Times New Roman', serif;
+        font-size: 21px;
+        font-weight: 800;
+      }
+      .boot-title {
+        font-size: 16px;
+        font-weight: 600;
+        letter-spacing: 0.08em;
+      }
+      .boot-tip {
+        margin-top: -6px;
+        color: rgba(240, 247, 255, 0.7);
+        font-size: 12px;
+        letter-spacing: 0.08em;
+      }
+      .boot-spinner {
+        width: 22px;
+        height: 22px;
+        margin-top: 4px;
+        border: 2px solid rgba(255, 255, 255, 0.25);
+        border-top-color: #ffca29;
+        border-radius: 50%;
+        animation: boot-spin 0.8s linear infinite;
+      }
+      @keyframes boot-spin {
+        to {
+          transform: rotate(360deg);
+        }
+      }
+    </style>
   </head>
   <body>
-    <div id="stepin-app">
-      <style>
-        body {
-          height: 100vh;
-          text-align: center;
-          align-items: center;
-          background-color: #003f8c;
-          display: flex;
-          justify-content: center;
-        }
-        .loader {
-          color: rgb(124, 124, 124);
-            font-family: system-ui, 'Segoe UI', Roboto, Arial, sans-serif;
-            font-weight: 500;
-          font-size: 25px;
-          -webkit-box-sizing: content-box;
-          box-sizing: content-box;
-          height: 40px;
-          padding: 10px 10px;
-          display: -webkit-box;
-          display: flex;
-          border-radius: 8px;
-        }
-
-        .words {
-          overflow: hidden;
-        }
-
-        .word {
-          display: block;
-          height: 100%;
-          padding-left: 6px;
-          color: #ffca29;
-          animation: spin_4991 4s infinite;
-        }
-
-        @keyframes spin_4991 {
-          10% {
-            -webkit-transform: translateY(-105%);
-            transform: translateY(-105%);
-          }
-
-          25% {
-            -webkit-transform: translateY(-100%);
-            transform: translateY(-100%);
-          }
-
-          35% {
-            -webkit-transform: translateY(-205%);
-            transform: translateY(-205%);
-          }
-
-          50% {
-            -webkit-transform: translateY(-200%);
-            transform: translateY(-200%);
-          }
-
-          60% {
-            -webkit-transform: translateY(-305%);
-            transform: translateY(-305%);
-          }
-
-          75% {
-            -webkit-transform: translateY(-300%);
-            transform: translateY(-300%);
-          }
-
-          85% {
-            -webkit-transform: translateY(-405%);
-            transform: translateY(-405%);
-          }
-
-          100% {
-            -webkit-transform: translateY(-400%);
-            transform: translateY(-400%);
-          }
-        }
-
-      </style>
-      <div class="loader">
-        <div>loading</div>
-        <div class="words">
-            <span class="word">buttons</span>
-            <span class="word">forms</span>
-            <span class="word">switches</span>
-            <span class="word">cards</span>
-            <span class="word">buttons</span>
-        </div>
-      </div>
-      <div class="" style="color: rgba(255, 255, 255, 0.35)">首次加载可能较慢，请耐心等待...</div>
+    <!-- 首屏加载层：首条路由解析完成后由 main.js 淡出 -->
+    <div id="boot-loader" aria-hidden="true">
+      <div class="boot-mark">杰</div>
+      <div class="boot-title">杰米多多</div>
+      <div class="boot-tip">正在加载…</div>
+      <span class="boot-spinner"></span>
     </div>
+    <div id="stepin-app"></div>
     <script type="module" src="/src/main.js"></script>
     <script>
       if (!global) {

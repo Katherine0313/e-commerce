@@ -33,3 +33,22 @@ app.config.errorHandler = function (err) {
   console.error('未捕获的异常，', err);
 };
 app.mount('#stepin-app');
+
+// 首屏加载层：等首条路由解析完成（页面真正可渲染）后再淡出，避免白屏闪烁
+const bootLoader = document.getElementById('boot-loader');
+let bootHidden = false;
+function hideBootLoader() {
+  if (bootHidden || !bootLoader) return;
+  bootHidden = true;
+  bootLoader.classList.add('is-done');
+  setTimeout(() => bootLoader.remove(), 260);
+}
+router
+    .isReady()
+    .then(() => {
+      // 等两帧，确保首屏内容已经绘制到屏幕上
+      requestAnimationFrame(() => requestAnimationFrame(hideBootLoader));
+    })
+    .catch(hideBootLoader);
+// 兜底：极端情况下也不让加载层一直挡着（正常 1 秒内就会淡出）
+setTimeout(hideBootLoader, 15000);

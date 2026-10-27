@@ -9,9 +9,14 @@
 </template>
 <script setup>
   import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue';
-  import * as echarts from 'echarts';
+  // 按需引入：折线图 + 坐标系 + 图例/提示框 + Canvas 渲染器
+  import * as echarts from 'echarts/core';
+  import { LineChart } from 'echarts/charts';
+  import { GridComponent, LegendComponent, TooltipComponent } from 'echarts/components';
+  import { CanvasRenderer } from 'echarts/renderers';
   import { formatThousand } from '@/utils/formatter';
   import { useIsMobile } from '@/composables/useMediaQuery';
+  echarts.use([LineChart, GridComponent, LegendComponent, TooltipComponent, CanvasRenderer]);
   const props = defineProps({
     // [{ name: '销售额', data: [['9月', 1234], ...] }, { name: '订单', data: [...] }]
     // 不传时默认 []，组件进入空态，不会报错

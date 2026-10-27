@@ -22,10 +22,6 @@
         </div>
       </div>
       <div class="flex flex-col items-end gap-2">
-        <a-button type="primary" :loading="exporting" @click="handleExport">
-          <template #icon><download-outlined /></template>
-          数据导出
-        </a-button>
         <div class="hero-stats flex items-start">
           <a-statistic
             class="w-20"
@@ -73,7 +69,7 @@
       </mini-statistic-card>
     </div>
     <!-- 统一下方所有报表的时间维度：营业额、订单统计、用户增长、销量排名 -->
-    <div class="report-toolbar flex items-center justify-center">
+    <div class="report-toolbar flex flex-wrap items-center justify-center gap-8">
       <a-radio-group
         class="period-selector"
         :value="reportPeriod"
@@ -88,6 +84,11 @@
           {{ item.label }}
         </a-radio-button>
       </a-radio-group>
+      <!-- 运营数据导出：跟随时间维度选择器放在一起 -->
+      <a-button type="primary" :loading="exporting" @click="handleExport" size="large">
+        <template #icon><download-outlined /></template>
+        数据导出
+      </a-button>
     </div>
     <div class="overview grid grid-cols-12 gap-4">
       <turnover-panel

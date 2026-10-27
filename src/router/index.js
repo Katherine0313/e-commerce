@@ -26,6 +26,8 @@ const routes = [
             view: 'blank',
             target: '_blank',
             cacheable: false,
+            // 登录页是整屏独立页面，不进入侧边导航
+            renderMenu: false,
         },
         component: () => import('@/pages/login'),
     },

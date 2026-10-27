@@ -9,8 +9,13 @@
 </template>
 <script setup>
   import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue';
-  import * as echarts from 'echarts';
+  // 按需引入：只注册柱状图 + 坐标系 + Canvas 渲染器，避免打进整包 echarts
+  import * as echarts from 'echarts/core';
+  import { BarChart } from 'echarts/charts';
+  import { GridComponent } from 'echarts/components';
+  import { CanvasRenderer } from 'echarts/renderers';
   import { formatThousand } from '@/utils/formatter';
+  echarts.use([BarChart, GridComponent, CanvasRenderer]);
   const props = defineProps({
     color: Array,
     list: Array,

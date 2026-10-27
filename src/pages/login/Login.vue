@@ -69,7 +69,8 @@
                   </template>
                 </a-input-password>
               </div>
-              <button class="submit-btn" type="submit" :disabled="loading">
+              <!-- 账号密码登录按钮只在本机开发时显示，上线后只保留一键体验 -->
+              <button v-if="isDev" class="submit-btn" type="submit" :disabled="loading">
                 <span v-if="loading" class="spinner"></span>
                 {{ loading ? '登录中…' : '登 录' }}
               </button>
@@ -118,7 +119,8 @@
                   </button>
                 </div>
               </div>
-              <button class="submit-btn" type="submit" :disabled="phoneLoading">
+              <!-- 登录按钮只在本机开发时显示，上线后手机号 Tab 只保留下方的一键体验 -->
+              <button v-if="isDev" class="submit-btn" type="submit" :disabled="phoneLoading">
                 <span v-if="phoneLoading" class="spinner"></span>
                 {{ phoneLoading ? '登录中…' : '登 录' }}
               </button>
@@ -126,12 +128,16 @@
           </transition>
         </form>
 
-        <div class="panel-foot">
-          <span>还没有店铺？</span>
-          <button class="sandbox-link" type="button" :disabled="sandboxLoading" @click="startSandbox">
-            {{ sandboxLoading ? '正在开通体验店铺…' : '一键体验（免注册）' }}
-          </button>
-        </div>
+        <!-- 一键体验：样式与登录按钮保持一致 -->
+        <button
+            class="submit-btn sandbox-btn"
+            type="button"
+            :disabled="sandboxLoading"
+            @click="startSandbox"
+        >
+          <span v-if="sandboxLoading" class="spinner"></span>
+          {{ sandboxLoading ? '正在开通体验店铺…' : '一键体验（免注册）' }}
+        </button>
       </section>
     </main>
 
@@ -169,11 +175,12 @@ const sandboxLoading = ref(false);
 const sending = ref(false);
 const countdown = ref(0);
 let countdownTimer = null;
+let prefetchTimer = null;
 
-// 开发环境预填演示账号，生产环境保持为空
+// 固定预填演示账号（开发和生产都回填）
 const accountForm = reactive({
-  username: isDev ? 'admin' : '',
-  password: isDev ? 'admin123' : '',
+  username: 'admin',
+  password: 'admin123',
 });
 const phoneForm = reactive({phone: '13800138000', code: ''});
 
@@ -203,9 +210,16 @@ onMounted(() => {
     message.warning(tip);
     sessionStorage.removeItem('loginMessage');
   }
+  // 空闲时预取工作台代码块：登录后 router.push 直接命中缓存，不再等下载
+  prefetchTimer = setTimeout(() => {
+    import('@/pages/workplace/Workplace.vue').catch(() => {});
+  }, 1200);
 });
 
-onBeforeUnmount(() => clearInterval(countdownTimer));
+onBeforeUnmount(() => {
+  clearInterval(countdownTimer);
+  clearTimeout(prefetchTimer);
+});
 
 // 登录成功后的公共处理：账号密码登录与手机号登录共用
 const finishLogin = (res) => {
@@ -239,7 +253,7 @@ const submitAccount = () => {
       });
 };
 
-// 发送验证码：开发环境后端会回传 devCode，自动填入方便本机联调
+// 发送验证码：开发环境或演示手机号后端会回传 devCode，自动填入方便登录
 const handleSendCode = () => {
   const phone = phoneForm.phone.trim();
   if (countdown.value > 0 || sending.value) return;
@@ -290,6 +304,8 @@ const submitPhone = () => {
 };
 
 const handleSubmit = () => {
+  // 两个登录入口都只在本机开发时可用，上线后表单按回车也不触发
+  if (!isDev) return;
   if (mode.value === 'account') {
     submitAccount();
   } else {
@@ -321,13 +337,6 @@ const startSandbox = () => {
 </script>
 
 <style scoped lang="less">
-/* 让角度可以参与动画插值，conic-gradient 才能平滑转圈 */
-@property --border-angle {
-  syntax: '<angle>';
-  initial-value: 0deg;
-  inherits: false;
-}
-
 .auth-shell {
   --ink: #eef4ff;
   /* 卡片已改为浅色玻璃，这里用深灰蓝保证浅底上的可读性 */
@@ -358,7 +367,6 @@ const startSandbox = () => {
     border-radius: 50%;
     filter: blur(90px);
     pointer-events: none;
-    will-change: transform;
   }
 
   .aurora-1 {
@@ -367,7 +375,6 @@ const startSandbox = () => {
     top: -220px;
     left: -160px;
     background: radial-gradient(circle at 40% 40%, rgba(255, 202, 41, 0.28), rgba(255, 202, 41, 0) 65%);
-    animation: drift-a 20s ease-in-out infinite alternate;
   }
 
   .aurora-2 {
@@ -376,7 +383,6 @@ const startSandbox = () => {
     right: -260px;
     bottom: -320px;
     background: radial-gradient(circle at 50% 50%, rgba(24, 150, 255, 0.5), rgba(24, 150, 255, 0) 66%);
-    animation: drift-b 24s ease-in-out infinite alternate;
   }
 
   .aurora-3 {
@@ -385,7 +391,6 @@ const startSandbox = () => {
     left: 52%;
     top: 58%;
     background: radial-gradient(circle, rgba(0, 214, 255, 0.16), rgba(0, 214, 255, 0) 70%);
-    animation: drift-a 18s -6s ease-in-out infinite alternate-reverse;
   }
 
   /* 噪点：抵消大面积渐变的塑料感 */
@@ -404,7 +409,6 @@ const startSandbox = () => {
     align-items: center;
     justify-content: center;
     gap: 14px;
-    animation: rise 0.7s cubic-bezier(0.22, 1, 0.36, 1) both;
 
     .hero-mark {
       width: 44px;
@@ -461,9 +465,6 @@ const startSandbox = () => {
         0 40px 90px -32px rgba(2, 20, 50, 0.55),
         0 1px 0 rgba(255, 255, 255, 0.9) inset;
     color: #10243f;
-    -webkit-backdrop-filter: blur(26px) saturate(140%);
-    backdrop-filter: blur(26px) saturate(140%);
-    animation: rise 0.75s cubic-bezier(0.22, 1, 0.36, 1) both;
 
     /* 顶部金色高光细线 */
     &::before {
@@ -472,38 +473,6 @@ const startSandbox = () => {
       inset: -1px 24% auto;
       height: 1px;
       background: linear-gradient(90deg, transparent, rgba(255, 202, 41, 0.9), transparent);
-    }
-
-    /* 流动边框：padding 的数值就是边框粗细，conic-gradient 的角度随时间旋转 */
-    &::after {
-      content: '';
-      position: absolute;
-      inset: 0;
-      z-index: 3;
-      padding: 3px;
-      border-radius: inherit;
-      background: conic-gradient(
-          from var(--border-angle),
-          rgba(255, 202, 41, 0) 0deg,
-          rgba(255, 202, 41, 0.95) 30deg,
-          rgba(255, 245, 205, 1) 55deg,
-          rgba(255, 202, 41, 0.55) 95deg,
-          rgba(255, 202, 41, 0) 130deg,
-          rgba(255, 202, 41, 0) 195deg,
-          rgba(255, 202, 41, 0.6) 230deg,
-          rgba(255, 202, 41, 0) 275deg,
-          rgba(255, 202, 41, 0) 360deg
-      );
-      -webkit-mask:
-          linear-gradient(#000 0 0) content-box,
-          linear-gradient(#000 0 0);
-      -webkit-mask-composite: xor;
-      mask:
-          linear-gradient(#000 0 0) content-box,
-          linear-gradient(#000 0 0);
-      mask-composite: exclude;
-      animation: border-flow 6s linear infinite;
-      pointer-events: none;
     }
   }
 
@@ -718,35 +687,10 @@ const startSandbox = () => {
     animation: spin 0.7s linear infinite;
   }
 
-  /* ============ 底部 ============ */
-  .panel-foot {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 6px;
-    margin-top: 18px;
-    color: var(--muted);
-    font-size: 12.5px;
-  }
-
-  .sandbox-link {
-    padding: 0;
-    border: none;
-    border-bottom: 1px dashed rgba(190, 137, 0, 0.45);
-    background: none;
-    color: #a06e00;
-    font-family: inherit;
-    font-size: 12.5px;
-    cursor: pointer;
-
-    &:hover:not(:disabled) {
-      color: #7c5300;
-    }
-
-    &:disabled {
-      opacity: 0.6;
-      cursor: wait;
-    }
+  /* ============ 一键体验按钮 ============ */
+  /* 复用 .submit-btn 的全部视觉样式，只调整与上方登录按钮的间距 */
+  .sandbox-btn {
+    margin-top: 12px;
   }
 
   .page-foot {
@@ -813,42 +757,6 @@ const startSandbox = () => {
   }
 }
 
-/* 边框流光：角度从 0 转到 360，形成绕边框一圈的扫光 */
-@keyframes border-flow {
-  to {
-    --border-angle: 360deg;
-  }
-}
-
-@keyframes rise {
-  from {
-    opacity: 0;
-    transform: translateY(18px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-@keyframes drift-a {
-  from {
-    transform: translate3d(0, 0, 0) scale(1);
-  }
-  to {
-    transform: translate3d(60px, 40px, 0) scale(1.12);
-  }
-}
-
-@keyframes drift-b {
-  from {
-    transform: translate3d(0, 0, 0) scale(1);
-  }
-  to {
-    transform: translate3d(-70px, -50px, 0) scale(1.08);
-  }
-}
-
 @keyframes spin {
   to {
     transform: rotate(360deg);
@@ -857,13 +765,6 @@ const startSandbox = () => {
 
 @media (prefers-reduced-motion: reduce) {
   .auth-shell {
-    .aurora,
-    .hero,
-    .panel,
-    .panel::after {
-      animation: none !important;
-    }
-
     .switch-thumb,
     .submit-btn,
     .swap-enter-active,
