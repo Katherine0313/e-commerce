@@ -21,30 +21,36 @@
           <div class="text-subtext font-bold text-sm">{{ roleText }}</div>
         </div>
       </div>
-      <div class="hero-stats flex items-start">
-        <a-statistic
-          class="w-20"
-          :valueStyle="{ fontWeight: 500 }"
-          title="商品"
-          :value="headline.products"
-        ></a-statistic>
-        <a-statistic
-          class="w-20"
-          :valueStyle="{ fontWeight: 500 }"
-          title="订单"
-          :value="headline.orders"
-        ></a-statistic>
-        <a-statistic
-          :valueStyle="{ fontWeight: 500 }"
-          title="销售额"
-        >
-          <template #formatter>
-            <div class="whitespace-nowrap">
-              <span class="text-base">￥</span
-              >{{ formatThousand(headline.amount, 2) }}
-            </div>
-          </template>
-        </a-statistic>
+      <div class="flex flex-col items-end gap-2">
+        <a-button type="primary" :loading="exporting" @click="handleExport">
+          <template #icon><download-outlined /></template>
+          数据导出
+        </a-button>
+        <div class="hero-stats flex items-start">
+          <a-statistic
+            class="w-20"
+            :valueStyle="{ fontWeight: 500 }"
+            title="商品"
+            :value="headline.products"
+          ></a-statistic>
+          <a-statistic
+            class="w-20"
+            :valueStyle="{ fontWeight: 500 }"
+            title="订单"
+            :value="headline.orders"
+          ></a-statistic>
+          <a-statistic
+            :valueStyle="{ fontWeight: 500 }"
+            title="累计销售额"
+          >
+            <template #formatter>
+              <div class="whitespace-nowrap">
+                <span class="text-base">￥</span
+                >{{ formatThousand(headline.amount, 2) }}
+              </div>
+            </template>
+          </a-statistic>
+        </div>
       </div>
     </div>
     <div class="card-grid grid grid-cols-12 gap-6">
@@ -116,8 +122,11 @@
 </template>
 
 <script setup>
-  import { computed, onActivated, onMounted } from 'vue';
+  import { computed, onActivated, onMounted, ref } from 'vue';
   import dayjs from 'dayjs';
+  import { message } from 'ant-design-vue';
+  import { DownloadOutlined } from '@ant-design/icons-vue';
+  import { exportOperationReport } from '@/api/report.js';
   import MiniStatisticCard from '@/components/statistic/MiniStatisticCard.vue';
   import TurnoverPanel from './TurnoverPanel.vue';
   import OrderStats from './OrderStats.vue';
@@ -154,6 +163,32 @@
 
   const isAdminUser = isAdmin();
   const userName = getCurrentUser()?.username || '访客';
+
+  // 运营数据报表导出
+  const exporting = ref(false);
+  async function handleExport() {
+    if (exporting.value) return;
+    exporting.value = true;
+    try {
+      const res = await exportOperationReport();
+      const blob = new Blob([res.data], {
+        type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+      });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `运营数据报表_${dayjs().format('YYYYMMDD')}.xlsx`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      console.error('导出运营数据报表失败', err);
+      message.error('导出失败，请稍后重试');
+    } finally {
+      exporting.value = false;
+    }
+  }
 
   const greeting = computed(() => {
     const h = dayjs().hour();

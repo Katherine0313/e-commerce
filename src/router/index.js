@@ -18,6 +18,18 @@ const routes = [
         },
     },
     {
+        // 登录页独立成整屏路由（view: blank 时 stepin 不渲染后台布局），不再套 FrontView 的营销头部
+        path: '/front/login',
+        name: 'Login',
+        meta: {
+            icon: 'LoginOutlined',
+            view: 'blank',
+            target: '_blank',
+            cacheable: false,
+        },
+        component: () => import('@/pages/login'),
+    },
+    {
         path: '/front',
         name: '前端',
         meta: {
@@ -25,17 +37,6 @@ const routes = [
         },
         component: () => import('@/components/layout/FrontView.vue'),
         children: [
-            {
-                path: 'login',
-                name: 'Login',
-                meta: {
-                    icon: 'LoginOutlined',
-                    view: 'blank',
-                    target: '_blank',
-                    cacheable: false,
-                },
-                component: () => import('@/pages/login'),
-            },
             {
                 path: 'home',
                 name: 'Home',

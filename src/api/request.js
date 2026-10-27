@@ -42,7 +42,8 @@ axios.interceptors.response.use(
     if (error.response) {
       switch (error.response.status) {
         case 400:
-          console.log('请求参数错误，请检查填写内容')
+          // 参数/业务校验失败，后端 message 已可直接展示（如「该手机号未绑定后台账号」）
+          message.error((error.response.data && error.response.data.message) || '请求参数错误，请检查填写内容')
           break
         case 401:
           handleUnauthorized(error)
@@ -53,6 +54,10 @@ axios.interceptors.response.use(
           break
         case 404:
           message.error('请求资源不存在')
+          break
+        case 429:
+          // 验证码发送频率限制等场景，后端 message 已可直接展示
+          message.warning((error.response.data && error.response.data.message) || '操作过于频繁，请稍后再试')
           break
         case 500:
           message.error('服务器内部错误，请稍后重试')

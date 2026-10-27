@@ -11,6 +11,7 @@ import { getDashboard } from '@/api/products.js';
 import { getUserStatistics } from '@/api/user.js';
 import {
   getDashboardStats,
+  getHeadline,
   getSalesRanking,
   getTurnover,
   getTurnoverReport,
@@ -36,9 +37,6 @@ export const PERIODS = [
 ];
 
 // ==================== 纯函数 ====================
-/** pay_amount 是 REAL 列但可能以字符串返回，统一转数字（formatThousand 内部要 toFixed） */
-export const toAmount = (o) => Number(o?.payAmount) || 0;
-
 /** created_at 正常是 'YYYY-MM-DD HH:mm:ss'，兜底兼容 Unix 秒 */
 const toDate = (v) => {
   if (!v) return null;
@@ -47,10 +45,6 @@ const toDate = (v) => {
 
 export const isPaidOrder = (o) => PAID_STATUS.includes(o.orderStatus);
 export const isCountedOrder = (o) => !COUNTED_EXCLUDE.includes(o.orderStatus);
-
-/** 求和，取不到值按 0 兜底，避免 NaN 扩散 */
-const sumBy = (list, pick) =>
-  list.reduce((sum, o) => sum + (Number(pick(o)) || 0), 0);
 
 /**
  * 环比涨跌幅。上期为 0 时无法计算（除零得 Infinity），返回 null → 调用处不显示涨跌幅。
@@ -92,6 +86,13 @@ export function useWorkplaceData() {
     yesterdayOrders: 0,
     pendingShip: 0,
   });
+  // 顶部累计销售额与订单量（后端聚合，不受订单分页影响）
+  const headlineStats = ref({
+    totalPaid: 0,
+    totalRefund: 0,
+    netAmount: 0,
+    totalOrders: 0,
+  });
 
   // ---------------- 报表时间窗口 ----------------
   // dayOffsetKey(0)=今天
@@ -117,8 +118,9 @@ export function useWorkplaceData() {
   // ---------------- 顶部三个 a-statistic ----------------
   const headline = computed(() => ({
     products: Number(productStat.value.totalProducts) || 0,
-    orders: orders.value.filter(isCountedOrder).length,
-    amount: sumBy(orders.value.filter(isPaidOrder), toAmount),
+    // 累计订单量与销售额都走后端聚合，不再依赖前端拉取的订单分页
+    orders: Number(headlineStats.value.totalOrders) || 0,
+    amount: Number(headlineStats.value.netAmount) || 0,
   }));
 
   // ---------------- 订单统计折线 ----------------
@@ -345,6 +347,11 @@ export function useWorkplaceData() {
       loadUserStatistics(reportPeriod.value),
       refreshDashboardStats(),
       loadTurnover(reportPeriod.value),
+      getHeadline()
+        .then((res) => {
+          headlineStats.value = res.data.data || headlineStats.value;
+        })
+        .catch((err) => console.error('累计销售额加载失败', err)),
     ]);
   }
 

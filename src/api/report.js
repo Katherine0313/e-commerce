@@ -21,3 +21,13 @@ export function getSalesRanking(period, limit = 8) {
 export function getDashboardStats() {
   return axios.get('/api/admin/report/dashboard')
 }
+
+// 工作台顶部累计销售额：全时段实收 − 退款
+export function getHeadline() {
+  return axios.get('/api/admin/report/headline')
+}
+
+// 运营数据报表导出（近 30 天 Excel）
+export function exportOperationReport() {
+  return axios.get('/api/admin/report/export', { responseType: 'blob' })
+}
