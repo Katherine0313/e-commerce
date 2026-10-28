@@ -13,7 +13,7 @@
         </template>
       </a-table-column>
       <a-table-column title="用户账号" dataIndex="userId"></a-table-column>
-      <a-table-column title="订单总金额" dataIndex="payAmount"></a-table-column>
+      <a-table-column title="订单金额" dataIndex="payAmount"></a-table-column>
       <a-table-column title="订单状态" dataIndex="orderStatus">
         <template #default="{record}">
           <a-tag :color="orderStatus.color[record.orderStatus] || 'default'">

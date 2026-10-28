@@ -6,7 +6,7 @@
       <a-table-column title="订单编号" dataIndex="orderNo"></a-table-column>
       <a-table-column title="支付时间" dataIndex="payAt"></a-table-column>
       <a-table-column title="用户账号" dataIndex="userId"></a-table-column>
-      <a-table-column title="订单总金额" dataIndex="payAmount"></a-table-column>
+      <a-table-column title="订单金额" dataIndex="payAmount"></a-table-column>
       <a-table-column title="支付方式" dataIndex="payTypeDesc"></a-table-column>
       <a-table-column title="订单状态" dataIndex="orderStatus">
         <template #default="{record}">
@@ -39,7 +39,7 @@
             currentOrder?.detailAddress
           }}
         </a-descriptions-item>
-        <a-descriptions-item label="实付金额">¥{{ currentOrder?.payAmount }}</a-descriptions-item>
+        <a-descriptions-item label="订单金额">¥{{ currentOrder?.payAmount }}</a-descriptions-item>
       </a-descriptions>
       <a-table :dataSource="currentOrder?.items" row-key="productId" :pagination="false" size="small"
                style="margin-bottom: 16px;" class="title">

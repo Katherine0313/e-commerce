@@ -4,7 +4,7 @@
       <a-table-column title="编号" dataIndex="id"></a-table-column>
       <a-table-column title="订单编号" dataIndex="orderNo"></a-table-column>
       <a-table-column title="订单确认时间" dataIndex="confirmAt"></a-table-column>
-      <a-table-column title="实收金额" dataIndex="payAmount"></a-table-column>
+      <a-table-column title="订单金额" dataIndex="payAmount"></a-table-column>
       <a-table-column title="支付方式" dataIndex="payTypeDesc"></a-table-column>
       <a-table-column title="客户" dataIndex="consignee"></a-table-column>
       <a-table-column title="配送方式" dataIndex="shippingType"></a-table-column>

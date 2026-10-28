@@ -128,7 +128,7 @@
           </transition>
         </form>
 
-        <!-- 一键体验：样式与登录按钮保持一致 -->
+        <!-- 一键体验：免注册登录，账号密码 / 手机号两个 Tab 都显示 -->
         <button
             class="submit-btn sandbox-btn"
             type="button"
@@ -313,17 +313,19 @@ const handleSubmit = () => {
   }
 };
 
-// 一键体验：后端开一个只属于本次访客的沙箱店铺，并直接签发该店铺的管理员 token
+// 一键体验：后端按浏览器访客标识复用 24h 内的沙箱，没有则新开，并签发该店铺的管理员 token
 const startSandbox = () => {
+  if (sandboxLoading.value) return; // 防同一页面连点，减少并发建店
   sandboxLoading.value = true;
   createSandbox()
       .then(res => {
         if (res.data.success) {
-          setToken(res.data.data.token);
+          const data = res.data.data;
+          setToken(data.token);
           connectOrderNotify();
-          // 换到新店铺了，强制重拉店铺信息（顶栏/店铺卡片要显示新的沙箱店名）
+          // 换到店铺了，强制重拉店铺信息（顶栏/店铺卡片要显示店铺名）
           loadShop(true);
-          message.success('体验店铺已开通：' + res.data.data.shop.name);
+          message.success((data.restored ? '已恢复体验店铺：' : '体验店铺已开通：') + data.shop.name);
           router.push('/workplace');
         }
       })
