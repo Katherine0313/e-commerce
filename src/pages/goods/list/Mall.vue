@@ -20,8 +20,8 @@
           </div>
 
           <!-- ===== 商品标题 ===== -->
-          <h1 class="product-title">{{ product.name }}</h1>
-          <p class="product-tagline">超光变XMAGE影像｜5000mAh大电池｜第二代昆仑玻璃</p>
+          <h1 class="product-title">{{ product.title }}</h1>
+          <p class="product-tagline">{{ product.subTitle }}</p>
 
           <!-- ===== 价格卡 ===== -->
           <div class="price-card">
@@ -240,7 +240,7 @@ const handleAddToCart = () => {
         name: product.value.name,
         image: product.value.image,
         price: Number(product.value.salesPrice) || 0,   // 纯商品售价（不含保障费）
-        description: product.value.description,
+        description: product.value.title,
         insurance_detail: insuranceDetail.value,       // 增值保障明细
         insurance_fee: Number(insuranceFee.value)      // 单件保障费
       },
@@ -299,7 +299,7 @@ const handlePay = async () => {
         name: product.value.name,
         image: product.value.image,
         price: Number(product.value.salesPrice) || 0,
-        description: product.value.description,
+        description: product.value.title,
         insurance_detail: insuranceDetail.value,
         insurance_fee: Number(insuranceFee.value),
       },
@@ -432,7 +432,7 @@ const handlePay = async () => {
    模块 06 — 商品标题 + 卖点
    ══════════════════════════════════════════════════════ */
 .product-title { /* 34px 粗体标题 */
-  font-size: 29px;
+  font-size: 20px;
   font-weight: 700;
   color: #111;
   margin: 0;

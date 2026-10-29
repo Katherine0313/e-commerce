@@ -20,11 +20,11 @@
             <a-select-option v-for="brand in brandOptions" :value="brand" :key="brand" label="option"></a-select-option>
           </a-select>
         </a-form-item>
+        <a-form-item label="主标题">
+          <a-textarea v-model:value="addGoodsForm.title" show-count maxLength="100" />
+        </a-form-item>
         <a-form-item label="商品副标题" name="subTitle">
           <a-input v-model:value="addGoodsForm.subTitle" placeholder="请输入商品副标题" />
-        </a-form-item>
-        <a-form-item label="商品简介">
-          <a-textarea v-model:value="addGoodsForm.description" show-count maxLength="200" />
         </a-form-item>
         <a-form-item label="商品图片">
           <a-upload
@@ -178,7 +178,7 @@ const resetAll = () => {
   addGoodsForm.value.name = ''
   addGoodsForm.value.brand = undefined
   addGoodsForm.value.subTitle = ''
-  addGoodsForm.value.description = ''
+  addGoodsForm.value.title = ''
   addGoodsForm.value.categoryId = []
   addGoodsForm.value.image = undefined
   addGoodsForm.value.body = ''
@@ -198,7 +198,7 @@ const addGoodsForm = ref({
   // brand用undefined,否则placeholder不显示
   brand: undefined,
   subTitle: '',
-  description: '',
+  title: '',
   categoryId: [],
 })
 

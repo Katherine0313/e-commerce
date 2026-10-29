@@ -25,8 +25,8 @@
         <a-form-item label="商品副标题" name="subTitle">
           <a-input v-model:value="addGoodsForm.subTitle" placeholder="请输入商品副标题" />
         </a-form-item>
-        <a-form-item label="商品简介">
-          <a-textarea v-model:value="addGoodsForm.description" show-count maxLength="200" />
+        <a-form-item label="主标题">
+          <a-textarea v-model:value="addGoodsForm.title" show-count maxLength="300" />
         </a-form-item>
         <a-form-item label="商品图片">
           <a-upload
@@ -91,7 +91,7 @@ const addGoodsForm = ref({
   // brand用undefined,否则placeholder不显示
   brand: undefined,
   subTitle: '',
-  description: '',
+  title: '',
   categoryId: [],
 })
 
@@ -103,7 +103,7 @@ const open = (record) => {
   addGoodsForm.value.name = record.name
   addGoodsForm.value.brand = record.brand
   addGoodsForm.value.subTitle = record.subTitle
-  addGoodsForm.value.description = record.description
+  addGoodsForm.value.title = record.title
   addGoodsForm.value.image = record.image
   addGoodsForm.value.body = record.body
   // 回填已上传的图片到上传组件

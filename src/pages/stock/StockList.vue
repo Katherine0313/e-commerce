@@ -12,7 +12,7 @@
         <img v-lazy="record.image" width="80" />
       </template>
     </a-table-column>
-    <a-table-column title="产品描述" dataIndex="description"></a-table-column>
+    <a-table-column title="主标题" dataIndex="title"></a-table-column>
     <a-table-column title="库存" dataIndex="stock"></a-table-column>
     <a-table-column title="库存状态">
       <template #default="{record}">
