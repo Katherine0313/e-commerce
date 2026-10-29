@@ -43,6 +43,7 @@
         >新增分类
         </a-button>
         <a-button v-else type="link" @click="relateGoodsRef.relateGoodsModal(record)">关联产品</a-button>
+        <a-button type="link" @click="addCategoryRef.editCategoryModal(record)">编辑</a-button>
         <a-button type="link" @click="handleDeleteCategory(record)">删除</a-button>
       </template>
     </a-table-column>
@@ -91,8 +92,8 @@ const imageUrl = (path) => {
   return /^https?:\/\//.test(path) ? path : (import.meta.env.VITE_API_BASE_URL || '') + path
 }
 // 一级分类蓝色箭头，二级分类绿色箭头
-// 判断是否是一级分类（后端只在根节点挂 children）
-const isParentCategory = (record) => Array.isArray(record.children)
+// 判断是否是一级分类：用 parentId 判断，后端二级分类也会带 children:[]，不能用 children 区分
+const isParentCategory = (record) => record.parentId == null
 // 查找分类所属的同级数组
 const findSiblings = (nodes, id) => {
   if (nodes.some(node => Number(node.id) === Number(id))) {

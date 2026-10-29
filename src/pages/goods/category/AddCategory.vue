@@ -1,8 +1,9 @@
 <template>
-  <a-modal title="新增分类" v-model:visible="open" @ok="handleCategorySubmit" wrap-class-name="drag-modal-addcat">
+  <a-modal :title="modalTitle" v-model:visible="open" @ok="handleCategorySubmit" wrap-class-name="drag-modal-addcat">
     <a-form :model="addCategoryForm" ref="categoryFormRef" :rules="categoryFormRules">
       <a-form-item label="分类层级">
-        <a-radio-group v-model:value="addCategoryForm.group">
+        <!-- 编辑时不允许改层级：后端局部更新无法把 parentId 置空 -->
+        <a-radio-group v-model:value="addCategoryForm.group" :disabled="editingId !== null">
           <a-radio value="1">一级分类</a-radio>
           <a-radio value="2">二级分类</a-radio>
         </a-radio-group>
@@ -64,13 +65,17 @@
 <script setup>
 import {computed, ref} from "vue";
 import { useDragModal } from '@/composables/useDragModal'
-import {addCategory, getCategoryFlat} from '@/api/products.js'
+import {addCategory, getCategoryFlat, updateCategoryTree} from '@/api/products.js'
 import {message} from 'ant-design-vue'
 import {UploadOutlined} from '@ant-design/icons-vue'
 import {getToken} from '@/utils/token'
 import {compressImage} from '@/utils/compressImage'
 // 定义并初始化弹窗响应式变量
 const open = ref(false)
+// 当前编辑的分类 id，null 表示新增
+const editingId = ref(null)
+// 弹窗标题：新增/编辑
+const modalTitle = computed(() => editingId.value === null ? '新增分类' : '编辑分类')
 useDragModal('drag-modal-addcat')
 // 定义上级分类
 // 默认打开一级分类
@@ -98,31 +103,46 @@ const resetCategoryForm = () => {
   }
   categoryFormRef.value?.clearValidate()
 }
-// 父组件调用打开弹窗
-const addCategoryModal = () => {
-  resetCategoryForm()
-  open.value = true
-  // 获取扁平化数据
+// 加载上级分类下拉（编辑时排除自己，避免把自己选成父级）
+const loadParentList = () => {
   getCategoryFlat()
       .then(res => {
         if (res.data.success) {
           // 过滤子级分类，留下父级分类
-          parentList.value = res.data.data.filter(c => c.parentId === null)
+          parentList.value = res.data.data.filter(c => c.parentId === null && Number(c.id) !== Number(editingId.value))
         }
       })
-      // 要区分校验失败和请求失败
       .catch(err => {
-        if (err.errorFields) {
-          // 校验未通过，不用提示
-        } else {
-          message.error('新增分类失败')
-          console.log(err)
-        }
+        message.error(editingId.value === null ? '新增分类失败' : '编辑分类失败')
+        console.log(err)
       })
+}
+// 父组件调用打开新增弹窗
+const addCategoryModal = () => {
+  editingId.value = null
+  resetCategoryForm()
+  open.value = true
+  loadParentList()
+}
+// 父组件调用打开编辑弹窗，把已有分类数据回填到表单
+const editCategoryModal = (record) => {
+  editingId.value = record.id
+  resetCategoryForm()
+  addCategoryForm.value = {
+    group: record.parentId == null ? '1' : '2',
+    name: record.name,
+    status: record.status === 1,
+    parentId: record.parentId ?? undefined,
+    recommend: record.recommend === 1,
+    image: record.image || '',
+  }
+  open.value = true
+  loadParentList()
 }
 
 defineExpose({
-  addCategoryModal
+  addCategoryModal,
+  editCategoryModal
 })
 // =============图片上传=================
 // 分类图上传地址：type=category 让后端落到 upload/image/category/
@@ -153,22 +173,25 @@ const categoryFormRules = {
   name: [{required: true, message: '分类名称不能为空', trigger: 'blur'}],
   parentId: [{required: true, message: '请选择上级分类', trigger: 'blur'}],
 }
-// 弹窗中表单的提交
+// 弹窗中表单的提交：editingId 有值走更新，否则走新增
 const handleCategorySubmit = () => {
+  const isEdit = editingId.value !== null
   categoryFormRef.value.validate()
-      .then(res => {
+      .then(() => {
         const data = {
           name: addCategoryForm.value.name,
           parentId: addCategoryForm.value.group === '1' ? null : addCategoryForm.value.parentId,
           status: addCategoryForm.value.status ? 1 : 0,
           recommend: addCategoryForm.value.recommend ? 1 : 0,
-          // 分类图只属于一级分类，二级分类不提交
-          image: addCategoryForm.value.group === '1' ? (addCategoryForm.value.image || null) : null
+          // 分类图只属于一级分类，二级分类不提交；编辑时传空串才能清空已有图片（null 会被后端忽略）
+          image: addCategoryForm.value.group === '1'
+              ? (addCategoryForm.value.image || (isEdit ? '' : null))
+              : null
         }
-        return addCategory(data)
+        return isEdit ? updateCategoryTree(editingId.value, data) : addCategory(data)
       })
-      .then(res => {
-        message.success('新增分类成功')
+      .then(() => {
+        message.success(isEdit ? '编辑分类成功' : '新增分类成功')
         emit('refresh')
         open.value = false
       })
@@ -176,7 +199,7 @@ const handleCategorySubmit = () => {
         if (err && err.errorFields) {
           console.log('表单校验未通过', err)
         } else {
-          message.error(err.response?.data?.message || '新增分类失败')
+          message.error(err.response?.data?.message || (isEdit ? '编辑分类失败' : '新增分类失败'))
           console.log(err)
         }
       })
