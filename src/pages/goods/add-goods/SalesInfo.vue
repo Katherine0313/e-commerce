@@ -91,8 +91,22 @@ const salesInfoRules = {
 const validate = () => {
   return salesInfoFormRef.value?.validate()
 }
+// 清空销售信息（提交成功 / 取消时由父组件调用）
+const resetForm = () => {
+  salesInfoForm.value = {
+    listingStatus: 1,
+    salesPrice: null,
+    marketPrice: null,
+    costPrice: null,
+    productCode: '',
+    stock: null,
+    weight: null,
+    volume: null,
+  }
+  salesInfoFormRef.value?.clearValidate()
+}
 // 把表单暴露出去，给父组件引用
-defineExpose({salesInfoForm,validate})
+defineExpose({salesInfoForm, validate, resetForm})
 </script>
 <style scoped>
 .spec-list :deep(.ant-table-tbody > tr > td){

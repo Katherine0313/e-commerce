@@ -31,6 +31,7 @@
               :action="uploadAction"
               :headers="uploadHeaders"
               :before-upload="compressImage"
+              v-model:file-list="fileList"
               @change="imageUpload"
           >
             <a-button class="upload-btn" >
@@ -78,6 +79,8 @@ const search = ref('')
 const addGoodsFormRef = ref(null)
 // 销售信息子组件实例
 const salesInfoRef = ref(null)
+// 商品图片上传列表（提交成功后清空缩略图）
+const fileList = ref([])
 // 定义商品品牌响应式变量数组
 const brandOptions = ref([])
 // 定义层级分类的数据源
@@ -153,8 +156,8 @@ const handleSubmit = () => {
         console.log(res)
         // 3. 后端接口返回成功，执行收尾逻辑
         message.success('商品新增成功')
-        // 一键重置
-        addGoodsFormRef.value.resetFields()
+        // 主表单 + 图片 + 富文本 + 销售信息全部清空，方便继续录入下一件
+        resetAll()
         // 重新加载数据
         loadData()
       })
@@ -169,9 +172,22 @@ const handleSubmit = () => {
         }
       })
 }
+// 清空整页表单：主表单有 name 的字段由 resetFields 清，其余手动清
+const resetAll = () => {
+  addGoodsFormRef.value?.resetFields()
+  addGoodsForm.value.name = ''
+  addGoodsForm.value.brand = undefined
+  addGoodsForm.value.subTitle = ''
+  addGoodsForm.value.description = ''
+  addGoodsForm.value.categoryId = []
+  addGoodsForm.value.image = undefined
+  addGoodsForm.value.body = ''
+  fileList.value = []
+  salesInfoRef.value?.resetForm()
+}
 // 取消按钮
 const cancel = () => {
-  addGoodsFormRef.value.resetFields()
+  resetAll()
 }
 // ====================== 表单校验 =====================
 // 数据表单（统一放对象里，和a-form的model对应）
