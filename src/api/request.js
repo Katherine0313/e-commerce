@@ -5,11 +5,10 @@ import {getToken, removeToken} from '@/utils/token'
 axios.defaults.baseURL = import.meta.env.VITE_API_BASE_URL
 axios.defaults.timeout = 10000
 
-// 登录页地址：沙箱过期/token 失效后要回到这里重新登录或重新体验
+// 登录页地址：token 失效后要回到这里重新登录
 const LOGIN_PATH = import.meta.env.BASE_URL + 'front/login'
 
-// 401 统一处理：token 失效或体验店铺过期后，继续留在后台页面上只会一直报错，
-// 必须把用户送回登录页
+// 401 统一处理：token 失效后继续留在后台页面上只会一直报错，必须把用户送回登录页
 function handleUnauthorized(error) {
   const msg = (error.response.data && error.response.data.message) || '登录已失效，请重新登录'
   removeToken()
@@ -49,7 +48,7 @@ axios.interceptors.response.use(
           handleUnauthorized(error)
           break
         case 403:
-          // 后端会区分「仅管理员可执行」「模板店禁止写入」等具体原因，优先展示它
+          // 后端会区分「仅管理员可执行」等具体原因，优先展示它
           message.error((error.response.data && error.response.data.message) || '无权限操作，请联系管理员')
           break
         case 404:

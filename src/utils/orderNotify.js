@@ -26,7 +26,7 @@ export function connectOrderNotify() {
   const token = getToken()
   if (!token) return
   // 已有可用连接（readyState：0=连接中、1=已连接）就不重复建；
-  // 只判 ws 非空会在断线重连/HMR 后残留多个连接，后端按 shopId 遍历连接逐个推送，连接一多同一条消息就弹多次
+  // 只判 ws 非空会在断线重连/HMR 后残留多个连接，后端遍历连接逐个推送，连接一多同一条消息就弹多次
   if (ws && ws.readyState < 2) {
     return
   }

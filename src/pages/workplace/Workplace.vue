@@ -123,7 +123,7 @@
 </template>
 
 <script setup>
-  import { computed, onActivated, onMounted, ref } from 'vue';
+  import { computed, onActivated, ref } from 'vue';
   import dayjs from 'dayjs';
   import { message } from 'ant-design-vue';
   import { DownloadOutlined } from '@ant-design/icons-vue';
@@ -153,13 +153,11 @@
     orderPeriodGrowth,
     salesRanking,
     userGrowth,
-    loadStatic,
     loadAll,
     setReportPeriod,
   } = useWorkplaceData();
 
-  // 字典/店铺信息只拉一次；业务数据每次进入都刷新（首次挂载也会触发 onActivated）
-  onMounted(loadStatic);
+  // 业务数据每次进入都刷新（首次挂载也会触发 onActivated）
   onActivated(loadAll);
 
   const isAdminUser = isAdmin();

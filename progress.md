@@ -1,5 +1,20 @@
 # 进度日志
 
+## 会话：2026-10-29（多租户下线：店铺信息静态化）
+
+### 当前状态
+- 后端已删除 shop-service 与 `/api/admin/shops/**`，前端店铺信息改为静态配置，不再发任何店铺请求。
+
+### 已执行操作
+- `src/utils/shop.js` 重写为静态 `shop`（id=1、`VITE_SHOP_NAME` 或「杰米小店」），删除 `loadShop` / `expireText` / 到期定时器。
+- 删除 `src/api/shop.js`、`src/utils/sandboxVisitor.js`（沙箱入口此前已从登录页移除）。
+- `App.vue` / `Login.vue` / `useWorkplaceData.js` / `Workplace.vue` 去掉 `loadShop` 调用；`StoreCard.vue` 直接取静态店名。
+- `AboutUs.vue` 删除店铺 ID/沙箱标签/有效期展示，固定显示「自营店铺」。
+- `request.js` / `permission.js` / `orderNotify.js` 清理沙箱相关注释。
+
+### 验证
+- `npm run build` 通过。
+
 ## 会话：2026-10-12
 
 ### 当前状态

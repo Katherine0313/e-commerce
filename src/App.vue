@@ -44,7 +44,7 @@ import {getToken, removeToken} from '@/utils/token';
 import {logout} from '@/api/auth.js';
 import {getCurrentUser} from '@/utils/auth';
 import {connectOrderNotify, disconnectOrderNotify} from '@/utils/orderNotify';
-import {expireText, loadShop, shop} from '@/utils/shop';
+import {shop} from '@/utils/shop';
 import {useIsMobile} from '@/composables/useMediaQuery';
 import {StepinView} from "stepin";
 
@@ -88,23 +88,17 @@ const onKeydown = (e) => {
 onMounted(() => window.addEventListener('keydown', onKeydown));
 onBeforeUnmount(() => window.removeEventListener('keydown', onKeydown));
 
-// 拉当前店铺信息（沙箱店名、剩余有效期）
+// 已登录（刷新页面）则自动建连来单提醒
 onMounted(() => {
-  loadShop(false)
-  // 已登录（刷新页面）则自动建连来单提醒
   if (getToken()) {
     connectOrderNotify()
   }
 });
 
-// 账号 + 有效期文案：模板店永不过期，就只显示账号
-const accountTitle = () => {
-  const username = getCurrentUser()?.username
-  const left = expireText()
-  return [username, left].filter(Boolean).join(' · ') || '未登录'
-};
+// 账号文案（单店模式，没有店铺有效期）
+const accountTitle = () => getCurrentUser()?.username || '未登录';
 
-// 顶栏显示当前店铺名而不是写死的 'admin'：访客一眼能看出自己进的是独立沙箱店铺
+// 顶栏显示店铺名
 const user = computed(() => ({
   name: shop.value?.name || accountTitle(),
   avatar: avatar,
@@ -140,8 +134,6 @@ const user = computed(() => ({
             .finally(() => {
               removeToken()
               disconnectOrderNotify()
-              // 退出后清掉店铺信息，避免下一个登录的人看到上一个店铺的店名
-              shop.value = null
               router.push('/front/login')
             })
       },

@@ -79,6 +79,15 @@
 
 - （本次任务未进行浏览器/截图操作）
 
+## 店铺信息静态化（2026-10-29）
+
+多租户沙箱已下线，后端删除 `shop-service` 与 `/api/admin/shops/**`：
+
+- 店铺信息唯一来源是 `src/utils/shop.js` 的静态 `shop` ref：`{id:1, name: VITE_SHOP_NAME || '杰米小店', isTemplate:1}`。
+- `loadShop()` / `expireText()` / 到期强制登出定时器已删除；不再请求店铺接口，也不再有店名加载空窗期。
+- `src/api/shop.js`、`src/utils/sandboxVisitor.js` 已删除；`sandbox-and-launch.md` 仅作历史存档。
+- 仍读取 `shop` 的组件：App 顶栏、StoreCard、Workplace/AboutUs，均为同步静态值，无需 loading 处理。
+
 ---
 *每执行2次查看/浏览器/搜索操作后更新此文件*
 *防止视觉信息丢失*

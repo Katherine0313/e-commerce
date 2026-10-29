@@ -8,7 +8,7 @@
 
 ## 下一步
 
-对接剩余后台模块：库存预警、售后、工作台（dashboard/shops/upload）。
+对接剩余后台模块：库存预警、售后、工作台（dashboard/upload）。店铺信息已于 2026-10-29 改为前端静态配置，不再对接 shops 接口。
 
 ## 当前阶段
 
@@ -75,7 +75,7 @@
 - [x] 公共时间选择器组件 date-range-select.vue（订单/发货/售后复用）
 - [x] 库存预警对接（api/stock.js 路径 /api/admin/stock + StockList 页 + 工作台 Projects 字段驼峰）
 - [x] 售后对接（api/afterSale.js 审核/删除走 /api/admin/after-sales + 6 售后页字段蛇形→驼形 + 列表搜索/日期筛选）
-- [ ] 工作台（dashboard/shops/upload）对接
+- [ ] 工作台（dashboard/upload）对接（shops 接口已下线）
 - **状态：** in_progress
 
 ## 关键问题

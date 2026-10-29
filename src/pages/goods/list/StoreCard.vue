@@ -17,16 +17,12 @@
 </template>
 
 <script setup>
-import {computed, onMounted} from 'vue'
-import {loadShop, shop} from '@/utils/shop'
+import {computed} from 'vue'
+import {shop} from '@/utils/shop'
 
 const baseUrl = import.meta.env.BASE_URL
-// 店名取当前登录的店铺（沙箱店名各不相同），拉不到时给个中性的兜底文案
+// 单店模式：店名直接取静态店铺配置
 const shopName = computed(() => shop.value?.name || '店铺')
-
-onMounted(() => {
-  loadShop(false)
-})
 </script>
 
 <style scoped lang="less">

@@ -16,7 +16,7 @@ import {
   getTurnover,
   getTurnoverReport,
 } from '@/api/report.js';
-import { loadShop, shop } from '@/utils/shop.js';
+import { shop } from '@/utils/shop.js';
 import { orderNotifyTick } from '@/utils/orderNotify.js';
 import { formatThousand } from '@/utils/formatter.js';
 
@@ -314,12 +314,6 @@ export function useWorkplaceData() {
     loadTurnover(reportPeriod.value);
   });
 
-  /** 静态数据：店铺信息。keep-alive 下 onMounted 只跑一次 */
-  function loadStatic() {
-    // 复用 utils/shop 的模块级缓存，App.vue 启动时已拉过 → 这里通常不发请求
-    loadShop();
-  }
-
   /** 业务数据：每次进入工作台都刷新 */
   function loadAll() {
     return Promise.all([
@@ -368,7 +362,6 @@ export function useWorkplaceData() {
     salesRanking,
     userGrowth,
     dashboardStats,
-    loadStatic,
     loadAll,
     loadTurnover,
     setReportPeriod,

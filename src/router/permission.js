@@ -25,7 +25,7 @@ router.beforeEach((to, from, next) => {
     // 从 localStorage 读取 token
     // token是用户登录成功后的身份凭证
     let token = getToken()
-    // 沙箱 token 与店铺同寿命，过期后先清掉，避免刷新页面时先闪一下后台再被 401 踢走
+    // token 过期后先清掉，避免刷新页面时先闪一下后台再被 401 踢走
     if (token && isTokenExpired(token)) {
         removeToken()
         sessionStorage.setItem('loginMessage', '登录已过期，请重新登录')

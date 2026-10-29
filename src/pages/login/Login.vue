@@ -69,8 +69,8 @@
                   </template>
                 </a-input-password>
               </div>
-              <!-- 账号密码登录按钮只在本机开发时显示，上线后只保留一键体验 -->
-              <button v-if="isDev" class="submit-btn" type="submit" :disabled="loading">
+              <!-- 账号密码登录：演示环境直接可用 -->
+              <button class="submit-btn" type="submit" :disabled="loading">
                 <span v-if="loading" class="spinner"></span>
                 {{ loading ? '登录中…' : '登 录' }}
               </button>
@@ -119,25 +119,14 @@
                   </button>
                 </div>
               </div>
-              <!-- 登录按钮只在本机开发时显示，上线后手机号 Tab 只保留下方的一键体验 -->
-              <button v-if="isDev" class="submit-btn" type="submit" :disabled="phoneLoading">
+              <!-- 手机号 + 验证码登录：演示环境直接可用 -->
+              <button class="submit-btn" type="submit" :disabled="phoneLoading">
                 <span v-if="phoneLoading" class="spinner"></span>
                 {{ phoneLoading ? '登录中…' : '登 录' }}
               </button>
             </div>
           </transition>
         </form>
-
-        <!-- 一键体验：免注册登录，账号密码 / 手机号两个 Tab 都显示 -->
-        <button
-            class="submit-btn sandbox-btn"
-            type="button"
-            :disabled="sandboxLoading"
-            @click="startSandbox"
-        >
-          <span v-if="sandboxLoading" class="spinner"></span>
-          {{ sandboxLoading ? '正在开通体验店铺…' : '一键体验（免注册）' }}
-        </button>
       </section>
     </main>
 
@@ -157,21 +146,16 @@ import {
   UserOutlined
 } from '@ant-design/icons-vue';
 import {login, loginByPhone, sendSmsCode} from '@/api/auth.js';
-import {createSandbox} from '@/api/shop.js';
 import {setToken} from '@/utils/token';
 import {connectOrderNotify} from '@/utils/orderNotify';
-import {loadShop} from '@/utils/shop';
 import router from '@/router';
 import avatar from '@/assets/avatar/zongjie.webp';
 
-// import.meta.env 不能在模板表达式里直接用（模板编译器按非 module 解析），先在 script 里取成变量
-const isDev = import.meta.env.DEV;
 const year = new Date().getFullYear();
 
 const mode = ref('account');
 const loading = ref(false);
 const phoneLoading = ref(false);
-const sandboxLoading = ref(false);
 const sending = ref(false);
 const countdown = ref(0);
 let countdownTimer = null;
@@ -204,7 +188,7 @@ const startCountdown = (seconds) => {
 };
 
 onMounted(() => {
-  // 401 拦截器跳回本页时留下的原因（例如「体验店铺已过期，请重新体验」）
+  // 401 拦截器跳回本页时留下的原因（例如「登录已过期，请重新登录」）
   const tip = sessionStorage.getItem('loginMessage');
   if (tip) {
     message.warning(tip);
@@ -226,8 +210,6 @@ const finishLogin = (res) => {
   if (res.data.success) {
     setToken(res.data.data.token);
     connectOrderNotify();
-    // 登录进去的可能是模板店或沙箱店，强制重拉店铺信息给顶栏用
-    loadShop(true);
     message.success('登录成功');
     router.push('/workplace');
   }
@@ -304,37 +286,11 @@ const submitPhone = () => {
 };
 
 const handleSubmit = () => {
-  // 两个登录入口都只在本机开发时可用，上线后表单按回车也不触发
-  if (!isDev) return;
   if (mode.value === 'account') {
     submitAccount();
   } else {
     submitPhone();
   }
-};
-
-// 一键体验：后端按浏览器访客标识复用 24h 内的沙箱，没有则新开，并签发该店铺的管理员 token
-const startSandbox = () => {
-  if (sandboxLoading.value) return; // 防同一页面连点，减少并发建店
-  sandboxLoading.value = true;
-  createSandbox()
-      .then(res => {
-        if (res.data.success) {
-          const data = res.data.data;
-          setToken(data.token);
-          connectOrderNotify();
-          // 换到店铺了，强制重拉店铺信息（顶栏/店铺卡片要显示店铺名）
-          loadShop(true);
-          message.success((data.restored ? '已恢复体验店铺：' : '体验店铺已开通：') + data.shop.name);
-          router.push('/workplace');
-        }
-      })
-      .catch(() => {
-        message.error('体验店铺开通失败，请稍后再试');
-      })
-      .finally(() => {
-        sandboxLoading.value = false;
-      });
 };
 </script>
 
@@ -687,12 +643,6 @@ const startSandbox = () => {
     border-top-color: #13223f;
     border-radius: 50%;
     animation: spin 0.7s linear infinite;
-  }
-
-  /* ============ 一键体验按钮 ============ */
-  /* 复用 .submit-btn 的全部视觉样式，只调整与上方登录按钮的间距 */
-  .sandbox-btn {
-    margin-top: 12px;
   }
 
   .page-foot {
