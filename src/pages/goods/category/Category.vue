@@ -37,14 +37,17 @@
     </a-table-column>
     <a-table-column title="操作">
       <template #default="{record}">
-        <a-button type="primary"
+        <a-button v-permission="'product:category:add'" type="primary"
                   v-if="isParentCategory(record)" style="margin-right: 10px;"
                   @click="addCategoryRef.addCategoryModal()"
         >新增分类
         </a-button>
-        <a-button v-else type="link" @click="relateGoodsRef.relateGoodsModal(record)">关联产品</a-button>
-        <a-button type="link" @click="addCategoryRef.editCategoryModal(record)">编辑</a-button>
-        <a-button type="link" @click="handleDeleteCategory(record)">删除</a-button>
+        <a-button v-else v-permission="'product:category:edit'" type="link"
+                  @click="relateGoodsRef.relateGoodsModal(record)">关联产品</a-button>
+        <a-button v-permission="'product:category:edit'" type="link"
+                  @click="addCategoryRef.editCategoryModal(record)">编辑</a-button>
+        <a-button v-permission="'product:category:remove'" type="link"
+                  @click="handleDeleteCategory(record)">删除</a-button>
       </template>
     </a-table-column>
   </a-table>

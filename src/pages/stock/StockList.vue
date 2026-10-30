@@ -30,7 +30,7 @@
     </a-table-column>
     <a-table-column title="操作">
       <template #default="{record}">
-        <a-button type="primary" @click="handleStockVisible(record)">设置</a-button>
+        <a-button v-permission="'product:stock:edit'" type="primary" @click="handleStockVisible(record)">设置</a-button>
       </template>
     </a-table-column>
   </a-table>

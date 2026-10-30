@@ -25,7 +25,30 @@ export function getCurrentUser() {
   }
 }
 
-/** 当前登录用户是否为管理员（商家） */
+/** 当前令牌是否为后台管理员令牌（admin 端所有角色） */
+export function isAdminToken() {
+  return getCurrentUser()?.type === 'admin'
+}
+
+/** 当前登录用户是否为超级管理员（店铺管理员） */
 export function isAdmin() {
-  return getCurrentUser()?.role === 'admin'
+  const user = getCurrentUser()
+  return user?.role === 'admin'
+      || (user?.roles || []).includes('admin')
+      || (user?.permissions || []).includes('*:*:*')
+}
+
+/** 是否拥有某个权限标识，例如 product:product:list */
+export function hasPermi(permission) {
+  const user = getCurrentUser()
+  if (!user) return false
+  // 历史 token 可能没有 permissions 字段，这里兜底成空数组
+  const permissions = Array.isArray(user.permissions) ? user.permissions : []
+  return permissions.includes('*:*:*') || permissions.includes(permission)
+}
+
+/** 是否拥有任意一个权限 */
+export function hasAnyPermi(permissions) {
+  const list = Array.isArray(permissions) ? permissions : [permissions]
+  return list.some((permission) => hasPermi(permission))
 }

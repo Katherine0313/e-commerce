@@ -16,116 +16,72 @@
       </div>
 
       <section class="panel">
-        <!-- 登录方式切换：滑块位移代替 antd Tabs，保持整体视觉统一 -->
-        <div class="mode-switch" role="tablist" aria-label="登录方式">
-          <span class="switch-thumb" :class="{ right: mode === 'phone' }"></span>
-          <button
-              type="button"
-              role="tab"
-              :aria-selected="mode === 'account'"
-              :class="{ active: mode === 'account' }"
-              @click="switchMode('account')"
-          >
-            账号密码
-          </button>
-          <button
-              type="button"
-              role="tab"
-              :aria-selected="mode === 'phone'"
-              :class="{ active: mode === 'phone' }"
-              @click="switchMode('phone')"
-          >
-            手机号登录
-          </button>
-        </div>
-
-        <form class="auth-form" @submit.prevent="handleSubmit">
-          <transition name="swap" mode="out-in">
-            <!-- 账号密码登录 -->
-            <div v-if="mode === 'account'" key="account" class="field-group">
-              <div class="field">
-                <label for="login-username">账号</label>
+        <form class="auth-form" @submit.prevent="submitAccount">
+          <div class="field-group">
+            <div class="field">
+              <label for="login-username">账号</label>
+              <a-input
+                  id="login-username"
+                  v-model:value="accountForm.username"
+                  autocomplete="username"
+                  placeholder="用户名 / 邮箱"
+              >
+                <template #prefix>
+                  <UserOutlined class="field-icon" />
+                </template>
+              </a-input>
+            </div>
+            <div class="field">
+              <label for="login-password">密码</label>
+              <a-input-password
+                  id="login-password"
+                  v-model:value="accountForm.password"
+                  autocomplete="current-password"
+                  placeholder="请输入密码"
+              >
+                <template #prefix>
+                  <LockOutlined class="field-icon" />
+                </template>
+              </a-input-password>
+            </div>
+            <div class="field">
+              <label for="login-captcha">图形验证码</label>
+              <div class="captcha-row">
                 <a-input
-                    id="login-username"
-                    v-model:value="accountForm.username"
-                    autocomplete="username"
-                    placeholder="用户名 / 邮箱"
+                    id="login-captcha"
+                    v-model:value="captchaCode"
+                    autocomplete="off"
+                    :maxlength="4"
+                    placeholder="请输入右侧验证码"
+                    @pressEnter="submitAccount"
                 >
                   <template #prefix>
-                    <UserOutlined class="field-icon" />
+                    <SafetyCertificateOutlined class="field-icon" />
                   </template>
                 </a-input>
+                <img
+                    v-if="captchaImage"
+                    :src="captchaImage"
+                    class="captcha-img"
+                    alt="图形验证码"
+                    title="点击刷新"
+                    @click="loadCaptcha"
+                />
+                <button v-else type="button" class="captcha-img captcha-refresh" @click="loadCaptcha">
+                  {{ captchaLoading ? '加载中…' : '点击刷新' }}
+                </button>
               </div>
-              <div class="field">
-                <label for="login-password">密码</label>
-                <a-input-password
-                    id="login-password"
-                    v-model:value="accountForm.password"
-                    autocomplete="current-password"
-                    placeholder="请输入密码"
-                >
-                  <template #prefix>
-                    <LockOutlined class="field-icon" />
-                  </template>
-                </a-input-password>
-              </div>
-              <!-- 账号密码登录：演示环境直接可用 -->
-              <button class="submit-btn" type="submit" :disabled="loading">
-                <span v-if="loading" class="spinner"></span>
-                {{ loading ? '登录中…' : '登 录' }}
-              </button>
             </div>
-
-            <!-- 手机号验证码登录 -->
-            <div v-else key="phone" class="field-group">
-              <div class="field">
-                <label for="login-phone">手机号</label>
-                <a-input
-                    id="login-phone"
-                    v-model:value="phoneForm.phone"
-                    autocomplete="tel"
-                    inputmode="numeric"
-                    :maxlength="11"
-                    placeholder="请输入绑定的手机号"
-                >
-                  <template #prefix>
-                    <MobileOutlined class="field-icon" />
-                    <span class="dial-code">+86</span>
-                  </template>
-                </a-input>
-              </div>
-              <div class="field">
-                <label for="login-code">验证码</label>
-                <div class="code-row">
-                  <a-input
-                      id="login-code"
-                      v-model:value="phoneForm.code"
-                      autocomplete="one-time-code"
-                      inputmode="numeric"
-                      :maxlength="6"
-                      placeholder="6 位验证码"
-                  >
-                    <template #prefix>
-                      <SafetyCertificateOutlined class="field-icon" />
-                    </template>
-                  </a-input>
-                  <button
-                      class="code-btn"
-                      type="button"
-                      :disabled="countdown > 0 || sending"
-                      @click="handleSendCode"
-                  >
-                    {{ codeButtonText }}
-                  </button>
-                </div>
-              </div>
-              <!-- 手机号 + 验证码登录：演示环境直接可用 -->
-              <button class="submit-btn" type="submit" :disabled="phoneLoading">
-                <span v-if="phoneLoading" class="spinner"></span>
-                {{ phoneLoading ? '登录中…' : '登 录' }}
-              </button>
+            <!-- 记住密码：只回填登录页，不参与鉴权 -->
+            <div class="remember-row">
+              <a-checkbox v-model:checked="remember">记住密码</a-checkbox>
+              <span class="remember-tip">30 天内自动回填</span>
             </div>
-          </transition>
+            <button class="submit-btn" type="submit" :disabled="loading">
+              <span v-if="loading" class="spinner"></span>
+              {{ loading ? '登录中…' : '登 录' }}
+            </button>
+          </div>
         </form>
       </section>
     </main>
@@ -137,28 +93,27 @@
 </template>
 
 <script setup>
-import {computed, onBeforeUnmount, onMounted, reactive, ref} from 'vue';
+import {onBeforeUnmount, onMounted, reactive, ref} from 'vue';
 import {message} from 'ant-design-vue';
 import {
   LockOutlined,
-  MobileOutlined,
   SafetyCertificateOutlined,
   UserOutlined
 } from '@ant-design/icons-vue';
-import {login, loginByPhone, sendSmsCode} from '@/api/auth.js';
+import {getCaptcha, login} from '@/api/auth.js';
 import {setToken} from '@/utils/token';
+import {clearRemember, loadRemember, saveRemember} from '@/utils/remember';
 import {connectOrderNotify} from '@/utils/orderNotify';
 import router from '@/router';
 import avatar from '@/assets/avatar/zongjie.webp';
 
 const year = new Date().getFullYear();
 
-const mode = ref('account');
 const loading = ref(false);
-const phoneLoading = ref(false);
-const sending = ref(false);
-const countdown = ref(0);
-let countdownTimer = null;
+const captchaLoading = ref(false);
+const captchaId = ref('');
+const captchaImage = ref('');
+const captchaCode = ref('');
 let prefetchTimer = null;
 
 // 固定预填演示账号（开发和生产都回填）
@@ -166,25 +121,32 @@ const accountForm = reactive({
   username: 'admin',
   password: 'admin123',
 });
-const phoneForm = reactive({phone: '13800138000', code: ''});
 
-const codeButtonText = computed(() => {
-  if (sending.value) return '发送中…';
-  if (countdown.value > 0) return `${countdown.value}s 后重发`;
-  return '获取验证码';
-});
+// 记住密码：有历史记录时优先回填（30 天过期）
+const remembered = loadRemember();
+const remember = ref(!!remembered);
+if (remembered) {
+  accountForm.username = remembered.username;
+  accountForm.password = remembered.password;
+}
 
-const switchMode = (target) => {
-  if (mode.value !== target) mode.value = target;
-};
-
-const startCountdown = (seconds) => {
-  countdown.value = seconds;
-  clearInterval(countdownTimer);
-  countdownTimer = setInterval(() => {
-    countdown.value -= 1;
-    if (countdown.value <= 0) clearInterval(countdownTimer);
-  }, 1000);
+// 拉取图形验证码：点击图片或登录失败后刷新
+const loadCaptcha = () => {
+  captchaLoading.value = true;
+  getCaptcha()
+      .then((res) => {
+        const data = res.data.data || {};
+        captchaId.value = data.captchaId || '';
+        captchaImage.value = data.image || '';
+        captchaCode.value = '';
+      })
+      .catch(() => {
+        // 错误提示由 axios 拦截器统一处理
+        captchaImage.value = '';
+      })
+      .finally(() => {
+        captchaLoading.value = false;
+      });
 };
 
 onMounted(() => {
@@ -194,6 +156,8 @@ onMounted(() => {
     message.warning(tip);
     sessionStorage.removeItem('loginMessage');
   }
+  // 进入登录页先拉图形验证码
+  loadCaptcha();
   // 空闲时预取工作台代码块：登录后 router.push 直接命中缓存，不再等下载
   prefetchTimer = setTimeout(() => {
     import('@/pages/workplace/Workplace.vue').catch(() => {});
@@ -201,11 +165,10 @@ onMounted(() => {
 });
 
 onBeforeUnmount(() => {
-  clearInterval(countdownTimer);
   clearTimeout(prefetchTimer);
 });
 
-// 登录成功后的公共处理：账号密码登录与手机号登录共用
+// 登录成功后的公共处理
 const finishLogin = (res) => {
   if (res.data.success) {
     setToken(res.data.data.token);
@@ -224,73 +187,42 @@ const submitAccount = () => {
     message.warning('请输入密码');
     return;
   }
+  if (!captchaCode.value.trim()) {
+    message.warning('请输入图形验证码');
+    return;
+  }
+  if (!captchaId.value) {
+    message.warning('验证码已失效，请刷新后重试');
+    loadCaptcha();
+    return;
+  }
   loading.value = true;
-  login({username: accountForm.username.trim(), password: accountForm.password})
-      .then(finishLogin)
+  const username = accountForm.username.trim();
+  login({
+    username,
+    password: accountForm.password,
+    captchaId: captchaId.value,
+    // 前端收集验证码，交给后端比对
+    captchaCode: captchaCode.value.trim(),
+  })
+      .then((res) => {
+        // 登录成功后才保存，避免把错误密码记下来
+        if (res.data && res.data.success) {
+          if (remember.value) {
+            saveRemember(username, accountForm.password);
+          } else {
+            clearRemember();
+          }
+        }
+        finishLogin(res);
+      })
       .catch(() => {
-        // 密码错误等由 axios 拦截器统一提示，这里只需要结束 loading
+        // 密码/验证码错误等由 axios 拦截器统一提示；验证码一次性使用，失败后刷新
+        loadCaptcha();
       })
       .finally(() => {
         loading.value = false;
       });
-};
-
-// 发送验证码：开发环境或演示手机号后端会回传 devCode，自动填入方便登录
-const handleSendCode = () => {
-  const phone = phoneForm.phone.trim();
-  if (countdown.value > 0 || sending.value) return;
-  if (!/^1[3-9]\d{9}$/.test(phone)) {
-    message.warning('请输入正确的手机号');
-    return;
-  }
-  sending.value = true;
-  sendSmsCode({phone})
-      .then(res => {
-        if (res.data.success) {
-          const devCode = res.data.data && res.data.data.devCode;
-          if (devCode) {
-            phoneForm.code = devCode;
-            message.info(`验证码：${devCode}`, 6);
-          }
-          startCountdown(60);
-        }
-      })
-      .catch(() => {
-        // 未绑定账号 / 发送过于频繁等由 axios 拦截器提示
-      })
-      .finally(() => {
-        sending.value = false;
-      });
-};
-
-const submitPhone = () => {
-  const phone = phoneForm.phone.trim();
-  const code = phoneForm.code.trim();
-  if (!/^1[3-9]\d{9}$/.test(phone)) {
-    message.warning('请输入正确的手机号');
-    return;
-  }
-  if (!/^\d{6}$/.test(code)) {
-    message.warning('请输入 6 位验证码');
-    return;
-  }
-  phoneLoading.value = true;
-  loginByPhone({phone, code})
-      .then(finishLogin)
-      .catch(() => {
-        // 验证码错误等由 axios 拦截器统一提示
-      })
-      .finally(() => {
-        phoneLoading.value = false;
-      });
-};
-
-const handleSubmit = () => {
-  if (mode.value === 'account') {
-    submitAccount();
-  } else {
-    submitPhone();
-  }
 };
 </script>
 
@@ -434,53 +366,6 @@ const handleSubmit = () => {
     }
   }
 
-  /* 登录方式切换 */
-  .mode-switch {
-    position: relative;
-    display: flex;
-    padding: 4px;
-    border: 1px solid rgba(16, 52, 100, 0.08);
-    border-radius: 12px;
-    background: rgba(16, 52, 100, 0.06);
-
-    button {
-      position: relative;
-      z-index: 1;
-      flex: 1;
-      height: 36px;
-      border: none;
-      background: transparent;
-      color: #6a80a0;
-      font-family: inherit;
-      font-size: 13.5px;
-      font-weight: 500;
-      letter-spacing: 0.04em;
-      cursor: pointer;
-      transition: color 0.25s ease;
-
-      &.active {
-        color: #12213f;
-        font-weight: 600;
-      }
-    }
-  }
-
-  .switch-thumb {
-    position: absolute;
-    top: 4px;
-    left: 4px;
-    width: calc(50% - 4px);
-    height: calc(100% - 8px);
-    border-radius: 9px;
-    background: linear-gradient(135deg, #ffe08a, #ffca29);
-    box-shadow: 0 6px 18px -6px rgba(255, 202, 41, 0.65);
-    transition: transform 0.34s cubic-bezier(0.22, 1, 0.36, 1);
-
-    &.right {
-      transform: translateX(100%);
-    }
-  }
-
   /* ============ 表单 ============ */
   .auth-form {
     margin-top: 22px;
@@ -545,8 +430,17 @@ const handleSubmit = () => {
     color: #7a90b2 !important;
   }
 
-  /* Chrome 自动填充时保留浅色背景 */
-  .field :deep(input:-webkit-autofill) {
+  /* Chrome 自动填充：
+     1) 内层 input 上的 box-shadow: none !important 会把 autofill 常用的白色 inset 阴影覆盖掉，
+        这里用更高优先级的选择器重新覆盖，避免露出浏览器默认的淡黄/淡蓝底色；
+     2) affix 容器一起改白，避免只有文本区一块白、左右 padding 还是玻璃色。 */
+  .field :deep(.ant-input-affix-wrapper:has(input:-webkit-autofill)) {
+    background: #ffffff !important;
+  }
+
+  .field :deep(.ant-input-affix-wrapper > input.ant-input:-webkit-autofill),
+  .field :deep(.ant-input-affix-wrapper > input.ant-input:-webkit-autofill:hover),
+  .field :deep(.ant-input-affix-wrapper > input.ant-input:-webkit-autofill:focus) {
     -webkit-text-fill-color: #10243f !important;
     -webkit-box-shadow: 0 0 0 1000px #ffffff inset !important;
     caret-color: #10243f;
@@ -558,46 +452,48 @@ const handleSubmit = () => {
     font-size: 15px;
   }
 
-  .dial-code {
-    margin-right: 8px;
-    padding-right: 10px;
-    border-right: 1px solid var(--line);
-    color: #607a9e;
-    font-size: 13px;
-    line-height: 1;
-  }
-
-  .code-row {
+  /* 图形验证码：输入框 + 可点击刷新的图片 */
+  .captcha-row {
     display: flex;
-    gap: 10px;
+    align-items: center;
+    gap: 12px;
 
     :deep(.ant-input-affix-wrapper) {
       flex: 1;
-      min-width: 0;
     }
   }
 
-  .code-btn {
-    flex: 0 0 116px;
-    height: 48px;
-    border: 1px solid rgba(219, 164, 0, 0.55);
-    border-radius: 12px;
-    background: rgba(255, 202, 41, 0.26);
-    color: #7c5300;
-    font-family: inherit;
-    font-size: 13px;
+  .captcha-img {
+    width: 120px;
+    height: 40px;
+    flex-shrink: 0;
+    border-radius: 8px;
     cursor: pointer;
-    transition: background 0.2s ease, border-color 0.2s ease;
+    object-fit: cover;
+    background: rgba(255, 255, 255, 0.92);
+  }
 
-    &:hover:not(:disabled) {
-      border-color: rgba(219, 164, 0, 0.8);
-      background: rgba(255, 202, 41, 0.28);
-    }
+  .captcha-refresh {
+    padding: 0;
+    border: 1px solid var(--line);
+    font-size: 12px;
+    color: var(--muted);
+  }
 
-    &:disabled {
-      opacity: 0.45;
-      cursor: not-allowed;
-    }
+  /* 记住密码：勾选框 + 过期提示 */
+  .remember-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin: 2px 0 18px;
+    font-size: 13px;
+    color: var(--muted);
+  }
+
+  .remember-tip {
+    font-size: 12px;
+    color: var(--muted);
+    opacity: 0.75;
   }
 
   .submit-btn {
@@ -656,22 +552,6 @@ const handleSubmit = () => {
     text-align: center;
   }
 
-  /* ============ 动效 ============ */
-  .swap-enter-active,
-  .swap-leave-active {
-    transition: opacity 0.18s ease, transform 0.18s ease;
-  }
-
-  .swap-enter-from {
-    opacity: 0;
-    transform: translateY(6px);
-  }
-
-  .swap-leave-to {
-    opacity: 0;
-    transform: translateY(-6px);
-  }
-
   /* 小屏：隐藏品牌介绍，卡片居中 */
   @media (max-width: 767px) {
     padding: 56px 16px 70px;
@@ -717,10 +597,7 @@ const handleSubmit = () => {
 
 @media (prefers-reduced-motion: reduce) {
   .auth-shell {
-    .switch-thumb,
-    .submit-btn,
-    .swap-enter-active,
-    .swap-leave-active {
+    .submit-btn {
       transition: none !important;
     }
   }

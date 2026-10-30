@@ -1,12 +1,5 @@
 <template>
   <div class="workplace grid grid-rows-none gap-4 mt-xxs">
-    <!-- 非管理员看到的订单只属于本人，和商品/库存的全店口径不一致，这里明确说明 -->
-    <a-alert
-      v-if="!isAdminUser"
-      type="info"
-      show-icon
-      message="当前为普通用户账号，订单相关指标仅统计您本人的订单；使用商家（管理员）账号可查看全店数据。"
-    />
     <div
       class="hero bg-container p-base rounded-b-lg rounded-tr-lg pt-8 flex items-end justify-between"
     >
@@ -136,7 +129,7 @@
   import AboutUs from './AboutUs.vue';
   import { useUnbounded } from '@/utils/useTheme';
   import { formatThousand } from '@/utils/formatter';
-  import { getCurrentUser, isAdmin } from '@/utils/auth';
+  import { getCurrentUser } from '@/utils/auth';
   import { PERIODS, useWorkplaceData } from './useWorkplaceData';
 
   useUnbounded();
@@ -160,7 +153,6 @@
   // 业务数据每次进入都刷新（首次挂载也会触发 onActivated）
   onActivated(loadAll);
 
-  const isAdminUser = isAdmin();
   const userName = getCurrentUser()?.username || '访客';
 
   // 运营数据报表导出
@@ -204,12 +196,20 @@
     return `${word}，${userName}，欢迎回来`;
   });
 
-  // 原来是演示身份「CEO / Co-Founder」，换成真实角色 + 店铺名
-  const roleText = computed(() =>
-    [isAdminUser ? '店铺管理员' : '普通用户', shopInfo.value?.name]
+  // 顶部展示真实 RBAC 角色 + 店铺名
+  const ROLE_NAMES = {
+    admin: '店铺管理员',
+    operator: '运营',
+    service: '客服',
+    warehouse: '仓储发货',
+  };
+  const roleText = computed(() => {
+    const roles = getCurrentUser()?.roles || [];
+    const names = roles.map((role) => ROLE_NAMES[role] || role);
+    return [names.join('/') || '后台用户', shopInfo.value?.name]
       .filter(Boolean)
-      .join(' · ')
-  );
+      .join(' · ');
+  });
 </script>
 
 <style scoped lang="less">

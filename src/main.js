@@ -15,9 +15,12 @@ import 'stepin/es/style';
 import '@/theme/index.less';
 import { AuthPlugin, IconfontPlugin } from '@/plugins';
 import lazy from '@/directives/lazy';
+import permission from '@/directives/permission';
 const app = createApp(App);
 // 注册图片懒加载指令 v-lazy（用于列表缩略图，避免全量请求）
 app.directive('lazy', lazy);
+// 注册按钮权限指令 v-permission（按 JWT 中的 permissions 控制显隐）
+app.directive('permission', permission);
 
 // 注册Pinia到Vue应用
 app.use(pinia)

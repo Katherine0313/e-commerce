@@ -17,7 +17,7 @@
           </a-button>
         </a-form-item>
       </a-form>
-      <a-button type="primary" @click="openCreate">新建优惠券</a-button>
+      <a-button v-permission="'business:coupon:add'" type="primary" @click="openCreate">新建优惠券</a-button>
     </div>
 
     <a-table :dataSource="list" :columns="columns" :pagination="pagination" row-key="id"
@@ -43,16 +43,17 @@
         </template>
         <template v-else-if="column.key === 'action'">
           <a-button size="small" @click="openDetail(record)" style="margin-right: 6px">详情</a-button>
-          <a-button v-if="record.status === 'PENDING'" size="small" type="primary"
-                    style="margin-right: 6px" @click="openEdit(record)">编辑</a-button>
-          <a-button v-if="canGrant(record)" size="small" type="primary"
-                    style="margin-right: 6px" @click="openGrant(record)">发券</a-button>
+          <a-button v-if="record.status === 'PENDING'" v-permission="'business:coupon:edit'"
+                    size="small" type="primary" style="margin-right: 6px" @click="openEdit(record)">编辑</a-button>
+          <a-button v-if="canGrant(record)" v-permission="'business:coupon:grant'"
+                    size="small" type="primary" style="margin-right: 6px" @click="openGrant(record)">发券</a-button>
           <a-popconfirm v-if="record.status === 'PENDING' || record.status === 'ACTIVE'"
                         title="确定停止发放该券？" @confirm="handleStop(record)">
-            <a-button size="small" danger style="margin-right: 6px">停止</a-button>
+            <a-button v-permission="'business:coupon:edit'" size="small" danger
+                      style="margin-right: 6px">停止</a-button>
           </a-popconfirm>
           <a-popconfirm v-if="record.status === 'PENDING'" title="确定删除该券？" @confirm="handleDelete(record)">
-            <a-button size="small" danger>删除</a-button>
+            <a-button v-permission="'business:coupon:remove'" size="small" danger>删除</a-button>
           </a-popconfirm>
         </template>
       </template>

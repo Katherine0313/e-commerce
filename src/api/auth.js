@@ -10,12 +10,7 @@ export function logout() {
   return axios.post('/api/logout')
 }
 
-// 发送手机登录验证码（开发环境后端会回传 devCode，方便本机联调）
-export function sendSmsCode(data) {
-  return axios.post('/api/auth/sms-code', data)
-}
-
-// 手机号 + 验证码登录
-export function loginByPhone(data) {
-  return axios.post('/api/auth/phone-login', data)
+// 获取图形验证码（返回 captchaId + base64 图片）
+export function getCaptcha() {
+  return axios.get('/api/auth/captcha')
 }

@@ -1,7 +1,7 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import { getCart, addCartItem, updateCartItem, removeCartItem, clearCart } from '@/api/cart.js'
-import { isAdmin } from '@/utils/auth'
+import { isAdminToken } from '@/utils/auth'
 
 // 购物车状态仓库，数据存后端数据库（不再用 localStorage）
 export const useCartStore
@@ -13,7 +13,7 @@ export const useCartStore
     // 后台管理端（admin）没有购物车：商品列表页复用了 C 端 Mall 组件做详情预览，
     // 会带上 Cart/Settlement 连带触发这里的 load()；admin token 调 /api/cart 会被后端
     // 按 user 身份拦截（403）。商家身份直接跳过，避免无意义的报错请求。
-    if (isAdmin()) {
+    if (isAdminToken()) {
       items.value = []
       return
     }

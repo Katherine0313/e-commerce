@@ -42,9 +42,9 @@
         {{ record.updatedAt ? dayjs(record.updatedAt).format('YYYY-MM-DD HH:mm:ss') : '-' }}
       </template>
       <template v-if="column.key === 'action'">
-        <a-button @click="handleEdit(record)" type="primary" style="margin-right:5px">编辑
+        <a-button v-permission="'product:product:edit'" @click="handleEdit(record)" type="primary" style="margin-right:5px">编辑
         </a-button>
-        <a-button @click="handleDelete(record)" type="primary">删除</a-button>
+        <a-button v-permission="'product:product:remove'" @click="handleDelete(record)" type="primary">删除</a-button>
       </template>
     </template>
   </a-table>

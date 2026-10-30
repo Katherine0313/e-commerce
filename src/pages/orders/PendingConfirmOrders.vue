@@ -24,16 +24,16 @@
       <a-table-column title="操作">
         <template #default="{record}">
           <div class="ops">
-            <a-button v-if="isAdminUser" type="primary" style="margin-right:10px;"
+            <a-button v-if="hasPermi('order:order:update')" type="primary" style="margin-right:10px;"
                       @click="handleConfirmOrders(record)" >订单确认
             </a-button>
-            <a-button :disabled="!isAdminUser" @click="$emit('delete',record.id)" size="small" type="link">删除
+            <a-button v-if="hasPermi('order:order:remove')" @click="$emit('delete',record.id)" size="small" type="link">删除
             </a-button>
           </div>
         </template>
       </a-table-column>
     </a-table>
-    <a-button class="bat-delete-btn" :disabled="!isAdminUser" @click="batchDelete">批量删除</a-button>
+    <a-button v-if="hasPermi('order:order:remove')" class="bat-delete-btn" @click="batchDelete">批量删除</a-button>
 
     <!--订单确认审核弹窗-->
     <a-modal v-model:visible="confirmVisible" title="订单确认审核" width="900px" @ok="submitConfirm"
@@ -88,7 +88,7 @@
 import {ref} from 'vue'
 import {getDetailOrders, confirmOrder, cancelOrder, updateOrder} from '@/api/orders.js'
 import {message} from 'ant-design-vue'
-import {isAdmin} from '@/utils/auth.js'
+import {hasPermi} from '@/utils/auth.js'
 import {useIsMobile} from '@/composables/useMediaQuery'
 
 // 手机端描述列表改单列
@@ -106,9 +106,6 @@ const emit = defineEmits(['view', 'delete', 'batchDelete', 'refresh', 'pageChang
 const onPageChange = (pag) => {
   emit('pageChange', pag.current)
 }
-
-// 是否为管理员（商家）：审批类操作仅商家可见
-const isAdminUser = isAdmin()
 
 //====================== 复选框 ====================
 const selectedRowKeys = ref([])

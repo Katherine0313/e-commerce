@@ -43,8 +43,9 @@
               </a-tag>
             </template>
             <template v-else-if="column.key === 'action'">
-              <a-button v-if="!record.isDeleted" type="primary" size="small"
-                        :loading="refreshingId === record.id" @click="handleRefresh(record)">刷新成长值</a-button>
+              <a-button v-if="!record.isDeleted" v-permission="'business:member:refresh'"
+                        type="primary" size="small" :loading="refreshingId === record.id"
+                        @click="handleRefresh(record)">刷新成长值</a-button>
               <a-button v-else size="small" @click="openDetail(record)">查看</a-button>
             </template>
           </template>
@@ -71,8 +72,8 @@
                               style="width: 90px" />
             </template>
             <template v-else-if="column.key === 'action'">
-              <a-button type="primary" size="small" :loading="savingId === record.id"
-                        @click="saveLevel(record)">保存</a-button>
+              <a-button v-permission="'business:member:edit'" type="primary" size="small"
+                        :loading="savingId === record.id" @click="saveLevel(record)">保存</a-button>
             </template>
           </template>
         </a-table>

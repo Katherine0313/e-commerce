@@ -27,14 +27,14 @@
           <div class="ops">
             <a-button type="primary" @click="emit('view', record.id)" size="small">查看订单</a-button>
             <a-button type="primary" @click="handleExpress(record)" size="small">物流跟踪</a-button>
-            <a-button @click="handleFinishOrder(record)" size="small">确认收货</a-button>
+            <a-button v-if="hasPermi('order:order:update')" @click="handleFinishOrder(record)" size="small">确认收货</a-button>
             <a-button type="dashed" :disabled="record.has_after_sale" @click="openAfterSale(record)" size="small">申请售后</a-button>
-            <a-button type="link" :disabled="!isAdminUser" @click="handleDeleteOrder(record)" size="small">删除</a-button>
+            <a-button v-if="hasPermi('order:order:remove')" type="link" @click="handleDeleteOrder(record)" size="small">删除</a-button>
           </div>
         </template>
       </a-table-column>
     </a-table>
-    <a-button class="bat-delete-btn" :disabled="!isAdminUser" @click="handleBatchDeleteOrders(selectedRowKeys)">批量删除</a-button>
+    <a-button v-if="hasPermi('order:order:remove')" class="bat-delete-btn" @click="handleBatchDeleteOrders(selectedRowKeys)">批量删除</a-button>
 
     <!--物流跟踪弹窗-->
     <a-modal v-model:visible="expressVisible" title="物流轨迹" :footer="null" width="600px">
@@ -127,16 +127,13 @@ import {deleteOrder, deleteOrders, getLogistics, finishOrder} from '@/api/orders
 import {addAfterSale} from '@/api/afterSale.js'
 import {message, Modal} from 'ant-design-vue'
 import {ExclamationCircleOutlined, PlusOutlined} from '@ant-design/icons-vue'
-import {isAdmin} from '@/utils/auth.js'
+import {hasPermi} from '@/utils/auth.js'
 import {getToken} from '@/utils/token'
 
 defineProps({
   list: {type: Array, default: () => []},
   orderStatus: {type: Object, default: () => ({ map: {}, color: {} })}
 })
-
-// 是否为管理员（商家）：删除仅管理员可用
-const isAdminUser = isAdmin()
 
 // ================== 确认收货 ==================
 const emit = defineEmits(['refresh', 'view'])

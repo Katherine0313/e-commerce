@@ -56,6 +56,7 @@ const routes = [
             isLogin: true,
             icon: 'DashboardOutlined',
             title: '工作台',
+            permission: 'workplace:view',
             renderMenu: true,
             cacheable: true,
         },
@@ -68,6 +69,7 @@ const routes = [
             isLogin: true,
             title: '表格',
             icon: 'TableOutlined',
+            permission: 'system:menu:list',
             renderMenu: true,
             cacheable: true,
         },
@@ -80,6 +82,7 @@ const routes = [
             isLogin: true,
             title: '个人中心',
             icon: 'ProfileOutlined',
+            permission: 'personal:view',
             renderMenu: true,
             cacheable: true,
         },
@@ -101,6 +104,7 @@ const routes = [
                 name: 'List',
                 meta: {
                     title: '商品列表',
+                    permission: 'product:product:list',
                 },
                 component: () => import('@/pages/goods/list/List.vue')
             },
@@ -109,6 +113,7 @@ const routes = [
                 name: 'addGoods',
                 meta: {
                     title: '添加商品',
+                    permission: 'product:product:add',
                 },
                 component: () => import('@/pages/goods/add-goods/AddGoods.vue')
             },
@@ -117,6 +122,7 @@ const routes = [
                 name: 'Categories',
                 meta: {
                     title: '商品分类',
+                    permission: 'product:category:list',
                 },
                 component: () => import('@/pages/goods/category/Category.vue')
             },
@@ -125,6 +131,7 @@ const routes = [
                 name: 'Tag',
                 meta: {
                     title: '商品标签',
+                    permission: 'product:tag:list',
                 },
                 component: () => import('@/pages/goods/tag/Tag.vue')
             },
@@ -146,6 +153,7 @@ const routes = [
                 name: 'OrderList',
                 meta: {
                     title: '订单列表',
+                    permission: 'order:order:list',
                 },
                 component: () => import('@/pages/orders/OrderList.vue'),
             },
@@ -154,6 +162,7 @@ const routes = [
                 name: 'Ship',
                 meta: {
                     title: '发货管理',
+                    permission: 'order:order:ship',
                 },
                 component: () => import('@/pages/orders/shipment/Ship.vue'),
             }
@@ -174,6 +183,7 @@ const routes = [
                 name: 'AfterSaleList',
                 meta: {
                     title: '售后订单',
+                    permission: 'aftersale:aftersale:list',
                 },
                 component: () => import('@/pages/after-sales/AfterSaleList.vue'),
             }
@@ -193,6 +203,7 @@ const routes = [
             name: 'StockList',
             meta: {
                 title: '库存列表',
+                    permission: 'product:stock:list',
             },
             component: () => import('@/pages/stock/StockList.vue'),
         }]
@@ -212,7 +223,8 @@ const routes = [
                 path: 'promotion',
                 name: 'Promotion',
                 meta: {
-                    title: '促销活动'
+                    title: '促销活动',
+                    permission: 'business:promotion:list'
                 },
                 component: () => import('@/pages/business/promotion/PromotionList.vue'),
             },
@@ -220,7 +232,8 @@ const routes = [
                 path: 'coupon',
                 name: 'Coupon',
                 meta: {
-                    title: '优惠券'
+                    title: '优惠券',
+                    permission: 'business:coupon:list'
                 },
                 component: () => import('@/pages/business/coupon/CouponList.vue'),
             },
@@ -228,12 +241,53 @@ const routes = [
                 path: 'member',
                 name: 'Member',
                 meta: {
-                    title: '会员'
+                    title: '会员',
+                    permission: 'business:member:list'
                 },
                 component: () => import('@/pages/business/member/MemberList.vue'),
             }
         ]
         },
+    {
+        path: '/system',
+        name: 'System',
+        meta: {
+            isLogin: true,
+            title: '系统管理',
+            icon: 'SettingOutlined',
+            renderMenu: true,
+            cacheable: true,
+        },
+        children: [
+            {
+                path: 'users',
+                name: 'SystemUsers',
+                meta: {
+                    title: '管理员账号',
+                    permission: 'system:user:list',
+                },
+                component: () => import('@/pages/system/users/UserList.vue'),
+            },
+            {
+                path: 'roles',
+                name: 'SystemRoles',
+                meta: {
+                    title: '角色管理',
+                    permission: 'system:role:list',
+                },
+                component: () => import('@/pages/system/roles/RoleList.vue'),
+            },
+            {
+                path: 'menus',
+                name: 'SystemMenus',
+                meta: {
+                    title: '菜单管理',
+                    permission: 'system:menu:list',
+                },
+                component: () => import('@/pages/system/menus/MenuList.vue'),
+            }
+        ]
+    },
     {
         path: '/:pathMatch(.*)*',
         name: '404',

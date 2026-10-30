@@ -1,6 +1,6 @@
 <template>
   <div class="add-tag">
-    <a-button type="primary" @click="handleAddTag">新增标签
+    <a-button v-permission="'product:tag:add'" type="primary" @click="handleAddTag">新增标签
       <PlusOutlined />
     </a-button>
     <a-modal v-model:visible="newTagModal" title="新增标签" @ok="submitAddTag"
@@ -26,8 +26,10 @@
     </a-table-column>
     <a-table-column title="操作" align="center">
       <template #default="{record}">
-        <a-button type="primary" style="margin-right: 10px" @click="tagModalRef.firstOpen(record)">关联产品</a-button>
-        <a-button type="primary" style="margin-right: 10px" @click="handleDeleteTag(record)">删除</a-button>
+        <a-button v-permission="'product:tag:edit'" type="primary" style="margin-right: 10px"
+                  @click="tagModalRef.firstOpen(record)">关联产品</a-button>
+        <a-button v-permission="'product:tag:remove'" type="primary" style="margin-right: 10px"
+                  @click="handleDeleteTag(record)">删除</a-button>
       </template>
     </a-table-column>
   </a-table>

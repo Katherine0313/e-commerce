@@ -25,7 +25,7 @@
     <a-table-column title="补充说明" dataIndex="remark"></a-table-column>
     <a-table-column title="操作">
       <template #default="{record}">
-        <a-button v-if="isAdminUser" type="primary" style="margin-right:15px;"
+        <a-button v-if="canAudit" type="primary" style="margin-right:15px;"
                   @click="handleExchangeReview(record)">售后审核</a-button>
         <a-button @click="handleExchangeDetail(record)">售后详情</a-button>
         <a-button type="link" @click="handleDelete(record)">删除</a-button>
@@ -41,7 +41,7 @@
 <script setup>
 import { inject, onMounted,watch,ref,computed} from 'vue'
 import { deleteAfterSale,getAfterSaleStatus,getAfterSales } from '@/api/afterSale.js'
-import {isAdmin} from '@/utils/auth.js'
+import {hasPermi} from '@/utils/auth.js'
 import {getOrderStatus} from '@/api/orders.js'
 import { message, Modal } from 'ant-design-vue'
 import ExchangeDetail from './ExchangeDetail.vue'
@@ -119,7 +119,7 @@ const handleExchangeDetail = (record) => {
   exchangeDetailRef.value.exchangeDetailOpen(record)
 }
 // =============== 管理员身份 ===================
-const isAdminUser = isAdmin()
+const canAudit = hasPermi('aftersale:aftersale:audit')
 </script>
 
 <style scoped>

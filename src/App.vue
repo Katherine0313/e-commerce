@@ -4,6 +4,7 @@
       system-name="杰米多多"
       logo-src="@/assets/vite.svg"
       :user="user"
+      :menuList="menuList"
       :nav-mode="navMode"
       :collapsed="effectiveCollapsed"
       :themeList="themeList"
@@ -97,6 +98,56 @@ onMounted(() => {
 
 // 账号文案（单店模式，没有店铺有效期）
 const accountTitle = () => getCurrentUser()?.username || '未登录';
+
+// 当前登录信息（token 存在 localStorage，路由切换后重新解析，驱动菜单刷新）
+const currentUser = ref(getCurrentUser());
+watch(() => route.fullPath, () => {
+  currentUser.value = getCurrentUser();
+}, { immediate: true });
+
+// 菜单过滤：按 meta.permission 和 renderMenu 生成 stepin 需要的菜单树
+function canUse(user, permission) {
+  if (!permission) return true;
+  // 历史 token 可能缺少 permissions 字段，兜底成空数组避免报错
+  const permissions = Array.isArray(user?.permissions) ? user.permissions : [];
+  return permissions.includes('*:*:*') || permissions.includes(permission);
+}
+
+function joinPath(base, path) {
+  if (!path) return base || '/';
+  if (path.startsWith('/')) return path;
+  return (base.endsWith('/') ? base : base + '/') + path;
+}
+
+function buildMenu(routes, basePath, user) {
+  const list = [];
+  (routes || []).forEach((item) => {
+    if (item.meta?.renderMenu === false) return;
+    const fullPath = joinPath(basePath, item.path);
+    const children = buildMenu(item.children, fullPath, user);
+    const allowed = canUse(user, item.meta?.permission);
+    // 有子路由但全部被过滤掉时，父目录也不再显示
+    if (item.children?.length && !children.length) return;
+    // 页面本身没权限则整项隐藏
+    if (!allowed) return;
+    list.push({
+      path: fullPath,
+      title: item.meta?.title || item.name || fullPath,
+      key: fullPath,
+      meta: {
+        icon: item.meta?.icon,
+        badge: item.meta?.badge,
+        target: item.meta?.target,
+        href: item.meta?.href,
+        view: item.meta?.view,
+      },
+      children,
+    });
+  });
+  return list;
+}
+
+const menuList = computed(() => buildMenu(router.options.routes, '', currentUser.value));
 
 // 顶栏显示店铺名
 const user = computed(() => ({

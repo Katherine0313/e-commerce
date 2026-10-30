@@ -26,9 +26,9 @@
         <template #default="{record}">
           <div class="ops">
             <a-button type="primary" @click="emit('view', record.id)" size="small">查看订单</a-button>
-            <a-button v-if="isAdminUser" type="primary" @click="handlePendingShip(record)" size="small" >去发货</a-button>
-            <a-button type="dashed" @click="handleCancelOrder(record)" size="small">取消订单</a-button>
-            <a-button type="link" :disabled="!isAdminUser" @click="handleDeleteOrder(record)" size="small">删除</a-button>
+            <a-button v-if="hasPermi('order:order:ship')" type="primary" @click="handlePendingShip(record)" size="small" >去发货</a-button>
+            <a-button v-if="hasPermi('order:order:update')" type="dashed" @click="handleCancelOrder(record)" size="small">取消订单</a-button>
+            <a-button v-if="hasPermi('order:order:remove')" type="link" @click="handleDeleteOrder(record)" size="small">删除</a-button>
           </div>
         </template>
       </a-table-column>
@@ -48,7 +48,7 @@
         </a-form-item>
       </a-form>
     </a-modal>
-    <a-button class="bat-delete-btn" :disabled="!isAdminUser" @click="handleBatchDeleteOrders(selectedRowKeys)">批量删除</a-button>
+    <a-button v-if="hasPermi('order:order:remove')" class="bat-delete-btn" @click="handleBatchDeleteOrders(selectedRowKeys)">批量删除</a-button>
   </div>
 </template>
 <script setup>
@@ -56,14 +56,11 @@ import {ref, onMounted, createVNode} from 'vue'
 import {getCouriers, shipOrder, deleteOrder, deleteOrders, cancelOrder} from '@/api/orders.js'
 import {message, Modal} from 'ant-design-vue'
 import {ExclamationCircleOutlined} from '@ant-design/icons-vue'
-import {isAdmin} from '@/utils/auth.js'
+import {hasPermi} from '@/utils/auth.js'
 defineProps({
   list: {type: Array, default: () => []},
   orderStatus: {type: Object, default: () => ({ map: {}, color: {} })}
 })
-
-// 是否为管理员（商家）：删除仅管理员可用
-const isAdminUser = isAdmin()
 
 //================= 去发货 按钮 ================
 const currentOrderId = ref(null)
