@@ -8,11 +8,12 @@
 
 ## 下一步
 
-对接剩余后台模块：库存预警、售后、工作台（dashboard/upload）。店铺信息已于 2026-10-29 改为前端静态配置，不再对接 shops 接口。
+先做「阶段 10：清理遗留与修错」——2026-10-30 的全面探索发现 6 处硬伤（vite proxy 死配置、`.env.example` 端口过期、`postinstall` 指向不存在的目录、`/profile` 死链、购物车 store 契约不一致、文档停留在 Node 后端时代），这些不修会持续误导后续开发。
+阶段 9 剩余的「工作台（dashboard/upload）对接」实际上后端接口已全部就绪（`/api/admin/report/*` 6 个 + `/api/admin/products/dashboard` + `/api/admin/users/statistics`），只剩前端页面对接与验收。
 
 ## 当前阶段
 
-后台管理端对接（商品/分类/标签/订单完成）
+阶段 10：清理遗留与修错（2026-10-30 探索产出）
 
 ## 各阶段
 
@@ -78,9 +79,36 @@
 - [ ] 工作台（dashboard/upload）对接（shops 接口已下线）
 - **状态：** in_progress
 
-## 关键问题
+### 阶段 10：清理遗留与修错（2026-10-30 全面探索产出）
+
+- [ ] **删掉坏的 `/api` dev proxy 规则**：`vite.config.js` 的 `target: env.VITE_API_URL` 变量不存在（应统一用 `VITE_API_BASE_URL`），且 `rewrite` 会剥掉 `/api` 前缀（Spring 网关期望 `/api/**`）。当前 axios 走 `baseURL` 直连 8080 绕过了它，属于死配置
+- [ ] **`.env.example` 对齐新后端**：`VITE_API_BASE_URL` 改成 `http://127.0.0.1:8080`，删掉 `PORT` / `JWT_SECRET`（Node 时代残留）；`POST=3000` 同理
+- [ ] **删掉 `postinstall` 与 `api` 脚本**：`server/`、`service/` 目录已不存在，`cd server && npm install` 会让全新克隆的 `npm install` 报错
+- [ ] **修 `/profile` 死链**：`App.vue` 顶栏「个人中心」改为 `router.push('/personal')`
+- [ ] **`src/store/cart.js` 改驼峰**：`product_id`→`productId`、`insurance_detail`→`insuranceDetail`、`insurance_fee`→`insuranceFee`；并给 `addItem/removeItem/updateQuantity/clear` 加 `isAdminToken()` 短路（管理员预览链路不该打 C 端接口）
+- [ ] **清理死 API**：`getProductTags`（后端无此接口，一用就 404）、`getCourierList`（`getCouriers` 的重复别名）、`getAdminUser`（后端有但无人用）
+- [ ] **删 `src/components/layout/CommonView.vue`**（stepin 模板残留，链接全指向 `/front/login`）
+- [ ] **文档去 Node 化**：`ddos-attack-and-defense.md`、`sandbox-and-launch.md`、本文件与 `findings.md` 中所有 `server/*`、`productDB.*` 路径已失效，标注为历史存档或重写
+- [ ] **补质量门禁**：加 `.prettierrc` + `.editorconfig`（prettier 已装但没配置）；清理 `mockjs` / `typescript` 冗余依赖
+- **状态：** pending
+
+### 阶段 11：菜单双数据源治理（待决策）
+
+- [ ] 明确 `admin_system_menu` 表与前端 `router/index.js` 的同步策略：
+  - 方案 A：以后端表为准，前端启动时拉表动态生成路由（改动大，stepin 框架适配成本高）
+  - 方案 B：保持前端路由为准，把后端菜单表降级为「角色授权的权限标识集合」，去掉 `path` 列的重复维护
+  - 方案 C：加一个 CI 脚本比对两边的 `path` + `permission` 是否一致，不一致就失败
+- [ ] 无论选哪个，都要在「菜单管理」页加提示：改菜单需同步改前端路由
+- **状态：** pending
+
+## 关键问题（2026-10-30 更新）
 
 1. 生产 nginx 的 gzip/缓存优化是否要做？（需用户改宝塔 nginx 配置并 reload）
+2. **菜单到底以哪边为准？** 前后端两份菜单数据，靠人工对齐（见阶段 11）。需要产品/开发一起定。
+3. **管理员的「商品预览 → 加购 → 结算」链路要不要真打通？** 现在打的是 C 端接口、拿 admin token，必然 403。
+   - 选项 A：只做只读预览（展示商品 + 详情），砍掉加购/结算/支付
+   - 选项 B：后台预览链路改成纯前端 mock（不落库），仅作演示
+   - 选项 C：后端给 admin 身份开一条预览专用链路（成本最高）
 
 ## 已做决策
 

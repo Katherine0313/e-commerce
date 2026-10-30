@@ -1,5 +1,38 @@
 # 进度日志
 
+## 会话：2026-10-30（管理端全面探索：架构摸底 + 接口契约核对）
+
+### 当前状态
+- **阶段：** 新建「阶段 10：清理遗留与修错」；阶段 9（后台管理端对接）剩余工作台对接。
+- 工作区干净（`git status` 无改动），本次只产出文档，未改任何代码。
+
+### 已执行操作
+- 通读 `src/` 全部 169 个源文件的骨架 + 关键文件（`main.js` / `App.vue` / `router/index.js` / `router/permission.js` / `api/request.js` / `api/*.js` 全部 15 个 / `store/cart.js` / `utils/auth.js` / `utils/token.js` / `utils/shop.js` / `utils/orderNotify.js`）。
+- 与 `e-commerce-boot` 后端**逐条核对** 60+ 个 `/api/admin/**` 接口：管理端调用与后端 `Admin*Controller` 基本一一对应 ✅（含报表 6 个接口、RBAC 三套、商品/分类/标签/促销/库存/售后/会员）。
+- 提取管理端调用的全部接口路径，与后端 `Admin*Controller` 的 `@*Mapping` 做差集比对。
+- 核对 `.env` / `.env.example` 的键名（只看键名不打印值）、`vite.config.js` 代理规则、`package.json` 脚本与实际目录是否存在。
+- 发现并记录 10 类问题（详见 findings.md「管理端全面探索」章节）：
+  1. `vite.config.js` 的 `/api` 代理 target 变量不存在 + rewrite 剥掉 `/api` 前缀 → 死配置
+  2. `.env.example` 指向已废弃的 Node 后端 3000 端口
+  3. `postinstall` / `npm run api` 指向不存在的 `server/`、`service/` 目录
+  4. `App.vue`「个人中心」跳 `/profile`，实际路由是 `/personal` → 404
+  5. `src/store/cart.js` 仍是 snake_case，与后端驼峰契约不一致；admin token 打 C 端接口必然 403
+  6. `getProductTags` 打后端不存在的接口
+  7. 4 个未使用的 API 函数
+  8. 文档（ddos / sandbox / findings / task_plan）整体停留在 Node 后端时代，路径全部失效
+  9. `CommonView.vue` 是 stepin 模板残留
+  10. 无 ESLint / Prettier 配置、无 CI，prettier / mockjs / typescript 冗余
+- 摸清架构要点：后台外壳来自 npm 包 `stepin`；侧边栏渲染读前端静态路由，后端 `admin_system_menu` 表只用于菜单管理与角色授权 → **菜单双数据源**，靠 path + permission 人工对齐。
+- 产出：`findings.md` 新增「管理端全面探索（2026-10-30）」章节；`task_plan.md` 新增阶段 10 / 阶段 11 并更新「下一步 / 当前阶段 / 关键问题」；本文件新增本会话记录。
+
+### 验证
+- 未改代码，无需构建验证。
+- 接口契约核对方式：提取 `src/api/*.js` 中全部 `axios.get/post/put/delete` 路径，与后端各 `Admin*Controller` 的 `@RequestMapping` + `@*Mapping` 双向差集比对。
+
+### 待决策
+- 菜单双数据源以哪边为准（阶段 11 三选一）。
+- 管理员「商品预览 → 加购 → 结算」链路要不要真打通（选项 A 只读 / B 纯前端 mock / C 后端开预览专用链路）。
+
 ## 会话：2026-10-29（多租户下线：店铺信息静态化）
 
 ### 当前状态
