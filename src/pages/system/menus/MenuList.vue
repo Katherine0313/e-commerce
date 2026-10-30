@@ -159,9 +159,24 @@ function collectIds(nodes, acc = []) {
   return acc
 }
 
+// Ant Design 会把 children: [] 当成可展开节点，叶子节点也会显示 +；
+// 递归去掉空 children，只有真正有子级的节点才保留展开图标。
+function normalizeTree(nodes) {
+  return (nodes || []).map((node) => {
+    const children = normalizeTree(node.children)
+    const item = { ...node }
+    if (children.length) {
+      item.children = children
+    } else {
+      delete item.children
+    }
+    return item
+  })
+}
+
 function loadData(options = {}) {
   getMenuManageTree().then((res) => {
-    treeData.value = res.data.data || []
+    treeData.value = normalizeTree(res.data.data || [])
     const ids = new Set(collectIds(treeData.value))
     // 默认收起，只保留用户手动展开的层级；新增子项后自动展开父级
     let keys = expandedKeys.value.filter((key) => ids.has(key))
