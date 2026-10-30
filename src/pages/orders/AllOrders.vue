@@ -7,6 +7,12 @@
       <a-table-column title="提交时间" dataIndex="createdAt"></a-table-column>
       <a-table-column title="用户账号" dataIndex="userId"></a-table-column>
       <a-table-column title="订单金额" dataIndex="payAmount"></a-table-column>
+      <a-table-column title="优惠金额">
+        <template #default="{record}">
+          <span v-if="record.discountAmount > 0" style="color:#FF6700">-¥{{ record.discountAmount }}</span>
+          <span v-else>—</span>
+        </template>
+      </a-table-column>
       <a-table-column title="支付方式" dataIndex="payTypeDesc"></a-table-column>
       <a-table-column title="订单状态" dataIndex="orderStatus">
         <template #default="{record}">

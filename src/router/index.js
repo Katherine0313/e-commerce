@@ -209,12 +209,28 @@ const routes = [
         },
         children: [
             {
-                path: 'on-sale',
-                name: 'OnSale',
+                path: 'promotion',
+                name: 'Promotion',
                 meta: {
-                    title:'促销工具'
+                    title: '促销活动'
                 },
-                component: () => import('@/pages/business/OnSale.vue'),
+                component: () => import('@/pages/business/promotion/PromotionList.vue'),
+            },
+            {
+                path: 'coupon',
+                name: 'Coupon',
+                meta: {
+                    title: '优惠券'
+                },
+                component: () => import('@/pages/business/coupon/CouponList.vue'),
+            },
+            {
+                path: 'member',
+                name: 'Member',
+                meta: {
+                    title: '会员'
+                },
+                component: () => import('@/pages/business/member/MemberList.vue'),
             }
         ]
         },

@@ -12,7 +12,8 @@
         <img v-lazy="record.image" width="80" />
       </template>
     </a-table-column>
-    <a-table-column title="主标题" dataIndex="title"></a-table-column>
+    <!-- 主标题是 40~90 字的 SEO 长标题，单行省略，悬停看全文，避免表格被撑宽 -->
+    <a-table-column title="主标题" dataIndex="title" :ellipsis="true"></a-table-column>
     <a-table-column title="库存" dataIndex="stock"></a-table-column>
     <a-table-column title="库存状态">
       <template #default="{record}">
