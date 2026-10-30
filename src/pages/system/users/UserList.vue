@@ -1,0 +1,316 @@
+<template>
+  <div>
+    <div class="head">
+      <a-form layout="inline">
+        <a-form-item>
+          <a-input v-model:value="query.keyword" placeholder="用户名 / 姓名 / 手机号" allow-clear
+                   @pressEnter="handleSearch" />
+        </a-form-item>
+        <a-form-item>
+          <a-select v-model:value="query.status" style="width: 130px" placeholder="状态" allow-clear
+                    :options="statusOptions" />
+        </a-form-item>
+        <a-form-item>
+          <a-button type="primary" @click="handleSearch">
+            <SearchOutlined />
+            搜索
+          </a-button>
+        </a-form-item>
+      </a-form>
+      <a-button v-permission="'system:user:add'" type="primary" @click="openCreate">新增账号</a-button>
+    </div>
+
+    <a-table :dataSource="list" :columns="columns" :pagination="pagination" row-key="id"
+             @change="handleTableChange">
+      <template #bodyCell="{ column, record }">
+        <template v-if="column.key === 'roles'">
+          <a-tag v-for="name in record.roleNames" :key="name" color="blue">{{ name }}</a-tag>
+        </template>
+        <template v-else-if="column.key === 'status'">
+          <a-tag :color="record.status === 1 ? 'green' : 'default'">
+            {{ record.status === 1 ? '正常' : '禁用' }}
+          </a-tag>
+        </template>
+        <template v-else-if="column.key === 'action'">
+          <!-- 固定三列，超管/当前账号没有禁用按钮，用空占位补齐保证上下对齐 -->
+          <div class="row-actions">
+            <a-button v-permission="'system:user:edit'" type="link" size="small"
+                      @click="openEdit(record)">编辑</a-button>
+            <a-button v-permission="'system:user:resetPwd'" type="link" size="small"
+                      @click="openReset(record)">重置密码</a-button>
+            <!-- 超级管理员和当前登录账号不能禁用；禁用后旧 token 会立即失效 -->
+            <a-popconfirm
+                v-if="record.id !== 1 && record.id !== currentUserId"
+                :title="record.status === 1 ? '禁用后该账号会立即退出登录，确定禁用？' : '确定启用该账号？'"
+                @confirm="toggleStatus(record)"
+            >
+              <a-button v-permission="'system:user:edit'" type="link" size="small" :danger="record.status === 1">
+                {{ record.status === 1 ? '禁用' : '启用' }}
+              </a-button>
+            </a-popconfirm>
+            <span v-else></span>
+          </div>
+        </template>
+      </template>
+    </a-table>
+
+    <!-- 新增 / 编辑 -->
+    <a-modal v-model:visible="formVisible" :title="editingId ? '编辑账号' : '新增账号'" :width="620"
+             :confirm-loading="saving" @ok="handleSubmit">
+      <a-form :model="form" :label-col="{ span: 5 }">
+        <a-form-item label="用户名" required>
+          <a-input v-model:value="form.username" :disabled="!!editingId" :maxlength="30"
+                   placeholder="3~30 位字母、数字或下划线" />
+        </a-form-item>
+        <a-form-item v-if="!editingId" label="初始密码" required>
+          <a-input-password v-model:value="form.password" :maxlength="64" placeholder="至少 6 位" />
+        </a-form-item>
+        <a-form-item label="显示名" required>
+          <a-input v-model:value="form.name" :maxlength="64" />
+        </a-form-item>
+        <a-form-item label="手机号">
+          <a-input v-model:value="form.phone" :maxlength="11" />
+        </a-form-item>
+        <a-form-item label="角色" required>
+          <a-select v-model:value="form.roleIds" mode="multiple" :options="roleOptions"
+                    placeholder="请选择角色" style="width: 100%" />
+        </a-form-item>
+        <a-form-item label="状态">
+          <a-switch v-model:checked="form.statusBool" checked-children="正常" un-checked-children="禁用" />
+        </a-form-item>
+      </a-form>
+    </a-modal>
+
+    <!-- 重置密码 -->
+    <a-modal v-model:visible="resetVisible" title="重置密码" :width="440" :confirm-loading="resetting"
+             @ok="handleReset">
+      <a-form :label-col="{ span: 6 }">
+        <a-form-item label="账号">{{ resetTarget?.username }}</a-form-item>
+        <a-form-item label="新密码" required>
+          <a-input-password v-model:value="resetPassword" :maxlength="64" placeholder="至少 6 位" />
+        </a-form-item>
+      </a-form>
+    </a-modal>
+  </div>
+</template>
+
+<script setup>
+import { computed, onActivated, onMounted, ref } from 'vue'
+import { SearchOutlined } from '@ant-design/icons-vue'
+import { message } from 'ant-design-vue'
+import { getCurrentUser } from '@/utils/auth'
+import {
+  addAdminUser,
+  getAdminUsers,
+  getRoles,
+  resetAdminPassword,
+  updateAdminUser,
+} from '@/api/system.js'
+
+const list = ref([])
+const roles = ref([])
+const saving = ref(false)
+const formVisible = ref(false)
+const editingId = ref(null)
+const resetVisible = ref(false)
+const resetting = ref(false)
+const resetTarget = ref(null)
+const resetPassword = ref('')
+const query = ref({ keyword: '', status: undefined })
+// 当前登录账号不能禁用自己（后端也有校验，这里直接不显示按钮）
+const currentUserId = computed(() => getCurrentUser()?.id)
+
+const statusOptions = [
+  { value: 1, label: '正常' },
+  { value: 0, label: '禁用' },
+]
+
+const roleOptions = computed(() => roles.value.map((role) => ({
+  value: role.id,
+  label: role.roleName,
+})))
+
+const pagination = ref({
+  current: 1,
+  pageSize: 10,
+  total: 0,
+  showSizeChanger: true,
+  showTotal: (total) => `共 ${total} 条`,
+})
+
+const columns = [
+  { title: 'ID', dataIndex: 'id', key: 'id', width: 70 },
+  { title: '用户名', dataIndex: 'username', key: 'username', width: 130 },
+  { title: '显示名', dataIndex: 'name', key: 'name', width: 120 },
+  { title: '手机号', dataIndex: 'phone', key: 'phone', width: 130 },
+  { title: '角色', key: 'roles' },
+  { title: '状态', key: 'status', width: 100 },
+  { title: '创建时间', dataIndex: 'createTime', key: 'createTime', width: 170 },
+  { title: '操作', key: 'action', width: 250 },
+]
+
+const form = ref(emptyForm())
+
+function emptyForm() {
+  return {
+    username: '',
+    password: '',
+    name: '',
+    phone: '',
+    roleIds: [],
+    statusBool: true,
+  }
+}
+
+function loadRoles() {
+  getRoles().then((res) => {
+    roles.value = res.data.data || []
+  })
+}
+
+function loadData() {
+  getAdminUsers({
+    page: pagination.value.current,
+    pageSize: pagination.value.pageSize,
+    keyword: query.value.keyword || undefined,
+    status: query.value.status === undefined ? undefined : query.value.status,
+  }).then((res) => {
+    list.value = res.data.data.list || []
+    pagination.value.total = res.data.data.total || 0
+  })
+}
+
+function handleSearch() {
+  pagination.value.current = 1
+  loadData()
+}
+
+function handleTableChange(pager) {
+  pagination.value.current = pager.current
+  pagination.value.pageSize = pager.pageSize
+  loadData()
+}
+
+function openCreate() {
+  editingId.value = null
+  form.value = emptyForm()
+  formVisible.value = true
+}
+
+function openEdit(record) {
+  editingId.value = record.id
+  form.value = {
+    username: record.username,
+    password: '',
+    name: record.name,
+    phone: record.phone || '',
+    roleIds: record.roleIds || [],
+    statusBool: record.status === 1,
+  }
+  formVisible.value = true
+}
+
+function handleSubmit() {
+  if (!form.value.username.trim()) {
+    message.warning('请输入用户名')
+    return
+  }
+  if (!editingId.value && (!form.value.password || form.value.password.length < 6)) {
+    message.warning('初始密码至少 6 位')
+    return
+  }
+  if (!form.value.name.trim()) {
+    message.warning('请输入显示名')
+    return
+  }
+  if (!form.value.roleIds.length) {
+    message.warning('请选择角色')
+    return
+  }
+  const payload = {
+    username: form.value.username.trim(),
+    password: form.value.password,
+    name: form.value.name.trim(),
+    phone: form.value.phone.trim(),
+    status: form.value.statusBool ? 1 : 0,
+    roleIds: form.value.roleIds,
+  }
+  saving.value = true
+  const request = editingId.value
+    ? updateAdminUser(editingId.value, payload)
+    : addAdminUser(payload)
+  request
+    .then(() => {
+      message.success(editingId.value ? '账号已更新' : '账号已创建')
+      formVisible.value = false
+      loadData()
+    })
+    .finally(() => {
+      saving.value = false
+    })
+}
+
+function toggleStatus(record) {
+  const nextStatus = record.status === 1 ? 0 : 1
+  updateAdminUser(record.id, {
+    name: record.name,
+    phone: record.phone,
+    status: nextStatus,
+    roleIds: record.roleIds || [],
+  })
+    .then(() => {
+      message.success(nextStatus === 1 ? '账号已启用' : '账号已禁用')
+      loadData()
+    })
+    .catch(() => loadData())
+}
+
+function openReset(record) {
+  resetTarget.value = record
+  resetPassword.value = ''
+  resetVisible.value = true
+}
+
+function handleReset() {
+  if (!resetPassword.value || resetPassword.value.length < 6) {
+    message.warning('新密码至少 6 位')
+    return
+  }
+  resetting.value = true
+  resetAdminPassword(resetTarget.value.id, resetPassword.value)
+    .then(() => {
+      message.success('密码已重置')
+      resetVisible.value = false
+    })
+    .finally(() => {
+      resetting.value = false
+    })
+}
+
+onMounted(() => {
+  loadRoles()
+  loadData()
+})
+onActivated(loadData)
+</script>
+
+<style scoped>
+.head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin: 20px 0;
+}
+
+/* 操作列固定三列：超管/当前账号没有禁用按钮时留空占位，保证上下对齐 */
+.row-actions {
+  display: grid;
+  grid-template-columns: repeat(3, 72px);
+  align-items: center;
+  justify-content: center;
+}
+
+.row-actions > * {
+  justify-self: center;
+}
+</style>
