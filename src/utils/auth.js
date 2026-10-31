@@ -33,8 +33,7 @@ export function isAdminToken() {
 /** 当前登录用户是否为超级管理员（店铺管理员） */
 export function isAdmin() {
   const user = getCurrentUser()
-  return user?.role === 'admin'
-      || (user?.roles || []).includes('admin')
+  return (user?.roles || []).includes('admin')
       || (user?.permissions || []).includes('*:*:*')
 }
 

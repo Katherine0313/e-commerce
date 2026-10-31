@@ -7,7 +7,14 @@
 
     <a-table :dataSource="list" :columns="columns" row-key="id" :pagination="false">
       <template #bodyCell="{ column, record }">
-        <template v-if="column.key === 'status'">
+        <template v-if="column.key === 'userCount'">
+          <!-- 启用中的账号数 / 总账号数：禁用账号不阻止角色删除 -->
+          <a-tooltip v-if="record.enabledUserCount > 0" :title="`有 ${record.enabledUserCount} 个启用中的账号，暂不能删除`">
+            <span>{{ record.enabledUserCount }} / {{ record.userCount }}</span>
+          </a-tooltip>
+          <span v-else>{{ record.userCount }} / {{ record.userCount }}</span>
+        </template>
+        <template v-else-if="column.key === 'status'">
           <a-tag :color="record.status === 1 ? 'green' : 'default'">
             {{ record.status === 1 ? '正常' : '停用' }}
           </a-tag>
@@ -87,7 +94,7 @@ const columns = [
   { title: 'ID', dataIndex: 'id', key: 'id', width: 70 },
   { title: '角色标识', dataIndex: 'roleKey', key: 'roleKey', width: 140 },
   { title: '角色名称', dataIndex: 'roleName', key: 'roleName', width: 140 },
-  { title: '账号数', dataIndex: 'userCount', key: 'userCount', width: 90 },
+  { title: '账号数', key: 'userCount', width: 120 },
   { title: '状态', key: 'status', width: 90 },
   { title: '备注', dataIndex: 'remark', key: 'remark' },
   { title: '创建时间', dataIndex: 'createTime', key: 'createTime', width: 170 },
