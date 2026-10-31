@@ -1,5 +1,21 @@
 # 进度日志
 
+## 发布（发布命令在 e-commerce-boot 仓库，别搞混站点）
+
+后台管理端 → **www.jiemids.com**，站点目录 `/www/wwwroot/jiemids.com`：
+
+```bash
+# 在 e-commerce-boot 仓库根目录执行
+./deploy/release-web.sh
+```
+
+- 参数：`--no-build`（只发现有 dist）/ `--dry-run`（只打印命令）/ `--rollback`（回滚上一版）
+- 脚本会 `npm run build` → tar 上传 → rsync 同步，自动留 3 份备份（`/www/backup/web/jiemids.com.bak.<时间戳>`）
+- 发布后要**清 EdgeOne 缓存**（腾讯云 EdgeOne 控制台 → 站点 → 缓存刷新；至少刷 `index.html` / `/assets/*`），否则老用户可能仍是旧页面
+  - 自查是否命中边缘缓存：`curl -I https://www.jiemids.com/ | grep -i "EO-Cache-Status\|Age"`
+- ⚠️ **PC 商城（xiaojiecpn.com）不要用这个脚本**，它用 `./deploy/release-mall.sh`（2026-10-31 新增）
+- ⚠️ 发布后端服务是另一套命令：`./deploy/release.sh <svc>`（auth-service 最后发）
+
 ## 会话：2026-10-30（管理端全面探索：架构摸底 + 接口契约核对）
 
 ### 当前状态

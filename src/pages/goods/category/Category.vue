@@ -3,9 +3,9 @@
     <a-table-column title="商品分类" dataIndex="name">
       <template #default="{ record }">
         <div class="category-name-cell">
-          <span>{{ record.name }}</span>
           <img v-if="record.image" :src="imageUrl(record.image)"
                class="category-image" alt="分类图片"/>
+          <span>{{ record.name }}</span>
         </div>
       </template>
     </a-table-column>
@@ -164,9 +164,10 @@ const handleDeleteCategory = (record) => {
 </script>
 
 <style scoped>
-/* 名称和分类图片同格展示，图片紧跟名称 */
+/* 名称和分类图片同格展示：图片放最左、名称跟在后面，所有行图片 x 位置对齐 */
 .category-name-cell {
-  display: inline-flex;
+  display: flex;
+  align-items: center;
   gap: 10px;
 }
 
@@ -176,6 +177,7 @@ const handleDeleteCategory = (record) => {
   object-fit: cover;
   border-radius: 4px;
   border: 1px solid #f0f0f0;
+  flex-shrink: 0;
 }
 
 .sort-order {
