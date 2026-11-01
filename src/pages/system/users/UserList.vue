@@ -65,8 +65,8 @@
         <a-form-item v-if="!editingId" label="初始密码" required>
           <a-input-password v-model:value="form.password" :maxlength="64" placeholder="至少 6 位" />
         </a-form-item>
-        <a-form-item label="显示名" required>
-          <a-input v-model:value="form.name" :maxlength="64" />
+        <a-form-item label="姓名" required>
+          <a-input v-model:value="form.name" :maxlength="64" placeholder="管理员真实姓名" />
         </a-form-item>
         <a-form-item label="手机号">
           <a-input v-model:value="form.phone" :maxlength="11" />
@@ -141,7 +141,7 @@ const pagination = ref({
 const columns = [
   { title: 'ID', dataIndex: 'id', key: 'id', width: 70 },
   { title: '用户名', dataIndex: 'username', key: 'username', width: 130 },
-  { title: '显示名', dataIndex: 'name', key: 'name', width: 120 },
+  { title: '姓名', dataIndex: 'name', key: 'name', width: 120 },
   { title: '手机号', dataIndex: 'phone', key: 'phone', width: 130 },
   { title: '角色', key: 'roles' },
   { title: '状态', key: 'status', width: 100 },
@@ -220,7 +220,7 @@ function handleSubmit() {
     return
   }
   if (!form.value.name.trim()) {
-    message.warning('请输入显示名')
+    message.warning('请输入姓名')
     return
   }
   if (!form.value.roleIds.length) {
