@@ -28,25 +28,36 @@
         </template>
         <template v-else-if="column.key === 'status'">
           <a-tag :color="record.status === 1 ? 'green' : 'default'">
-            {{ record.status === 1 ? '正常' : '禁用' }}
+            {{ record.status === 1 ? '正常' : '停用' }}
           </a-tag>
         </template>
         <template v-else-if="column.key === 'action'">
-          <!-- 固定三列，超管/当前账号没有禁用按钮，用空占位补齐保证上下对齐 -->
+          <!-- 固定四列，超管/当前账号没有停用和删除按钮，用空占位补齐保证上下对齐 -->
           <div class="row-actions">
             <a-button v-permission="'system:user:edit'" type="link" size="small"
                       @click="openEdit(record)">编辑</a-button>
             <a-button v-permission="'system:user:resetPwd'" type="link" size="small"
                       @click="openReset(record)">重置密码</a-button>
-            <!-- 超级管理员和当前登录账号不能禁用；禁用后旧 token 会立即失效 -->
+            <!-- 超级管理员和当前登录账号不能停用；停用后旧 token 会立即失效 -->
             <a-popconfirm
                 v-if="record.id !== 1 && record.id !== currentUserId"
-                :title="record.status === 1 ? '禁用后该账号会立即退出登录，确定禁用？' : '确定启用该账号？'"
+                :title="record.status === 1 ? '停用后该账号会立即退出登录，确定停用？' : '确定启用该账号？'"
                 @confirm="toggleStatus(record)"
             >
               <a-button v-permission="'system:user:edit'" type="link" size="small" :danger="record.status === 1">
-                {{ record.status === 1 ? '禁用' : '启用' }}
+                {{ record.status === 1 ? '停用' : '启用' }}
               </a-button>
+            </a-popconfirm>
+            <span v-else></span>
+            <!-- 删除 = 软删：账号从列表消失、立刻退出登录，历史数据保留 -->
+            <a-popconfirm
+                v-if="record.id !== 1 && record.id !== currentUserId"
+                title="删除后该账号会立即退出登录并从列表移除，确定删除？"
+                ok-text="确定删除"
+                ok-type="danger"
+                @confirm="handleDelete(record)"
+            >
+              <a-button v-permission="'system:user:remove'" type="link" size="small" danger>删除</a-button>
             </a-popconfirm>
             <span v-else></span>
           </div>
@@ -76,7 +87,7 @@
                     placeholder="请选择角色" style="width: 100%" />
         </a-form-item>
         <a-form-item label="状态">
-          <a-switch v-model:checked="form.statusBool" checked-children="正常" un-checked-children="禁用" />
+          <a-switch v-model:checked="form.statusBool" checked-children="正常" un-checked-children="停用" />
         </a-form-item>
       </a-form>
     </a-modal>
@@ -101,6 +112,7 @@ import { message } from 'ant-design-vue'
 import { getCurrentUser } from '@/utils/auth'
 import {
   addAdminUser,
+  deleteAdminUser,
   getAdminUsers,
   getRoles,
   resetAdminPassword,
@@ -117,12 +129,12 @@ const resetting = ref(false)
 const resetTarget = ref(null)
 const resetPassword = ref('')
 const query = ref({ keyword: '', status: undefined })
-// 当前登录账号不能禁用自己（后端也有校验，这里直接不显示按钮）
+// 当前登录账号不能停用/删除自己（后端也有校验，这里直接不显示按钮）
 const currentUserId = computed(() => getCurrentUser()?.id)
 
 const statusOptions = [
   { value: 1, label: '正常' },
-  { value: 0, label: '禁用' },
+  { value: 0, label: '停用' },
 ]
 
 const roleOptions = computed(() => roles.value.map((role) => ({
@@ -146,7 +158,7 @@ const columns = [
   { title: '角色', key: 'roles' },
   { title: '状态', key: 'status', width: 100 },
   { title: '创建时间', dataIndex: 'createTime', key: 'createTime', width: 170 },
-  { title: '操作', key: 'action', width: 250 },
+  { title: '操作', key: 'action', width: 320 },
 ]
 
 const form = ref(emptyForm())
@@ -259,7 +271,17 @@ function toggleStatus(record) {
     roleIds: record.roleIds || [],
   })
     .then(() => {
-      message.success(nextStatus === 1 ? '账号已启用' : '账号已禁用')
+      message.success(nextStatus === 1 ? '账号已启用' : '账号已停用')
+      loadData()
+    })
+    .catch(() => loadData())
+}
+
+// 删除账号（软删）：后端返回后该账号从列表消失
+function handleDelete(record) {
+  deleteAdminUser(record.id)
+    .then(() => {
+      message.success('账号已删除')
       loadData()
     })
     .catch(() => loadData())
@@ -302,10 +324,10 @@ onActivated(loadData)
   margin: 20px 0;
 }
 
-/* 操作列固定三列：超管/当前账号没有禁用按钮时留空占位，保证上下对齐 */
+/* 操作列固定四列：超管/当前账号没有停用和删除按钮时留空占位，保证上下对齐 */
 .row-actions {
   display: grid;
-  grid-template-columns: repeat(3, 72px);
+  grid-template-columns: repeat(4, 72px);
   align-items: center;
   justify-content: center;
 }

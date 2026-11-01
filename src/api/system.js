@@ -18,6 +18,11 @@ export function updateAdminUser(id, data) {
   return axios.put(`/api/admin/system/users/${id}`, data)
 }
 
+// 删除账号（后端是软删：账号从列表消失且立刻退出登录，历史数据保留）
+export function deleteAdminUser(id) {
+  return axios.delete(`/api/admin/system/users/${id}`)
+}
+
 export function resetAdminPassword(id, password) {
   return axios.post(`/api/admin/system/users/${id}/reset-password`, { password })
 }

@@ -65,7 +65,7 @@ function clearLogin(reason) {
  * 作用：实现登录权限控制，防止未登录用户访问需要权限的页面
  */
 router.beforeEach((to, from, next) => {
-    // 从 localStorage 读取 token（用户登录成功后的身份凭证）
+    // 从 sessionStorage 读取 token（用户登录成功后的身份凭证，关掉页面即失效）
     let token = getToken()
     // token 过期后先清掉，避免刷新页面时先闪一下后台再被 401 踢走
     if (token && isTokenExpired(token)) {

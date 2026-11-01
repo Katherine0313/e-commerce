@@ -99,7 +99,7 @@ onMounted(() => {
 // 账号文案（单店模式，没有店铺有效期）
 const accountTitle = () => getCurrentUser()?.username || '未登录';
 
-// 当前登录信息（token 存在 localStorage，路由切换后重新解析，驱动菜单刷新）
+// 当前登录信息（token 存在 sessionStorage，路由切换后重新解析，驱动菜单刷新）
 const currentUser = ref(getCurrentUser());
 watch(() => route.fullPath, () => {
   currentUser.value = getCurrentUser();
