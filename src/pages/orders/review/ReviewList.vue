@@ -48,7 +48,7 @@
     </div>
 
     <a-table :dataSource="list" :columns="columns" :pagination="pagination" row-key="id"
-             :scroll="{ x: 1600 }" @change="handleTableChange">
+              @change="handleTableChange">
       <template #bodyCell="{ column, record }">
         <template v-if="column.key === 'product'">
           <div class="cell-product">
@@ -75,7 +75,7 @@
           <div class="cell-media">
             <a-image v-for="(item, idx) in parseMedia(record.images).filter((m) => m.type !== 'video')"
                      :key="idx" :src="imgUrl(item.url)"
-                     :width="44" :height="44" fit="cover" style="margin-right: 4px" />
+                     :width="44" :height="44" fit="cover" />
             <a-tag v-if="hasVideo(record.images)" color="blue">含视频</a-tag>
             <span v-if="!parseMedia(record.images).length" class="muted">—</span>
           </div>
@@ -92,8 +92,9 @@
           </div>
           <span v-else class="muted">—</span>
         </template>
-        <template v-else-if="column.key === 'creator'">
-          <div v-if="record.createdByName">{{ record.createdByName }}</div>
+        <template v-else-if="column.key === 'orderNo'">
+          <!-- 虚拟评价不挂真实订单，orderNo 为 null，显示占位符 -->
+          <span v-if="record.orderNo">{{ record.orderNo }}</span>
           <span v-else class="muted">—</span>
         </template>
         <template v-else-if="column.key === 'status'">
@@ -106,13 +107,6 @@
         <template v-else-if="column.key === 'action'">
           <div class="action-buttons">
             <a-button size="small" @click="openReply(record)">回复</a-button>
-            <a-button size="small" @click="toggleVisible(record)">
-              {{ record.status === 1 ? '隐藏' : '显示' }}
-            </a-button>
-            <a-button v-permission="'product:review:edit'" size="small" type="primary"
-                      :disabled="record.isVirtual !== 1" @click="openEdit(record)">
-              编辑
-            </a-button>
             <a-button v-permission="'product:review:remove'" size="small" danger @click="remove(record)">
               删除
             </a-button>
@@ -149,7 +143,6 @@ import {
   exportReviews,
   getReviewList,
   replyReview,
-  updateReviewVisible,
 } from '@/api/review.js'
 import ReviewEditModal from '@/pages/orders/review/ReviewEditModal.vue'
 
@@ -191,19 +184,22 @@ const visibleOptions = [
   { value: 0, label: '隐藏' },
 ]
 
+// 列不写死宽度、也不写 :scroll —— 操作列保留 fixed:'right'，
+// antd 会走 table-layout: fixed，列宽由表头文字决定，
+// 24 位订单号不会把列撑爆，表格宽度正好等于内容区宽（任何屏幕都不溢出）
+// 注意：没有 bodyCell 分支的列（如订单号）必须写 dataIndex，否则单元格是空的
 const columns = [
-  { title: '商品', key: 'product', width: 220 },
-  { title: '星级', key: 'rating', width: 130 },
-  { title: '评价内容', key: 'content', width: 240 },
-  { title: '媒体', key: 'media', width: 150 },
-  { title: '类型', key: 'type', width: 80 },
-  { title: '评价人', key: 'user', width: 120 },
-  { title: '订单号', key: 'orderNo', width: 160 },
-  { title: '创建人', key: 'creator', width: 90 },
-  { title: '状态', key: 'status', width: 80 },
-  { title: '商家回复', key: 'reply', width: 180 },
-  { title: '评价时间', dataIndex: 'createdAt', key: 'createdAt', width: 160 },
-  { title: '操作', key: 'action', width: 260, fixed: 'right' },
+  { title: '商品', key: 'product'},
+  { title: '星级', key: 'rating'},
+  { title: '评价内容', key: 'content'},
+  { title: '媒体', key: 'media' },
+  { title: '类型', key: 'type'},
+  { title: '评价人', key: 'user' },
+  { title: '订单号', key: 'orderNo', dataIndex: 'orderNo'},
+  { title: '状态', key: 'status' },
+  { title: '商家回复', key: 'reply' },
+  { title: '评价时间', dataIndex: 'createdAt', key: 'createdAt'},
+  { title: '操作', key: 'action',fixed: 'right' },
 ]
 
 /** 拼查询参数：空值不传，后端据此不筛 */
@@ -254,16 +250,6 @@ function openCreate() {
   editVisible.value = true
 }
 
-// 编辑虚拟评价（真实评价按钮已禁用，这里再兜一次）
-function openEdit(record) {
-  if (record.isVirtual !== 1) {
-    message.warning('买家真实评价不可编辑')
-    return
-  }
-  editId.value = record.id
-  editVisible.value = true
-}
-
 // 回复
 function openReply(record) {
   replyTarget.value = record
@@ -279,15 +265,6 @@ function submitReply() {
   replyReview(replyTarget.value.id, replyText.value.trim()).then(() => {
     message.success('回复成功')
     replyVisible.value = false
-    loadData()
-  })
-}
-
-// 显示 / 隐藏
-function toggleVisible(record) {
-  const next = record.status === 1 ? 0 : 1
-  updateReviewVisible(record.id, next).then(() => {
-    message.success(next === 1 ? '已显示' : '已隐藏')
     loadData()
   })
 }
@@ -395,11 +372,13 @@ onActivated(() => {
   line-height: 1.4;
   max-height: 36px;
   overflow: hidden;
+  text-align: left;
 }
 
 .cell-product-id {
   font-size: 12px;
   color: #999;
+  text-align: left;
 }
 
 .cell-tag {
@@ -422,6 +401,7 @@ onActivated(() => {
   display: flex;
   flex-wrap: wrap;
   gap: 4px;
+  justify-content: center;
 }
 
 .cell-reply {
@@ -444,7 +424,7 @@ onActivated(() => {
   border-radius: 4px;
 }
 
-/* 操作列：四个按钮两列排 */
+/* 操作列：回复、删除两个按钮并排 */
 .action-buttons {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));

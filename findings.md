@@ -60,6 +60,23 @@
 - 售后：C 端申请/列表/详情/状态常量/提交退货 + 后台审核/删除（/api/admin/after-sales）；前端售后页字段蛇形→驼形（afterSaleNo/createdAt/afterSaleType/payTypeDesc 等）。
 - 支付方式：payType 存英文 code，payTypeDesc 中文，前端表格用 payTypeDesc 展示（不是 payType）。
 
+## a-table 列宽规则（2026-11-02）
+
+后台表格（ant-design-vue 3.2.20 / vc-table）横向布局的实测结论（无头 Chrome 加载 antd UMD 渲染量出来的）：
+
+- 表格实际宽度**按「所有列 width 之和」算**。`:scroll="{ x: 1600 }"` 而列宽和是 1870 时，`x` 是死数字，表格就是 1870。
+- `scroll.x` **是数字** → `table-layout: fixed`，列宽严格按写的来；写 `'max-content'` → `table-layout: auto`，
+  列会被内容撑开（本项目 24 位订单号 ≈ 219px），反而容易把表格顶出内容区。**列宽写死时只能用数字**。
+- 表格永远带 `min-width: 100%`：内容区比列宽和宽 → 列被等比拉宽，**不会在右侧留白**；
+  内容区比列宽和窄 → **横向溢出**（出滚动条），且右侧 `fixed: 'right'` 的列会 sticky 压在相邻列上
+  （评价列表就出现过「评价时间」列被「操作」列盖住）。
+- **推荐做法（评价列表已改成这样）**：**列不写死宽度、也不写 `:scroll`**，只保留操作列的 `fixed: 'right'`。
+  - 有固定列 → antd 走 `table-layout: fixed` → 列宽由**表头文字**决定，不会被长订单号撑爆；
+  - 表格宽度 = 容器宽（`width:100%`），任何屏幕都不溢出、不留白（实测 1920/2560/1366 三档都对齐）。
+  - 代价：各列宽度不可控，长文本列（如评价内容）只能靠单元格自身的 `line-clamp` 裁剪。
+- **规矩**：写死列宽时，`:scroll.x` 必须是数字且等于列宽之和，且列宽和 ≤ 内容区宽度（1920 屏约 1648）。
+- 以后改后台表格，别靠肉眼看有没有留白，量一下 `table` 与 `.ant-table-content` 的 `clientWidth`/`scrollWidth` 即可。
+
 ## 遇到的问题
 | 问题 | 解决方案 |
 |------|---------|
