@@ -13,7 +13,11 @@
       </template>
     </a-table-column>
     <!-- 主标题是 40~90 字的 SEO 长标题，单行省略，悬停看全文，避免表格被撑宽 -->
-    <a-table-column title="主标题" dataIndex="title" :ellipsis="true"></a-table-column>
+    <a-table-column title="主标题" dataIndex="title">
+      <template #default="{record}">
+        <span class="title-ellipsis" :title="record.title">{{ record.title }}</span>
+      </template>
+    </a-table-column>
     <a-table-column title="库存" dataIndex="stock"></a-table-column>
     <a-table-column title="库存状态">
       <template #default="{record}">
@@ -155,5 +159,15 @@ const submitStockForm = () => {
 .search{
   max-width: 300px;
   margin:20px 0;
+}
+/* 主标题单行省略。用 CSS 截断而不是 a-table 的 ellipsis 属性：
+   ellipsis 会让整张表切成 table-layout:fixed，浏览器把剩余宽度按固定列宽分摊后
+   还会剩一条空白，表现为表格右侧空出一块 */
+.title-ellipsis {
+  display: inline-block;
+  max-width: 260px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 </style>

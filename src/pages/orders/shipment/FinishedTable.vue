@@ -82,6 +82,7 @@
               v-model:file-list="fileList"
               :action="uploadAction"
               :headers="uploadHeaders"
+              :before-upload="beforeUpload"
               name="file"
               list-type="picture-card"
               :multiple="true"
@@ -111,6 +112,8 @@ import {addAfterSale} from '@/api/afterSale.js'
 import {message, Modal} from 'ant-design-vue'
 import {ExclamationCircleOutlined, PlusOutlined} from '@ant-design/icons-vue'
 import {getToken} from '@/utils/token'
+import {compressImage} from '@/utils/compressImage'
+import {getImageSpec} from '@/utils/image-spec'
 
 defineProps({
   list: {type: Array, default: () => []},
@@ -164,6 +167,9 @@ const handleBatchDeleteOrders = (ids) => {
 // ================== 申请售后 ==================
 const uploadAction = import.meta.env.VITE_API_BASE_URL + '/api/admin/upload?type=after-sale'
 const uploadHeaders = {Authorization: 'Bearer ' + getToken()}
+// 售后凭证图最长边压到 1200：列表里只缩略到 88px，但点开预览要看清晰
+const afterSaleSpec = getImageSpec('after-sale')
+const beforeUpload = (file) => compressImage(file, afterSaleSpec)
 
 const afterSaleVisible = ref(false)
 const afterSaleForm = reactive({

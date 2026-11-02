@@ -32,7 +32,7 @@
           <a-upload
               :action="uploadAction"
               :headers="uploadHeaders"
-              :before-upload="compressImage"
+              :before-upload="beforeUpload"
               v-model:file-list="fileList"
               :maxCount="1"
               @change="imageUpload"
@@ -71,10 +71,14 @@ import Editor from "@/pages/goods/add-goods/Editor.vue";
 import SalesInfo from "@/pages/goods/add-goods/SalesInfo.vue";
 import {getToken} from '@/utils/token'
 import {compressImage} from '@/utils/compressImage'
+import {getImageSpec} from '@/utils/image-spec'
 const editOpen = ref(false)
 const editingId = ref(null)  // 正在编辑的商品 id
 const fileList = ref([])
 const uploadAction = import.meta.env.VITE_API_BASE_URL + '/api/admin/upload'
+// 商品主图压成 800×800 白底方，与新增商品页保持同一规格
+const productImageSpec = getImageSpec('upload')
+const beforeUpload = (file) => compressImage(file, productImageSpec)
 useDragModal('drag-modal-editgoods')
 const salesInfoRef =ref(null)
 // 添加商品对话框表单实例ref，用于触发校验、重置

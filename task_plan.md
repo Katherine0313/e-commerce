@@ -101,6 +101,29 @@
 - [ ] 无论选哪个，都要在「菜单管理」页加提示：改菜单需同步改前端路由
 - **状态：** pending
 
+### 阶段 12：后台商品评价管理页面（2026-11-02，代码完成，已发版）
+
+> 后端在 `e-commerce-boot`（order-service），方案见 `e-commerce-boot/review`。本页只记前端部分。
+
+- [x] 新建 `src/api/review.js`：列表 / 详情 / 新增虚拟 / 编辑虚拟 / 回复 / 显示隐藏 / 删除 / 导出
+- [x] 新建 `src/pages/orders/review/ReviewList.vue`：筛选（商品名 / 订单号 / 星级 / 类型 / 显示状态 / 时间区间）
+      + 表格 + 分页 + 导出 + 新增虚拟评价 + 行内回复 / 隐藏显示 / 编辑 / 删除
+- [x] 新建 `src/pages/orders/review/ReviewEditModal.vue`：商品远程搜索下拉 + 星级 + 标签 + 内容 + 晒图上传
+- [x] `src/router/index.js` 加 `/orders/review`（`meta.permission = product:review:list`，
+      **必须与 `admin_menu` 的 `path`/`perms` 一致**，否则路由守卫会把页面跳走）
+- [x] `src/utils/image-spec.js` 补 `review` 档（最长边 800 / contain）
+- [x] 真实评价的「编辑」按钮 **禁用**（不是隐藏）+ 点击提示；后端另有 400 硬拦
+- [x] 导出走 blob 下载（照 `Workplace.vue:158-182` 样板），API 层 `responseType: 'blob'`
+- [x] 视频不进缩略图九宫格，只标一个「含视频」标签
+- [x] `npx vite build` 通过
+- [x] **发版**（2026-11-02）：`./deploy/release-web.sh`（在 e-commerce-boot 仓库根目录执行；
+      **同一次带上了阶段 27 的图片压缩改造**）→ 生产 `/www/wwwroot/jiemids.com`，产物 `index-87362cae.js`（ReviewList 14.56 kB）
+- [x] 发版后只读补验：`GET /api/admin/reviews` 200（3 条）、筛选全生效、详情 200/404、
+      导出 200 且魔数 `PK\x03\x04`、无权限令牌 **403**、SPA 路由 `www.jiemids.com/orders/review` 200
+- [ ] 发版后用运营账号确认「订单管理 → 商品评价」菜单可见可进（**需人工**，库里权限已确认）
+- [ ] 后台页面写操作交互（回复/隐藏/删除/新增虚拟评价）**故意没在生产跑**（生产上是真实买家评价，不改线上数据），
+      本地已全链路实测通过；要在生产验请先用测试数据
+
 ## 关键问题（2026-10-30 更新）
 
 1. 生产 nginx 的 gzip/缓存优化是否要做？（需用户改宝塔 nginx 配置并 reload）

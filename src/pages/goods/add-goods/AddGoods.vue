@@ -30,7 +30,7 @@
           <a-upload
               :action="uploadAction"
               :headers="uploadHeaders"
-              :before-upload="compressImage"
+              :before-upload="beforeUpload"
               v-model:file-list="fileList"
               @change="imageUpload"
           >
@@ -66,6 +66,7 @@ import Editor from './Editor.vue'
 import SalesInfo from './SalesInfo.vue'
 import {getToken} from '@/utils/token'
 import {compressImage} from '@/utils/compressImage'
+import {getImageSpec} from '@/utils/image-spec'
 
 
 const data = ref([])
@@ -86,6 +87,10 @@ const brandOptions = ref([])
 // 定义层级分类的数据源
 const categoryTree = ref([])
 const uploadAction = import.meta.env.VITE_API_BASE_URL + '/api/admin/upload'
+// 商品主图压成 800×800 白底方：与历史商品图（python 脚本产物）口径一致，
+// 商品卡和详情页都是方图位，规格表见 utils/image-spec.js
+const productImageSpec = getImageSpec('upload')
+const beforeUpload = (file) => compressImage(file, productImageSpec)
 // 加载商品数据，分页复用，便于统一维护
 const loadData = () => {
   // handlePageChange事件触发时，加载的商品要对应到点击的那一页，所以

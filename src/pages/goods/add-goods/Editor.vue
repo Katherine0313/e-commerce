@@ -20,6 +20,10 @@ import '@wangeditor/editor/dist/css/style.css'
 import {message} from 'ant-design-vue'
 import axios from '@/api/request.js'
 import {compressImage} from '@/utils/compressImage'
+import {getImageSpec} from '@/utils/image-spec'
+
+// 正文图按最长边 1200 压缩：富文本满宽展示，2x 够用，规格表见 utils/image-spec.js
+const bodySpec = getImageSpec('body')
 
 const props = defineProps({
   modelValue: {type: String, default: ''},
@@ -40,14 +44,20 @@ const editorConfig = {
   MENU_CONF: {
     uploadImage: {
       async customUpload(file, insertFn) {
-        // 超过 10MB 直接拒绝（与原 maxFileSize 行为一致）
-        if (file.size > 10 * 1024 * 1024) {
-          message.error('图片不能超过 10MB')
+        // 超过 30MB 直接拒绝：canvas 解码超大图会吃爆浏览器内存
+        if (file.size > 30 * 1024 * 1024) {
+          message.error('图片不能超过 30MB')
           return
         }
         try {
           // 先压缩原图再上传，避免详情页富文本里全是原图导致卡顿
-          const compressed = await compressImage(file)
+          const compressed = await compressImage(file, bodySpec)
+          // 体积上限放在压缩之后判：原图 12MB 压完可能只剩 200KB，
+          // 放在压缩前判会把这种图误拒
+          if (compressed.size > 5 * 1024 * 1024) {
+            message.error('图片压缩后仍超过 5MB，请换一张')
+            return
+          }
           const formData = new FormData()
           formData.append('file', compressed)
           const res = await axios.post('/api/admin/upload?type=body', formData)

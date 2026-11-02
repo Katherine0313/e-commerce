@@ -20,7 +20,7 @@
             <a-upload
                 :action="uploadAction"
                 :headers="uploadHeaders"
-                :before-upload="compressImage"
+                :before-upload="beforeUpload"
                 :show-upload-list="false"
                 accept="image/*"
                 @change="imageUpload"
@@ -33,6 +33,7 @@
               </a-button>
             </a-upload>
             <a v-if="addCategoryForm.image" @click="addCategoryForm.image = ''">移除</a>
+            <span class="unit">建议尺寸 {{ categorySpecLabel }}</span>
           </div>
         </a-form-item>
 
@@ -70,6 +71,7 @@ import {message} from 'ant-design-vue'
 import {UploadOutlined} from '@ant-design/icons-vue'
 import {getToken} from '@/utils/token'
 import {compressImage} from '@/utils/compressImage'
+import {getImageSpec, specLabel} from '@/utils/image-spec'
 // 定义并初始化弹窗响应式变量
 const open = ref(false)
 // 当前编辑的分类 id，null 表示新增
@@ -150,6 +152,10 @@ const uploadAction = import.meta.env.VITE_API_BASE_URL + '/api/admin/upload?type
 const uploadHeaders = {
   Authorization: 'Bearer ' + getToken()
 }
+// 分类图按 400×400 小方图裁切，规格表见 utils/image-spec.js
+const categorySpec = getImageSpec('category')
+const categorySpecLabel = specLabel(categorySpec)
+const beforeUpload = (file) => compressImage(file, categorySpec)
 // 预览地址：开发环境后端与前端不同源，补上接口域名；生产环境为空，走同源相对路径
 const imagePreviewUrl = computed(() => {
   const url = addCategoryForm.value.image
@@ -215,6 +221,11 @@ const handleCategorySubmit = () => {
   display: flex;
   align-items: flex-end;
   gap: 8px;
+}
+
+.unit {
+  color: #999;
+  font-size: 12px;
 }
 
 .category-image-preview {

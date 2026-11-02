@@ -165,6 +165,15 @@ const routes = [
                     permission: 'order:order:ship',
                 },
                 component: () => import('@/pages/orders/shipment/Ship.vue'),
+            },
+            {
+                path: 'review',
+                name: 'Review',
+                meta: {
+                    title: '商品评价',
+                    permission: 'product:review:list',
+                },
+                component: () => import('@/pages/orders/review/ReviewList.vue'),
             }
             ]
     },
@@ -227,6 +236,24 @@ const routes = [
                     permission: 'business:promotion:list'
                 },
                 component: () => import('@/pages/business/promotion/PromotionList.vue'),
+            },
+            {
+                path: 'banner',
+                name: 'Banner',
+                meta: {
+                    title: 'Banner管理',
+                    permission: 'business:banner:list'
+                },
+                component: () => import('@/pages/business/banner/BannerList.vue'),
+            },
+            {
+                path: 'article',
+                name: 'Article',
+                meta: {
+                    title: '文章管理',
+                    permission: 'business:article:list'
+                },
+                component: () => import('@/pages/business/article/ArticleList.vue'),
             },
             {
                 path: 'coupon',

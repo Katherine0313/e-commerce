@@ -16,6 +16,45 @@
 - ⚠️ **PC 商城（xiaojiecpn.com）不要用这个脚本**，它用 `./deploy/release-mall.sh`（2026-10-31 新增）
 - ⚠️ 发布后端服务是另一套命令：`./deploy/release.sh <svc>`（auth-service 最后发）
 
+## 会话：2026-11-02（后台商品评价管理页面）
+
+### 当前状态
+- **阶段：** 阶段 12（后台商品评价管理页面）代码完成，**2026-11-02 已发版**。
+- 后端在 `e-commerce-boot`（order-service），方案见 `e-commerce-boot/review`（v3）。
+
+### 已执行操作
+- 新增 `src/api/review.js`：列表 / 详情 / 新增虚拟 / 编辑虚拟 / 回复 / 显示隐藏 / 删除 / 导出（导出 `responseType: 'blob'`）。
+- 新增 `src/pages/orders/review/ReviewList.vue`：
+  筛选区（商品名 / 订单号 / 星级 / 评价类型 / 显示状态 / 时间区间 `a-range-picker`）+
+  表格（商品 / 星级 / 评价内容 / 媒体 / 类型 / 评价人 / 订单号 / 创建人 / 状态 / 商家回复 / 评价时间 / 操作）+
+  分页（表格自带）+ 导出 + 新增虚拟评价；行内回复弹窗 / 隐藏显示 / 编辑 / 删除。
+- 新增 `src/pages/orders/review/ReviewEditModal.vue`：商品远程搜索下拉（走 `getGoodsList`）+ `a-rate` 星级 +
+  标签（预设 + 自定义）+ 内容 + 晒图上传（`/api/admin/upload?type=review`，接 `compressImage(file, getImageSpec('review'))`）。
+- `src/router/index.js` 加 `/orders/review`，`meta.permission = product:review:list`。
+- `src/utils/image-spec.js` 补 `review` 档（最长边 800 / contain）。
+- 真实评价的「编辑」按钮 **禁用**（不是隐藏），点击提示「买家真实评价不可编辑」—— 真正的拦截在后端（400）。
+- 视频不进缩略图九宫格，单独标「含视频」标签。
+
+### 踩坑
+- `:fallback="\"...\""` 这种**双引号属性里塞 `\"` 转义**会直接编译失败
+  （`Error parsing JavaScript expression: Unterminated string constant`）。
+  SVG 占位图要放 script 级 `const PLACEHOLDER = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(...)`，
+  模板里用 `:fallback="PLACEHOLDER"`。
+
+### 验证
+- `npx vite build` 通过（ReviewList 14.36 kB）。
+
+### 发版与生产验证（2026-11-02）
+- `./deploy/release-web.sh`（**在 `e-commerce-boot` 仓库根目录执行**；同一次带上了阶段 27 的图片压缩改造）
+  → 生产 `/www/wwwroot/jiemids.com`，产物 `index-87362cae.js`（ReviewList 14.56 kB）。
+- 生产只读补验全过：`GET /api/admin/reviews` 200（3 条）、筛选（keyword / rating / isVirtual / visible / 时间区间）各自生效、
+  orderNo 精确 1·截断 1·不存在 0、详情 200 / 404、导出 200 且魔数 `PK\x03\x04`（真 xlsx）、
+  无 `product:review:*` 的令牌 **403「无权访问该功能」**、SPA 路由 `www.jiemids.com/orders/review` 200。
+- **故意没在生产跑写操作**（回复/隐藏/删除/新增虚拟评价）—— 生产上是真实买家评价，不改线上数据；
+  这些路径已在本地全链路实测通过。
+- 仍需人工：Excel 打开看内容、运营账号菜单可见性。
+- 发版后用运营账号确认「订单管理 → 商品评价」菜单可见可进。
+
 ## 会话：2026-10-30（管理端全面探索：架构摸底 + 接口契约核对）
 
 ### 当前状态
