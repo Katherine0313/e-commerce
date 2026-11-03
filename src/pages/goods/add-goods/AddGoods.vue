@@ -45,6 +45,9 @@
         </a-form-item>
       </a-form>
     </a-card>
+    <a-card title="商品规格" class="card">
+      <SpecsEditor ref="specsRef" />
+    </a-card>
     <a-card title="销售信息" class="card">
       <SalesInfo ref="salesInfoRef" />
     </a-card>
@@ -64,6 +67,7 @@ import {message} from 'ant-design-vue'
 // 导入富文本组件
 import Editor from './Editor.vue'
 import SalesInfo from './SalesInfo.vue'
+import SpecsEditor from './SpecsEditor.vue'
 import {getToken} from '@/utils/token'
 import {compressImage} from '@/utils/compressImage'
 import {getImageSpec} from '@/utils/image-spec'
@@ -80,6 +84,8 @@ const search = ref('')
 const addGoodsFormRef = ref(null)
 // 销售信息子组件实例
 const salesInfoRef = ref(null)
+// 规格参数子组件实例
+const specsRef = ref(null)
 // 商品图片上传列表（提交成功后清空缩略图）
 const fileList = ref([])
 // 定义商品品牌响应式变量数组
@@ -140,6 +146,10 @@ onActivated(() => {
 
 //提交按钮
 const handleSubmit = () => {
+  // 0. 规格参数：参数名不能为空（后端也会拦，这里先提示更友好）
+  if (!specsRef.value?.validate()) {
+    return
+  }
   // 1. 先校验父组件表单
   addGoodsFormRef.value.validate()
       .then(() => {
@@ -153,6 +163,8 @@ const handleSubmit = () => {
           ...addGoodsForm.value,
           categoryId: path.length ? Number(path[path.length - 1]) : null,
           ...salesInfoRef.value?.salesInfoForm,
+          // 规格参数：后端 specs 传 [] 表示清空、null 表示不修改
+          specs: specsRef.value?.specsForm ?? [],
         }
         // 4. 调用添加商品接口
         return addGoods(goodsData)
@@ -189,6 +201,7 @@ const resetAll = () => {
   addGoodsForm.value.body = ''
   fileList.value = []
   salesInfoRef.value?.resetForm()
+  specsRef.value?.resetForm()
 }
 // 取消按钮
 const cancel = () => {

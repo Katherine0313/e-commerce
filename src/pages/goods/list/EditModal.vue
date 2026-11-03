@@ -48,6 +48,9 @@
         </a-form-item>
       </a-form>
     </a-card>
+    <a-card title="商品规格" class="card">
+      <SpecsEditor ref="specsRef" />
+    </a-card>
     <a-card title="销售信息" class="card">
       <SalesInfo ref="salesInfoRef" />
     </a-card>
@@ -69,6 +72,7 @@ import {message} from 'ant-design-vue'
 import {UploadOutlined} from "@ant-design/icons-vue";
 import Editor from "@/pages/goods/add-goods/Editor.vue";
 import SalesInfo from "@/pages/goods/add-goods/SalesInfo.vue";
+import SpecsEditor from "@/pages/goods/add-goods/SpecsEditor.vue";
 import {getToken} from '@/utils/token'
 import {compressImage} from '@/utils/compressImage'
 import {getImageSpec} from '@/utils/image-spec'
@@ -81,6 +85,8 @@ const productImageSpec = getImageSpec('upload')
 const beforeUpload = (file) => compressImage(file, productImageSpec)
 useDragModal('drag-modal-editgoods')
 const salesInfoRef =ref(null)
+// 规格参数子组件实例
+const specsRef = ref(null)
 // 添加商品对话框表单实例ref，用于触发校验、重置
 const addGoodsFormRef = ref(null)
 // 定义商品品牌响应式变量数组
@@ -110,6 +116,8 @@ const open = (record) => {
   addGoodsForm.value.title = record.title
   addGoodsForm.value.image = record.image
   addGoodsForm.value.body = record.body
+  // 回填规格参数（商品列表接口已返回 specs 数组）
+  specsRef.value?.setSpecs(record.specs || [])
   // 回填已上传的图片到上传组件
   fileList.value = record.image
     ? [{ uid: '-1', name: record.image.split('/').pop() || record.image, status: 'done', url: record.image }]
@@ -119,6 +127,8 @@ const open = (record) => {
   // 3. 等弹窗渲染后回填（cascader 需要 DOM 就绪再设值）
   nextTick(() => {
     addGoodsForm.value.categoryId = findCategoryPath(categoryTree.value, record.categoryId) || []
+    // 弹窗内容首次渲染时组件才存在，这里再回填一次规格参数
+    specsRef.value?.setSpecs(record.specs || [])
     if (salesInfoRef.value?.salesInfoForm) {
       salesInfoRef.value.salesInfoForm.listingStatus = record.listingStatus ?? 1
       salesInfoRef.value.salesInfoForm.salesPrice = record.salesPrice
@@ -168,6 +178,10 @@ onMounted(() => {
 
 //提交按钮
 const handleSubmit = () => {
+  // 0. 规格参数：参数名不能为空（后端也会拦，这里先提示更友好）
+  if (!specsRef.value?.validate()) {
+    return
+  }
   // 1. 先校验父组件表单
   addGoodsFormRef.value.validate()
       .then(() => {
@@ -181,6 +195,8 @@ const handleSubmit = () => {
           ...addGoodsForm.value,
           categoryId: path.length ? Number(path[path.length - 1]) : null,
           ...salesInfoRef.value?.salesInfoForm,
+          // 规格参数：后端 specs 传 [] 表示清空、null 表示不修改
+          specs: specsRef.value?.specsForm ?? [],
         }
         // 4. 调用更新商品接口
         return updateGoods(editingId.value, goodsData)
@@ -207,6 +223,7 @@ const cancel = () => {
   editOpen.value = false
   fileList.value = []
   addGoodsFormRef.value.resetFields()
+  specsRef.value?.resetForm()
 }
 // ====================== 表单校验 =====================
 
