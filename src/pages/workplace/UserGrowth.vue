@@ -1,8 +1,9 @@
 <template>
   <div class="user-growth card p-lg">
     <OverviewTitle title="用户增长" :subtitle="periodLabel" />
-    <!-- 用户总量和新增量级差很多，用双纵轴避免新增曲线贴底；右轴刻度文字对用户无意义，隐藏 -->
-    <line-chart :series="series" dual-axis :show-right-axis-label="false" />
+    <!-- 两条线都是累计值、量级接近，共用一根纵轴：
+         双轴各自缩放会把「新增」画得比「总量」还高，看图的人没法换算，纯误导 -->
+    <line-chart :series="series" />
   </div>
 </template>
 <script>
@@ -15,10 +16,10 @@
     components: { LineChart, OverviewTitle },
     name: 'UserGrowth',
     props: {
-      // { bucketType: 'hour' | 'day' | 'month', buckets: [...], newUsers: [...], totalUsers: 123 }
+      // { bucketType: 'hour' | 'day' | 'month', buckets: [...], newUsers: [...], cumulativeUsers: [...], cumulativeNewUsers: [...], totalUsers: 123 }
       data: {
         type: Object,
-        default: () => ({ bucketType: '', buckets: [], newUsers: [], totalUsers: 0 }),
+        default: () => ({ bucketType: '', buckets: [], newUsers: [], cumulativeUsers: [], cumulativeNewUsers: [], totalUsers: 0 }),
       },
       // 全局报表时间维度，仅用于副标题
       period: { type: String, default: 'week' },
@@ -27,17 +28,31 @@
       periodLabel() {
         return PERIODS.find((p) => p.value === this.period)?.label || '';
       },
-      // 双折线：用户总量（期初总量 + 增量累计）+ 新增用户
+      // 双折线（都是累计值，共用一根轴）：
+      // 用户总量 = 期初存量 + 逐桶累加（后端算好）；累计新增 = 期内新增前缀和
       series() {
-        const { bucketType, buckets = [], newUsers = [], totalUsers = 0 } = this.data;
+        const { bucketType, buckets = [], newUsers = [], cumulativeUsers = [], cumulativeNewUsers = [], totalUsers = 0 } = this.data;
         const nums = newUsers.map((n) => Number(n) || 0);
-        // 期初总量 = 当前总量 − 本时间段新增，避免累计线从 0 开始
-        let acc = (Number(totalUsers) || 0) - nums.reduce((s, n) => s + n, 0);
-        const cumulative = nums.map((n) => (acc += n));
         const labels = buckets.map((b) => this.formatBucket(b, bucketType));
+        // 累计存量曲线：优先用后端返回的 cumulativeUsers；老接口没这个字段时用 totalUsers 反推兜底
+        let total;
+        if (Array.isArray(cumulativeUsers) && cumulativeUsers.length) {
+          total = cumulativeUsers.map((n) => Number(n) || 0);
+        } else {
+          let acc = (Number(totalUsers) || 0) - nums.reduce((s, n) => s + n, 0);
+          total = nums.map((n) => (acc += n));
+        }
+        // 累计新增曲线：后端没返回时自己算前缀和（与后端算法等价）
+        let added;
+        if (Array.isArray(cumulativeNewUsers) && cumulativeNewUsers.length) {
+          added = cumulativeNewUsers.map((n) => Number(n) || 0);
+        } else {
+          let acc = 0;
+          added = nums.map((n) => (acc += n));
+        }
         return [
-          { name: '用户总量', data: labels.map((l, i) => [l, cumulative[i] ?? 0]) },
-          { name: '新增用户', data: labels.map((l, i) => [l, nums[i] ?? 0]) },
+          { name: '用户总量', data: labels.map((l, i) => [l, total[i] ?? 0]) },
+          { name: '累计新增', data: labels.map((l, i) => [l, added[i] ?? 0]) },
         ];
       },
     },

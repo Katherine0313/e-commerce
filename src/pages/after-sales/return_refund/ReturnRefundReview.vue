@@ -1,6 +1,6 @@
 <template>
   <a-modal v-model:visible="returnRefundReviewVisible"
-           title="售后审核" width="min(900px, 92vw)" class="review" okText="确认" cancelText="取消" @ok="submitReview">
+           title="售后审核" width="min(900px, 92vw)" class="review">
     <div class="item">
       <div class="item-title">售后信息</div>
       <a-descriptions bordered :column="isMobile ? 1 : 2" :label-style="isMobile ? {} : { width: '160px' }">
@@ -75,18 +75,21 @@
       </div>
     </div>
     <a-form :model="confirmForm" layout="vertical">
-      <a-form-item label="售后审核" name="result">
-        <a-select v-model:value="confirmForm.result" placeholder="请选择审核结果" style="width:200px">
-          <a-select-option value="approve">审核通过</a-select-option>
-          <a-select-option value="refund">同意退款</a-select-option>
-          <a-select-option value="refunded">已退款</a-select-option>
-          <a-select-option value="reject">拒绝售后</a-select-option>
-        </a-select>
-      </a-form-item>
       <a-form-item label="商家内部备注" name="merchantRemark">
         <a-textarea v-model:value="confirmForm.merchantRemark" placeholder="请输入内部备注" :rows="3" />
       </a-form-item>
     </a-form>
+    <a-alert v-if="!primaryAction && !rejectAction" type="info" show-icon
+             message="当前状态没有可执行的操作" />
+    <template #footer>
+      <a-space>
+        <a-button v-if="primaryAction" type="primary" :loading="submitting"
+                  @click="submitReview(primaryAction.status)">{{ primaryAction.label }}</a-button>
+        <a-button v-if="rejectAction" danger :loading="submitting"
+                  @click="submitReview(rejectAction.status)">{{ rejectAction.label }}</a-button>
+        <a-button @click="returnRefundReviewVisible = false">取消</a-button>
+      </a-space>
+    </template>
   </a-modal>
 </template>
 <script setup>
@@ -125,11 +128,20 @@ defineProps({
 const returnRefundReviewOpen = (record) => {
   returnRefundReviewVisible.value = true
   currentOrder.value = record
+  // 每次打开重置表单，避免上一次的备注残留
+  confirmForm.value = {result: undefined, merchantRemark: ''}
   loadDetailOrders(record.id)
 }
 defineExpose({returnRefundReviewOpen})
 // ================ 商家审核 =================
 const confirmForm = ref({result: undefined, merchantRemark: ''})
+const submitting = ref(false)
+
+// 可执行动作由后端按状态机下发（availableActions），前端只按 kind 分主/危险按钮，
+// 不再自己维护一份状态表（两份拷贝必然漂移）
+const availableActions = computed(() => currentOrder.value?.availableActions || [])
+const primaryAction = computed(() => availableActions.value.find(a => a.kind === 'PRIMARY'))
+const rejectAction = computed(() => availableActions.value.find(a => a.kind === 'DANGER'))
 
 // 根据售后状态，算进度条走到第几步
 const stepCurrent = computed(() => {
@@ -137,8 +149,7 @@ const stepCurrent = computed(() => {
   if (status === 'reviewing') return 1                // 商家审核中 → 停在「商家审核」
   if (status === 'returning') return 2                // 买家退货中 → 走到「买家退货」
   if (['refunding', 'exchanging'].includes(status)) return 3  // 商家确认退款 → 走到「商家确认退款」
-  if (status === 'refund_confirming') return 4        // 确认退款 → 到「退款成功」
-  if (['refunded', 'exchanged', 'returned'].includes(status)) return 5  // 完成 → 全部走完
+  if (['refunded', 'exchanged'].includes(status)) return 5  // 完成 → 全部走完
   return 1                                            // 其它（含拒绝）默认停「商家审核」
 })
 
@@ -146,66 +157,65 @@ const stepCurrent = computed(() => {
 const stepDescription = (index) => {
   const o = currentOrder.value
   const status = o?.status
-  const done = ['refunded', 'exchanged', 'returned']
+  const done = ['refunded', 'exchanged']
   const processing = ['refunding', 'exchanging']
   const isReturning = status === 'returning'
   if (index === 0) return o?.createdAt || ''
   if (index === 1) {           // 商家审核
     if (status === 'reviewing') return '审核中'
     if (status === 'rejected') return o?.rejectedAt || '不通过'
-    if (isReturning || processing.includes(status) || status === 'refund_confirming' || done.includes(status)) return o?.reviewAt || '已完成'
+    if (isReturning || processing.includes(status) || done.includes(status)) return o?.reviewAt || '已完成'
     return '待处理'
   }
   if (index === 2) {           // 买家退货
     if (status === 'rejected') return '—'
     if (isReturning) return '退货中'
-    if (processing.includes(status) || status === 'refund_confirming' || done.includes(status)) return o?.returnAt || '已完成'
+    if (processing.includes(status) || done.includes(status)) return o?.returnAt || '已完成'
     return '待处理'
   }
-  if (index === 3) {           // 商家确认退款
+  if (index === 3) {           // 商家退款
     if (status === 'rejected') return '—'
     if (processing.includes(status)) return '退款中'
-    if (status === 'refund_confirming') return o?.refundAt || '已确认退款'
     if (done.includes(status)) return o?.refundAt || '已完成'
     return '待处理'
   }
   if (index === 4) {           // 退款成功
     if (status === 'rejected') return '—'
-    if (status === 'refund_confirming') return '退款中'
     if (done.includes(status)) return o?.refundedAt || '已完成'
     return '待处理'
   }
   return ''
 }
 
-// 下拉选项 → 后端 status
-const reviewResultMap = {
-  approve: 'returning',          // 审核通过 → 买家退货中（退货退款需先退货再退款）
-  refund: 'refund_confirming',   // 确认退款 → 确认退款中
-  refunded: 'refunded',          // 已退款 → 已退款
-  reject: 'rejected',            // 拒绝售后 → 售后拒绝
-}
-
 const emit = defineEmits(['refresh'])
-const submitReview = () => {
-  const status = reviewResultMap[confirmForm.value.result]
-  if (!status) {
+// 按目标状态提交审核（按钮直接给状态，不再经过下拉框转换）
+const submitReview = (targetStatus) => {
+  if (!targetStatus) {
     message.warning('请先选择审核结果')
     return
   }
+  // 拒绝售后必须写明原因
+  if (targetStatus === 'rejected' && !(confirmForm.value.merchantRemark || '').trim()) {
+    message.warning('拒绝售后必须填写备注原因')
+    return
+  }
+  submitting.value = true
   reviewAfterSale(currentOrder.value.id, {
-    status,
+    status: targetStatus,
     merchantRemark: confirmForm.value.merchantRemark,
   })
       .then(() => {
         message.success('审核提交成功')
-        confirmForm.value = []
+        confirmForm.value = {result: undefined, merchantRemark: ''}
         returnRefundReviewVisible.value = false
         loadDetailOrders(currentOrder.value.id)
         emit('refresh')
       })
       .catch(err => {
         message.error(err.response?.data?.message || '审核失败')
+      })
+      .finally(() => {
+        submitting.value = false
       })
 }
 

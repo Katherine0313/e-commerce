@@ -1,6 +1,6 @@
 <template>
   <a-modal v-model:visible="exchangeReviewVisible"
-           title="售后审核" width="min(900px, 92vw)" class="review" okText="确认" cancelText="取消" @ok="submitReview">
+           title="售后审核" width="min(900px, 92vw)" class="review">
     <div class="item">
       <div class="item-title">售后信息</div>
       <a-descriptions bordered :column="isMobile ? 1 : 2" :label-style="isMobile ? {} : { width: '160px' }">
@@ -75,18 +75,21 @@
       </div>
     </div>
     <a-form :model="confirmForm" layout="vertical">
-      <a-form-item label="售后审核" name="result">
-        <a-select v-model:value="confirmForm.result" placeholder="请选择审核结果" style="width:220px">
-          <a-select-option value="approve">审核通过</a-select-option>
-          <a-select-option value="exchanging">确认收到退货，开始换货</a-select-option>
-          <a-select-option value="exchanged">换货完成</a-select-option>
-          <a-select-option value="reject">拒绝售后</a-select-option>
-        </a-select>
-      </a-form-item>
       <a-form-item label="商家内部备注" name="merchantRemark">
         <a-textarea v-model:value="confirmForm.merchantRemark" placeholder="请输入内部备注" :rows="3" />
       </a-form-item>
     </a-form>
+    <a-alert v-if="!primaryAction && !rejectAction" type="info" show-icon
+             message="当前状态没有可执行的操作" />
+    <template #footer>
+      <a-space>
+        <a-button v-if="primaryAction" type="primary" :loading="submitting"
+                  @click="submitReview(primaryAction.status)">{{ primaryAction.label }}</a-button>
+        <a-button v-if="rejectAction" danger :loading="submitting"
+                  @click="submitReview(rejectAction.status)">{{ rejectAction.label }}</a-button>
+        <a-button @click="exchangeReviewVisible = false">取消</a-button>
+      </a-space>
+    </template>
   </a-modal>
 </template>
 <script setup>
@@ -125,20 +128,27 @@ defineProps({
 const exchangeReviewOpen = (record) => {
   exchangeReviewVisible.value = true
   currentOrder.value = record
+  // 每次打开重置表单，避免上一次的备注残留
+  confirmForm.value = {result: undefined, merchantRemark: ''}
   loadDetailOrders(record.id)
 }
 defineExpose({exchangeReviewOpen})
 // ================ 商家审核 =================
 const confirmForm = ref({result: undefined, merchantRemark: ''})
+const submitting = ref(false)
+
+// 可执行动作由后端按状态机下发（availableActions），前端只按 kind 分主/危险按钮
+const availableActions = computed(() => currentOrder.value?.availableActions || [])
+const primaryAction = computed(() => availableActions.value.find(a => a.kind === 'PRIMARY'))
+const rejectAction = computed(() => availableActions.value.find(a => a.kind === 'DANGER'))
 
 // 根据售后状态，算进度条走到第几步（换货流程：申请→审核→买家退货→商家换货→完成）
 const stepCurrent = computed(() => {
   const status = currentOrder.value?.status
   if (status === 'reviewing') return 1                                // 商家审核中 → 停在「商家审核」
-  if (status === 'returning' || status === 'returning_exchange') return 2  // 买家退货中 → 走到「买家退货」
+  if (status === 'returning') return 2                                // 买家退货中 → 走到「买家退货」
   if (status === 'exchanging') return 3                              // 商家换货中 → 走到「商家换货」
-  if (status === 'exchange_shipping') return 4                       // 商家已发货 → 走到「换货完成」
-  if (['refunded', 'exchanged', 'returned'].includes(status)) return 5    // 完成 → 全部走完
+  if (['exchanged', 'refunded'].includes(status)) return 5           // 完成 → 全部走完
   return 1
 })
 
@@ -146,7 +156,7 @@ const stepCurrent = computed(() => {
 const stepDescription = (index) => {
   const o = currentOrder.value
   const status = o?.status
-  const done = ['refunded', 'exchanged', 'returned']
+  const done = ['exchanged', 'refunded']
   if (index === 0) return o?.createdAt || ''
   if (index === 1) {           // 商家审核
     if (status === 'reviewing') return '审核中'
@@ -157,54 +167,54 @@ const stepDescription = (index) => {
     if (status === 'rejected') return '—'
     // 买家已提交退货方式（含换货仍停在 returning 的情况）→ 显示提交时间
     if (o?.returnAt) return o.returnAt
-    if (status === 'returning' || status === 'returning_exchange') return '退货中'
+    if (status === 'returning') return '退货中'
     return '已完成'
   }
   if (index === 3) {           // 商家换货
     if (status === 'rejected') return '—'
     // 商家已确认收到退货，开始换货 → 显示确认时间
-    if (o?.exchange_at) return o.exchange_at
+    if (o?.exchangeAt) return o.exchangeAt
     if (status === 'exchanging') return '处理中'
-    if (status === 'exchange_shipping' || done.includes(status)) return '已发货'
+    if (done.includes(status)) return '已发货'
     return '待处理'
   }
   if (index === 4) {           // 换货完成
     if (status === 'rejected') return '—'
-    if (status === 'exchange_shipping') return '进行中'
-    if (done.includes(status)) return o?.exchanged_at || '已完成'
+    if (done.includes(status)) return o?.exchangedAt || '已完成'
     return '待处理'
   }
   return ''
 }
 
-// 下拉选项 → 后端 status（换货流程：审核通过 → 买家退货 → 商家换货 → 已完成）
-const reviewResultMap = {
-  approve: 'returning',      // 审核通过 → 等待买家退货（不是直接换货）
-  exchanging: 'exchanging',  // 商家确认收到退货 → 开始换货
-  exchanged: 'exchanged',    // 换货完成 → 已完成
-  reject: 'rejected',        // 拒绝售后 → 售后拒绝
-}
-
 const emit = defineEmits(['refresh'])
-const submitReview = () => {
-  const status = reviewResultMap[confirmForm.value.result]
-  if (!status) {
+// 按目标状态提交审核（按钮直接给状态，不再经过下拉框转换）
+const submitReview = (targetStatus) => {
+  if (!targetStatus) {
     message.warning('请先选择审核结果')
     return
   }
+  // 拒绝售后必须写明原因
+  if (targetStatus === 'rejected' && !(confirmForm.value.merchantRemark || '').trim()) {
+    message.warning('拒绝售后必须填写备注原因')
+    return
+  }
+  submitting.value = true
   reviewAfterSale(currentOrder.value.id, {
-    status,
+    status: targetStatus,
     merchantRemark: confirmForm.value.merchantRemark,
   })
       .then(() => {
         message.success('审核提交成功')
-        confirmForm.value = []
+        confirmForm.value = {result: undefined, merchantRemark: ''}
         exchangeReviewVisible.value = false
         loadDetailOrders(currentOrder.value.id)
         emit('refresh')
       })
       .catch(err => {
         message.error(err.response?.data?.message || '审核失败')
+      })
+      .finally(() => {
+        submitting.value = false
       })
 }
 

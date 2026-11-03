@@ -24,6 +24,11 @@ export function reviewAfterSale(id, data) {
   return axios.put(`/api/admin/after-sales/${id}`, data)
 }
 
+// 售后变更流水（后台管理端，含商家内部备注）
+export function getAfterSaleLogs(id) {
+  return axios.get(`/api/admin/after-sales/${id}/logs`)
+}
+
 // 用户提交退货方式（上门取件/自行寄回 + 时间段）
 export function submitAfterSaleReturn(id,data){
   return axios.post(`/api/after-sales/${id}/submit-return`,data)

@@ -64,11 +64,13 @@ export function useWorkplaceData() {
   const orders = ref([]); // 本店全部订单（非 admin 时是本人订单，后端已过滤 is_deleted）
   const productStat = ref({ totalProducts: 0, totalStock: 0, totalValue: 0 });
   const afterSaleTodo = ref(0);
-  // 用户增长图表用：buckets/newUsers 是后端按时间桶返回的原始数据，总量曲线由组件累加
+  // 用户增长图表用：buckets/newUsers/cumulativeUsers/cumulativeNewUsers 都是后端按时间桶返回的原始数据
   const userGrowth = ref({
     bucketType: '',
     buckets: [],
     newUsers: [],
+    cumulativeUsers: [],
+    cumulativeNewUsers: [],
     totalUsers: 0,
   });
   // 营业额（后端口径：pay_at 实收 − 退款），维度 yesterday / week / month
@@ -252,6 +254,9 @@ export function useWorkplaceData() {
         bucketType: data.bucketType || 'day',
         buckets: data.buckets || [],
         newUsers: data.newUsers || [],
+        // 两条累计曲线由后端给出；老接口没返回时留空数组，组件里会兜底
+        cumulativeUsers: data.cumulativeUsers || [],
+        cumulativeNewUsers: data.cumulativeNewUsers || [],
         totalUsers: Number(data.totalUsers) || 0,
       };
     } catch (err) {

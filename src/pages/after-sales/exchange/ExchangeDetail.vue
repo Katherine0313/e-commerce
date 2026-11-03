@@ -74,6 +74,7 @@
         </a-steps>
       </div>
     </div>
+    <AfterSaleLogTimeline :logs="logs" />
     <div class="item" v-if="!currentOrder?.returnAt && currentOrder?.status === 'returning'">
       <div class="item-title">选择退货方式</div>
       <div class="return">
@@ -127,7 +128,8 @@
 <script setup>
 import {ref, computed} from "vue";
 import {message} from 'ant-design-vue'
-import {getAfterSale, submitAfterSaleReturn} from '@/api/afterSale.js'
+import {getAfterSale, getAfterSaleLogs, submitAfterSaleReturn} from '@/api/afterSale.js'
+import AfterSaleLogTimeline from '@/components/AfterSaleLogTimeline.vue'
 import {useIsMobile} from '@/composables/useMediaQuery'
 
 // 手机端描述列表改单列，避免 160px 标签把内容挤没
@@ -147,10 +149,9 @@ const chooseReturnWay = (way) => {
 const stepCurrent = computed(() => {
   const status = currentOrder.value?.status
   if (status === 'reviewing') return 1                                // 商家审核中 → 停在「商家审核」
-  if (status === 'returning' || status === 'returning_exchange') return 2  // 买家退货中 → 走到「买家退货」
+  if (status === 'returning') return 2                                // 买家退货中 → 走到「买家退货」
   if (status === 'exchanging') return 3                              // 商家换货中 → 走到「商家换货」
-  if (status === 'exchange_shipping') return 4                       // 商家已发货 → 走到「换货完成」
-  if (['refunded', 'exchanged', 'returned'].includes(status)) return 5    // 完成 → 全部走完
+  if (['exchanged', 'refunded'].includes(status)) return 5           // 完成 → 全部走完
   return 1
 })
 
@@ -158,7 +159,7 @@ const stepCurrent = computed(() => {
 const stepDescription = (index) => {
   const o = currentOrder.value
   const status = o?.status
-  const done = ['refunded', 'exchanged', 'returned']
+  const done = ['exchanged', 'refunded']
   if (index === 0) return o?.createdAt || ''
   if (index === 1) {           // 商家审核
     if (status === 'reviewing') return '审核中'
@@ -169,25 +170,26 @@ const stepDescription = (index) => {
     if (status === 'rejected') return '—'
     // 买家已提交退货方式（含换货仍停在 returning 的情况）→ 显示提交时间
     if (o?.returnAt) return o.returnAt
-    if (status === 'returning' || status === 'returning_exchange') return '退货中'
+    if (status === 'returning') return '退货中'
     return '已完成'
   }
   if (index === 3) {           // 商家换货
     if (status === 'rejected') return '—'
     // 商家已确认收到退货，开始换货 → 显示确认时间
-    if (o?.exchange_at) return o.exchange_at
+    if (o?.exchangeAt) return o.exchangeAt
     if (status === 'exchanging') return '处理中'
-    if (status === 'exchange_shipping' || done.includes(status)) return '已发货'
+    if (done.includes(status)) return '已发货'
     return '待处理'
   }
   if (index === 4) {           // 换货完成
     if (status === 'rejected') return '—'
-    if (status === 'exchange_shipping') return '进行中'
-    if (done.includes(status)) return o?.exchanged_at || '已完成'
+    if (done.includes(status)) return o?.exchangedAt || '已完成'
     return '待处理'
   }
   return ''
 }
+// 变更记录（after_sale_log）
+const logs = ref([])
 // =================== 加载订单详情 ============
 const items = ref([])
 // 退款金额 = 售后明细单品小计之和（单品售后=该商品小计）
@@ -204,7 +206,14 @@ const loadDetailOrders = (id) => {
       .catch(err => {
         console.log('详情请求失败：', err.response?.status, err.response?.data)
       })
-
+  // 变更记录单独拉，失败不影响详情展示
+  getAfterSaleLogs(id)
+      .then(res => {
+        logs.value = res.data.data || []
+      })
+      .catch(err => {
+        console.log('变更记录加载失败：', err.response?.status)
+      })
 }
 defineProps({
   afterSaleStatus: {type: Object, default: () => ({map: {}, reasonMap: {}, typeMap: {}})}
