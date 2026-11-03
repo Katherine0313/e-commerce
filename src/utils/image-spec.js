@@ -39,12 +39,14 @@ export const IMAGE_SPEC = {
   'after-sale': { maxEdge: 1200, fit: 'contain' },
   /** 评价晒图：详情页缩略图只有 ~100px，点开看大图，限制最长边 800 足够 */
   review: { maxEdge: 800, fit: 'contain' },
+  /** 快递公司 logo：后台列表缩略 48px，白底方图，别压太多 */
+  express: { width: 120, height: 120, fit: 'contain', background: '#ffffff' },
 }
 
 /**
  * 取某个 type 的压缩规格。
  *
- * @param {string} type 上传的 type（upload/body/category/banner/article/after-sale）
+ * @param {string} type 上传的 type（upload/body/category/banner/article/after-sale/review/express）
  * @param {number} [position] banner 用：广告位置，决定目标画幅
  * @returns {object|null} 规格对象；type 未知返回 null（调用方应走默认压缩）
  */

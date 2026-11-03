@@ -158,15 +158,6 @@ const routes = [
                 component: () => import('@/pages/orders/OrderList.vue'),
             },
             {
-                path: 'ship',
-                name: 'Ship',
-                meta: {
-                    title: '发货管理',
-                    permission: 'order:order:ship',
-                },
-                component: () => import('@/pages/orders/shipment/Ship.vue'),
-            },
-            {
                 path: 'review',
                 name: 'Review',
                 meta: {
@@ -174,6 +165,36 @@ const routes = [
                     permission: 'product:review:list',
                 },
                 component: () => import('@/pages/orders/review/ReviewList.vue'),
+            }
+            ]
+    },
+    {
+        path: '/delivery',
+        name: 'Delivery',
+        meta: {
+            isLogin: true,
+            title: '发货管理',
+            icon: 'SendOutlined',
+            renderMenu: true,
+            cacheable: true,
+        }, children: [
+            {
+                path: 'list',
+                name: 'DeliveryList',
+                meta: {
+                    title: '快递发货列表',
+                    permission: 'order:delivery:list',
+                },
+                component: () => import('@/pages/delivery/DeliveryList.vue'),
+            },
+            {
+                path: 'express',
+                name: 'ExpressList',
+                meta: {
+                    title: '快递公司',
+                    permission: 'order:express:list',
+                },
+                component: () => import('@/pages/delivery/ExpressList.vue'),
             }
             ]
     },

@@ -69,11 +69,6 @@ export function confirmOrder(id) {
   return axios.put(`/api/admin/orders/${id}/confirm`)
 }
 
-// 确认收货（完成）
-export function finishOrder(id) {
-  return axios.put(`/api/admin/orders/${id}/finish`)
-}
-
 // 更新订单信息
 export function updateOrder(id, data) {
   return axios.put(`/api/admin/orders/${id}`, data)
