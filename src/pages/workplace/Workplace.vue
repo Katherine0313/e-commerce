@@ -104,6 +104,7 @@
         class="col-span-12 xlx:col-span-7 xxlx:col-span-8 drop-shadow-sm"
         :data="userGrowth"
         :period="reportPeriod"
+        :error="userGrowthError"
       />
       <sales-ranking
         class="col-span-12 xlx:col-span-5 xxlx:col-span-4 drop-shadow-sm"
@@ -146,6 +147,7 @@
     orderPeriodGrowth,
     salesRanking,
     userGrowth,
+    userGrowthError,
     loadAll,
     setReportPeriod,
   } = useWorkplaceData();

@@ -64,15 +64,17 @@ export function useWorkplaceData() {
   const orders = ref([]); // 本店全部订单（非 admin 时是本人订单，后端已过滤 is_deleted）
   const productStat = ref({ totalProducts: 0, totalStock: 0, totalValue: 0 });
   const afterSaleTodo = ref(0);
-  // 用户增长图表用：buckets/newUsers/cumulativeUsers/cumulativeNewUsers 都是后端按时间桶返回的原始数据
+  // 用户增长图表用：buckets/newUsers/cumulativeUsers 都是后端按时间桶返回的原始数据
   const userGrowth = ref({
     bucketType: '',
     buckets: [],
     newUsers: [],
     cumulativeUsers: [],
-    cumulativeNewUsers: [],
     totalUsers: 0,
   });
+  // 用户统计接口是否加载失败：接口 500 时图表没有数据，
+  // 不区分就会显示成「暂无数据」，看起来像「这段时间真没注册」，实际是接口挂了
+  const userGrowthError = ref(false);
   // 营业额（后端口径：pay_at 实收 − 退款），维度 yesterday / week / month
   const turnover = ref({ timeDesc: '', turnover: 0 });
   const turnoverReport = ref({ dateList: [], turnoverList: [] });
@@ -254,13 +256,15 @@ export function useWorkplaceData() {
         bucketType: data.bucketType || 'day',
         buckets: data.buckets || [],
         newUsers: data.newUsers || [],
-        // 两条累计曲线由后端给出；老接口没返回时留空数组，组件里会兜底
+        // 用户总量曲线（存量累计）由后端给出；老接口没返回时留空数组，组件里会用 totalUsers 反推兜底
         cumulativeUsers: data.cumulativeUsers || [],
-        cumulativeNewUsers: data.cumulativeNewUsers || [],
         totalUsers: Number(data.totalUsers) || 0,
       };
+      userGrowthError.value = false;
     } catch (err) {
       console.error('用户统计加载失败', err);
+      // 保留上一次的数据，图表不至于塌成空白；同时标记错误，由组件显示「加载失败」
+      userGrowthError.value = true;
     }
   }
 
@@ -366,6 +370,7 @@ export function useWorkplaceData() {
     orderPeriodGrowth,
     salesRanking,
     userGrowth,
+    userGrowthError,
     dashboardStats,
     loadAll,
     loadTurnover,

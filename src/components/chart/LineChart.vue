@@ -9,16 +9,17 @@
 </template>
 <script setup>
   import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue';
-  // 按需引入：折线图 + 坐标系 + 图例/提示框 + Canvas 渲染器
+  // 按需引入：折线图 + 柱状图 + 坐标系 + 图例/提示框 + Canvas 渲染器
   import * as echarts from 'echarts/core';
-  import { LineChart } from 'echarts/charts';
+  import { BarChart, LineChart } from 'echarts/charts';
   import { GridComponent, LegendComponent, TooltipComponent } from 'echarts/components';
   import { CanvasRenderer } from 'echarts/renderers';
   import { formatThousand } from '@/utils/formatter';
   import { useIsMobile } from '@/composables/useMediaQuery';
-  echarts.use([LineChart, GridComponent, LegendComponent, TooltipComponent, CanvasRenderer]);
+  echarts.use([LineChart, BarChart, GridComponent, LegendComponent, TooltipComponent, CanvasRenderer]);
   const props = defineProps({
     // [{ name: '销售额', data: [['9月', 1234], ...] }, { name: '订单', data: [...] }]
+    // 每条序列可带 type：'line'（默认）/ 'bar'，用于「存量走折线 + 每日增量走柱状」这类组合
     // 不传时默认 []，组件进入空态，不会报错
     series: { type: Array, default: () => [] },
     // 是否双轴：两条线量级差异大时用（如销售额+订单量、用户总量+新增）；
@@ -144,11 +145,14 @@
       },
       series: props.series.map((s, i) => ({
         name: s.name,
-        type: 'line',
-        smooth: true,
+        // 序列可指定类型：默认折线，type: 'bar' 画柱状（存量趋势 + 每日增量这类组合）
+        type: s.type || 'line',
+        smooth: s.type === 'bar' ? false : true,
         lineStyle: {
           width: 3,
         },
+        // 柱子别太宽：日桶多的时候细一点才不会挤成一坨
+        ...(s.type === 'bar' ? { barMaxWidth: 24 } : {}),
         yAxisIndex: multi && i > 0 ? 1 : 0,
         data: s.data ?? [],
       })),
