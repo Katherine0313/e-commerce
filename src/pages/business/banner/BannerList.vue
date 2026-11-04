@@ -151,14 +151,14 @@ const pagination = ref({
 })
 
 const columns = [
-  { title: '图片', key: 'image', width: 110 },
+  { title: '排序', dataIndex: 'sortOrder', key: 'sortOrder' },
+  { title: '图片', key: 'image' },
   { title: '标题', dataIndex: 'title', key: 'title' },
-  { title: '位置', key: 'position', width: 130 },
-  { title: '跳转', key: 'link', width: 180 },
-  { title: '排序', dataIndex: 'sortOrder', key: 'sortOrder', width: 80 },
-  { title: '状态', key: 'status', width: 90 },
-  { title: '点击量', dataIndex: 'browseCount', key: 'browseCount', width: 90 },
-  { title: '创建时间', dataIndex: 'createTime', key: 'createTime', width: 170 },
+  { title: '位置', key: 'position' },
+  { title: '跳转', key: 'link'},
+  { title: '状态', key: 'status' },
+  { title: '点击量', dataIndex: 'browseCount', key: 'browseCount' },
+  { title: '创建时间', dataIndex: 'createTime', key: 'createTime' },
   { title: '操作', key: 'action', width: 200 },
 ]
 

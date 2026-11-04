@@ -26,7 +26,7 @@
     <template #bodyCell="{column, record}">
       <template v-if="column.key === 'image'">
         <!-- @click.stop 阻止事件冒泡，现在点击图片是 <a-image> 自带的预览放大效果，点击行的其他位置才跳 Mall.vue。-->
-        <img v-lazy="record.image" width="80" @click.stop/>
+        <img v-lazy="record.image" width="60" @click.stop/>
       </template>
       <template v-if="column.key === 'category'">
         {{ categoryMap[record.categoryId] || record.categoryId }}

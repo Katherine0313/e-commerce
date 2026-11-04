@@ -1,13 +1,9 @@
 <template>
   <div class="rich-editor-wrap">
-    <Toolbar
-        :editor="editorRef"
-        :defaultConfig="toolbarConfig"
-        style="border:1px solid #d9d9d9;border-bottom:none;border-radius:6px 6px 0 0"
-    />
+    <Toolbar :editor="editorRef" :defaultConfig="toolbarConfig" class="rich-editor-toolbar" />
     <Editor
         :defaultConfig="editorConfig"
-        style="border:1px solid #d9d9d9;border-radius:0 0 6px 6px;overflow-y:auto;min-height:300px"
+        class="rich-editor-body"
         @onCreated="handleCreated"
         @onChange="handleChange"
     />
@@ -99,5 +95,33 @@ onBeforeUnmount(() => {
 .rich-editor-wrap {
   width: 100%;
   z-index: 100;
+  /* 把 wangEditor 自带的白底配色接到 stepin 主题变量上，切换夜间/暗色主题时编辑器一起变色 */
+  --w-e-textarea-bg-color: var(--color-bg-container, #fff);
+  --w-e-textarea-color: var(--color-text-1, rgba(0, 0, 0, 0.85));
+  --w-e-textarea-border-color: var(--color-border-1, #d9d9d9);
+  --w-e-textarea-slight-border-color: var(--color-border-2, #e8e8e8);
+  --w-e-textarea-slight-color: var(--color-text-3, #d4d4d4);
+  --w-e-textarea-slight-bg-color: var(--color-fill-3, #f5f2f0);
+  --w-e-toolbar-color: var(--color-text-2, #595959);
+  --w-e-toolbar-bg-color: var(--color-bg-container, #fff);
+  --w-e-toolbar-active-color: var(--color-text-1, #333);
+  --w-e-toolbar-active-bg-color: var(--color-bg-hover, #f1f1f1);
+  --w-e-toolbar-disabled-color: var(--color-text-4, #999);
+  --w-e-toolbar-border-color: var(--color-border-1, #e8e8e8);
+  --w-e-modal-button-bg-color: var(--color-bg-container-light, #fafafa);
+  --w-e-modal-button-border-color: var(--color-border-1, #d9d9d9);
+}
+
+.rich-editor-toolbar {
+  border: 1px solid var(--color-border-1, #d9d9d9);
+  border-bottom: none;
+  border-radius: 6px 6px 0 0;
+}
+
+.rich-editor-body {
+  border: 1px solid var(--color-border-1, #d9d9d9);
+  border-radius: 0 0 6px 6px;
+  min-height: 300px;
+  overflow-y: auto;
 }
 </style>

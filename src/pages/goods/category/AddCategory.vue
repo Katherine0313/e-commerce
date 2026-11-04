@@ -1,5 +1,5 @@
 <template>
-  <a-modal :title="modalTitle" v-model:visible="open" @ok="handleCategorySubmit" wrap-class-name="drag-modal-addcat">
+  <a-modal :title="modalTitle" v-model:visible="open" width="720px" @ok="handleCategorySubmit" wrap-class-name="drag-modal-addcat">
     <a-form :model="addCategoryForm" ref="categoryFormRef" :rules="categoryFormRules">
       <a-form-item label="分类层级">
         <!-- 编辑时不允许改层级：后端局部更新无法把 parentId 置空 -->
@@ -62,13 +62,25 @@
       <a-form-item label="规格模板">
         <div class="spec-template">
           <div class="spec-template-tip">
-            新增商品选择该分类时，按下面顺序自动生成规格参数行；模板项非必填，可留空。参数名可带单位，如「重量(kg)」。
+            新增商品选择该分类时，按下面顺序自动生成规格参数行，并填入默认值，商家只需微调或选择；模板项非必填。参数名可带单位，如「重量(kg)」。
           </div>
-          <div class="spec-template-row" v-for="(item, index) in addCategoryForm.specTemplate" :key="index">
+          <div class="spec-template-row" :class="{ 'is-select': item.type === 'select' }"
+               v-for="(item, index) in addCategoryForm.specTemplate" :key="index">
             <a-input
-                v-model:value="addCategoryForm.specTemplate[index]"
+                v-model:value="item.name"
                 placeholder="参数名，如 屏幕尺寸 / 重量(kg)"
                 :maxlength="32"
+            />
+            <a-select v-model:value="item.type" :options="templateTypeOptions"/>
+            <a-input
+                v-model:value="item.defaultValue"
+                placeholder="默认值（自动填入商品表单）"
+                :maxlength="128"
+            />
+            <a-input
+                v-if="item.type === 'select'"
+                v-model:value="item.optionsText"
+                placeholder="可选值，逗号分隔"
             />
             <a-button type="text" danger @click="removeTemplateItem(index)">
               <DeleteOutlined/>
@@ -162,7 +174,7 @@ const editCategoryModal = (record) => {
     parentId: record.parentId ?? undefined,
     recommend: record.recommend === 1,
     image: record.image || '',
-    specTemplate: Array.isArray(record.specTemplate) ? [...record.specTemplate] : [],
+    specTemplate: Array.isArray(record.specTemplate) ? record.specTemplate.map(toTemplateFormItem) : [],
   }
   open.value = true
   loadParentList()
@@ -198,12 +210,34 @@ const imageUpload = (info) => {
   }
 }
 //=============规格模板=================
+// 控件类型：文本 / 数字 / 选项（与后端 SpecTemplateItem 常量一致）
+const templateTypeOptions = [
+  {value: 'text', label: '文本'},
+  {value: 'number', label: '数字'},
+  {value: 'select', label: '选项'},
+]
+// 表单内的模板项带 optionsText（逗号分隔的可选值），提交前再转成 options 数组
+const toTemplateFormItem = (item) => {
+  if (typeof item === 'string') {
+    return {name: item, type: 'text', defaultValue: '', optionsText: ''}
+  }
+  return {
+    name: item.name || '',
+    type: item.type || 'text',
+    defaultValue: item.defaultValue || '',
+    optionsText: Array.isArray(item.options) ? item.options.join(',') : '',
+  }
+}
+const parseOptions = (text) => (text || '')
+    .split(/[,，]/)
+    .map((option) => option.trim())
+    .filter(Boolean)
 const addTemplateItem = () => {
   if (addCategoryForm.value.specTemplate.length >= 30) {
     message.warning('规格模板最多 30 项')
     return
   }
-  addCategoryForm.value.specTemplate.push('')
+  addCategoryForm.value.specTemplate.push({name: '', type: 'text', defaultValue: '', optionsText: ''})
 }
 
 const removeTemplateItem = (index) => {
@@ -221,6 +255,13 @@ const categoryFormRules = {
 // 弹窗中表单的提交：editingId 有值走更新，否则走新增
 const handleCategorySubmit = () => {
   const isEdit = editingId.value !== null
+  // 选项类型必须配置可选值，否则商品表单无法选择
+  const invalidSelect = addCategoryForm.value.specTemplate
+      .find((item) => (item.name || '').trim() && item.type === 'select' && !parseOptions(item.optionsText).length)
+  if (invalidSelect) {
+    message.warning(`「${invalidSelect.name}」类型为选项时必须填写可选值`)
+    return
+  }
   categoryFormRef.value.validate()
       .then(() => {
         const data = {
@@ -232,10 +273,15 @@ const handleCategorySubmit = () => {
           image: addCategoryForm.value.group === '1'
               ? (addCategoryForm.value.image || (isEdit ? '' : null))
               : null,
-          // 空数组表示清空模板；模板项非必填，商品表单只负责按顺序展示字段名
+          // 空数组表示清空模板；模板项带类型/默认值/可选值，商品表单按顺序生成并自动填值
           specTemplate: addCategoryForm.value.specTemplate
-              .map(item => (item || '').trim())
-              .filter(Boolean)
+              .map((item) => ({
+                name: (item.name || '').trim(),
+                type: item.type || 'text',
+                defaultValue: (item.defaultValue || '').trim(),
+                options: item.type === 'select' ? parseOptions(item.optionsText) : [],
+              }))
+              .filter((item) => item.name)
         }
         return isEdit ? updateCategoryTree(editingId.value, data) : addCategory(data)
       })
@@ -285,9 +331,13 @@ const handleCategorySubmit = () => {
 
 .spec-template-row {
   display: grid;
-  grid-template-columns: 1fr 32px;
+  grid-template-columns: 1fr 92px 1fr 32px;
   align-items: center;
   gap: 8px;
+}
+
+.spec-template-row.is-select {
+  grid-template-columns: 1fr 92px 1fr 1fr 32px;
 }
 
 .category-image-preview {

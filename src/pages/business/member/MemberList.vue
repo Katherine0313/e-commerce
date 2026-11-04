@@ -145,15 +145,15 @@ const levelOptions = computed(() =>
 
 const memberColumns = [
   { title: 'ID', dataIndex: 'id', key: 'id', width: 80 },
-  { title: '头像', key: 'avatar', width: 70 },
-  { title: '昵称', dataIndex: 'name', key: 'name' },
-  { title: '手机号', dataIndex: 'phone', key: 'phone', width: 130 },
-  { title: '会员等级', key: 'levelName', width: 120 },
+  { title: '头像', key: 'avatar' },
+  { title: '昵称', dataIndex: 'name', key: 'name' , width: 100},
+  { title: '手机号', dataIndex: 'phone', key: 'phone' },
+  { title: '会员等级', key: `levelName`},
   { title: '成长值', dataIndex: 'growthValue', key: 'growthValue', width: 100 },
-  { title: '累计消费', key: 'totalPaidAmount', width: 120 },
+  { title: '累计消费', key: 'totalPaidAmount' },
   { title: '已支付订单', dataIndex: 'paidOrderCount', key: 'paidOrderCount', width: 110 },
-  { title: '注册时间', dataIndex: 'createTime', key: 'createTime', width: 170 },
-  { title: '状态', key: 'status', width: 90 },
+  { title: '注册时间', dataIndex: 'createTime', key: 'createTime' },
+  { title: '状态', key: 'status' },
   { title: '操作', key: 'action', width: 130 },
 ]
 
