@@ -50,10 +50,10 @@
             </template>
             <template v-else-if="column.key === 'action'">
               <div class="action-buttons">
-                <a-button v-permission="'order:delivery:list'" size="small" type="primary" @click="openLogs(record)">
+                <a-button size="small" type="primary" @click="openLogs(record)">
                   查看流水
                 </a-button>
-                <a-button v-permission="'order:delivery:list'" size="small" @click="openLogistics(record)">
+                <a-button size="small" @click="openLogistics(record)">
                   查看物流
                 </a-button>
                 <a-button v-permission="'order:delivery:resend'" size="small" @click="openModal('resend', record)">

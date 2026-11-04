@@ -41,7 +41,6 @@
 <script setup>
 import { inject, onMounted, ref, computed, watch } from 'vue'
 import { getAfterSales,getAfterSaleStatus,deleteAfterSale } from '@/api/afterSale.js'
-import {hasPermi} from '@/utils/auth.js'
 import {getOrderStatus} from '@/api/orders.js'
 import OnlyRefundDetail from './OnlyRefundDetail.vue'
 import OnlyRefundReview from './OnlyRefundReview.vue'
@@ -121,7 +120,6 @@ const handleOnlyRefundDetail = (record) => {
   onlyRefundDetailRef.value.onlyRefundDetailOpen(record)
 }
 // =============== 管理员身份 ===================
-const canAudit = hasPermi('aftersale:aftersale:audit')
 </script>
 
 <style scoped>

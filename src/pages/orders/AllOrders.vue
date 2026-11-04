@@ -23,7 +23,7 @@
       </a-table-column>
       <a-table-column title="操作">
         <template #default="{record}">
-          <a-button v-permission="'order:order:detail'" type="primary" style="margin-right:10px;"
+          <a-button type="primary" style="margin-right:10px;"
                     @click="$emit('view',record.id)">查看订单
           </a-button>
           <a-button v-permission="'order:order:remove'" type="link" @click="$emit('delete',record.id)">删除</a-button>

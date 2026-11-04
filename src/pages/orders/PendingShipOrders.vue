@@ -24,7 +24,7 @@
       <a-table-column title="操作">
         <template #default="{record}">
           <div class="ops">
-            <a-button v-permission="'order:order:detail'" type="primary" style="margin-right:10px;" @click="$emit('view',record.id)">查看订单
+            <a-button type="primary" style="margin-right:10px;" @click="$emit('view',record.id)">查看订单
             </a-button>
             <a-button v-permission="'order:order:remove'" @click="$emit('delete',record.id)" size="small" type="link">删除
             </a-button>
@@ -39,7 +39,6 @@
 import {ref} from 'vue'
 import {cancelOrder} from '@/api/orders.js'
 import {message, Modal} from 'ant-design-vue'
-import {hasPermi} from '@/utils/auth.js'
 
 defineProps({
   list: {type: Array, default: () => []},

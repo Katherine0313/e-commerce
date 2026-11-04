@@ -41,7 +41,6 @@
 <script setup>
 import { inject, onMounted,watch,ref,computed} from 'vue'
 import { deleteAfterSale,getAfterSaleStatus,getAfterSales } from '@/api/afterSale.js'
-import {hasPermi} from '@/utils/auth.js'
 import {getOrderStatus} from '@/api/orders.js'
 import { message, Modal } from 'ant-design-vue'
 import ExchangeDetail from './ExchangeDetail.vue'
@@ -119,7 +118,6 @@ const handleExchangeDetail = (record) => {
   exchangeDetailRef.value.exchangeDetailOpen(record)
 }
 // =============== 管理员身份 ===================
-const canAudit = hasPermi('aftersale:aftersale:audit')
 </script>
 
 <style scoped>
