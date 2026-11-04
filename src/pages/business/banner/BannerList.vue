@@ -66,7 +66,7 @@
         </a-form-item>
         <a-form-item label="Banner 图" required>
           <a-upload :action="uploadAction" :headers="uploadHeaders" :before-upload="beforeUpload"
-                    v-model:file-list="fileList" :maxCount="1" @change="imageUpload">
+                    v-model:file-list="fileList" :maxCount="4" @change="imageUpload">
             <a-button>
               <UploadOutlined />
               点击上传
