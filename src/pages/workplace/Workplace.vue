@@ -5,10 +5,32 @@
     >
       <div class="flex items-center">
         <!-- JWT 里只有 {username, role}，没有头像字段，沿用顶栏同一张默认图 -->
-        <img
-          src="@/assets/avatar/zongjie.webp"
-          class="w-16 h-16 rounded-full"
-        />
+        <div class="relative w-16 h-16 flex-none">
+          <!-- 兔耳挂件：按 64px 头像等比缩放，耳朵画在圆形下层 -->
+          <svg
+            class="absolute left-0 z-0 w-full h-auto pointer-events-none"
+            style="top: -45.5%"
+            viewBox="0 -20 44 64"
+            aria-hidden="true"
+            focusable="false"
+          >
+            <g transform="rotate(-12 12.2 4)">
+              <ellipse cx="12.2" cy="-6" rx="6" ry="13" fill="#f8dbe2" />
+              <ellipse cx="12.2" cy="-5" rx="2.8" ry="9.4" fill="#f3b6c6" />
+            </g>
+            <g transform="rotate(12 31.8 4)">
+              <ellipse cx="31.8" cy="-6" rx="6" ry="13" fill="#f8dbe2" />
+              <ellipse cx="31.8" cy="-5" rx="2.8" ry="9.4" fill="#f3b6c6" />
+            </g>
+          </svg>
+          <div class="relative z-10 w-full h-full rounded-full overflow-hidden bg-white">
+            <img
+              src="@/assets/avatar/zongjie.webp"
+              alt="杰米多多"
+              class="block w-full h-full object-cover"
+            />
+          </div>
+        </div>
         <div class="ml-base">
           <div class="text-title font-bold text-lg">{{ greeting }}</div>
           <div class="text-subtext font-bold text-sm">{{ roleText }}</div>
@@ -258,7 +280,8 @@
       .hero {
         flex-direction: column;
         align-items: stretch;
-        padding-top: 20px;
+        // 手机端留出 32px，避免兔耳顶出卡片背景
+        padding-top: 32px;
       }
       .hero-stats {
         width: 100%;

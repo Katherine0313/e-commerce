@@ -50,7 +50,8 @@
         </template>
         <template v-else-if="column.key === 'action'">
           <div class="action-buttons">
-            <a-button size="small" type="primary" @click="openEdit(record)">编辑</a-button>
+            <a-button v-permission="'business:article:edit'" size="small" type="primary"
+                      @click="openEdit(record)">编辑</a-button>
             <a-popconfirm v-if="record.status !== 1" title="确定上架该文章？" @confirm="handleToggle(record, 1)">
               <a-button v-permission="'business:article:edit'" size="small">上架</a-button>
             </a-popconfirm>

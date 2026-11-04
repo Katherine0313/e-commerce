@@ -17,7 +17,8 @@
         </template>
         <template v-else-if="column.key === 'action'">
           <div class="action-buttons">
-            <a-button size="small" type="primary" @click="openEdit(record)">编辑</a-button>
+            <a-button v-permission="'business:article:edit'" size="small" type="primary"
+                      @click="openEdit(record)">编辑</a-button>
             <a-popconfirm title="确定删除该分类？分类下还有文章时无法删除。" @confirm="handleDelete(record)">
               <a-button v-permission="'business:article:remove'" size="small" danger>删除</a-button>
             </a-popconfirm>

@@ -43,7 +43,8 @@
         </template>
         <template v-else-if="column.key === 'action'">
           <div class="action-buttons">
-            <a-button size="small" type="primary" @click="openEdit(record)">编辑</a-button>
+            <a-button v-permission="'business:banner:edit'" size="small" type="primary"
+                      @click="openEdit(record)">编辑</a-button>
             <a-popconfirm v-if="record.status !== 1" title="确定启用该 Banner？" @confirm="handleToggle(record, 1)">
               <a-button v-permission="'business:banner:edit'" size="small">启用</a-button>
             </a-popconfirm>

@@ -38,7 +38,7 @@
   .sales-ranking {
     @apply flex flex-col;
     .rank-list {
-      @apply flex-1 flex flex-col justify-between mt-md;
+      @apply flex-1 flex flex-col mt-md;
     }
     .rank-item {
       @apply flex items-center py-xs;

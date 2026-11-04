@@ -10,7 +10,20 @@
       <!-- 页面只保留系统名称，不再堆营销文案 -->
       <div class="hero">
         <div class="hero-mark">
-          <img :src="avatar" alt="杰米多多" />
+          <!-- 兔耳挂件：画在头像下层，耳朵从圆上方探出 -->
+          <svg class="hero-accessory" viewBox="0 -20 44 64" aria-hidden="true" focusable="false">
+            <g transform="rotate(-12 12.2 4)">
+              <ellipse cx="12.2" cy="-6" rx="6" ry="13" fill="#f8dbe2" />
+              <ellipse cx="12.2" cy="-5" rx="2.8" ry="9.4" fill="#f3b6c6" />
+            </g>
+            <g transform="rotate(12 31.8 4)">
+              <ellipse cx="31.8" cy="-6" rx="6" ry="13" fill="#f8dbe2" />
+              <ellipse cx="31.8" cy="-5" rx="2.8" ry="9.4" fill="#f3b6c6" />
+            </g>
+          </svg>
+          <div class="hero-photo">
+            <img :src="avatar" alt="杰米多多" />
+          </div>
         </div>
         <h1>杰米多多电商后台管理系统</h1>
       </div>
@@ -302,14 +315,34 @@ const submitAccount = () => {
     gap: 14px;
 
     .hero-mark {
+      position: relative;
       width: 44px;
       height: 44px;
       flex: 0 0 44px;
-      overflow: hidden;
       border: 2px solid rgba(255, 210, 80, 0.95);
       border-radius: 50%;
       background: #fff;
       box-shadow: 0 8px 20px -8px rgba(255, 202, 41, 0.8);
+
+      /* 兔耳层在头像下方，超出的部分不会被裁掉 */
+      .hero-accessory {
+        position: absolute;
+        top: -45.5%;
+        left: 0;
+        z-index: 1;
+        width: 100%;
+        height: auto;
+        pointer-events: none;
+      }
+
+      .hero-photo {
+        position: relative;
+        z-index: 2;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+        border-radius: 50%;
+      }
 
       img {
         display: block;
