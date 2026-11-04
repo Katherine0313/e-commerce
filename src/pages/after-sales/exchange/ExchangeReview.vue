@@ -3,36 +3,23 @@
            title="售后审核" width="min(900px, 92vw)" class="review">
     <div class="item">
       <div class="item-title">售后信息</div>
-      <a-descriptions bordered :column="isMobile ? 1 : 2" :label-style="isMobile ? {} : { width: '160px' }">
+      <a-descriptions bordered :column="isMobile ? 1 : 3" :label-style="isMobile ? {} : { width: '106px' }">
         <a-descriptions-item label="售后单号">{{ currentOrder?.afterSaleNo }}</a-descriptions-item>
         <a-descriptions-item label="申请时间">{{ currentOrder?.createdAt }}</a-descriptions-item>
-        <a-descriptions-item label="售后类型"> {{ afterSaleStatus.typeMap[currentOrder?.afterSaleType] }}
+        <a-descriptions-item label="售后类型">{{ afterSaleStatus.typeMap[currentOrder?.afterSaleType] }}
         </a-descriptions-item>
-        <a-descriptions-item label="售后原因">{{
-            afterSaleStatus.reasonMap[currentOrder?.reason]
-          }}
-        </a-descriptions-item>
-        <a-descriptions-item label="货物状态" :span="2">{{ currentOrder?.goodsStatusDesc || '—' }}</a-descriptions-item>
-        <a-descriptions-item label="补充说明" :span="2">{{ currentOrder?.remark }}</a-descriptions-item>
-      </a-descriptions>
-    </div>
-    <div class="item">
-      <div class="item-title">用户信息</div>
-      <a-descriptions bordered :column="isMobile ? 1 : 2" :label-style="isMobile ? {} : { width: '160px' }">
-        <a-descriptions-item label="收货人">{{ currentOrder?.consignee }}</a-descriptions-item>
-        <a-descriptions-item label="手机号码">{{ maskPhone(currentOrder?.phone) }}</a-descriptions-item>
-        <a-descriptions-item label="收货地址" :span="2">
-          {{ (currentOrder?.region || '') + ' ' + (currentOrder?.detailAddress || '') }}
-        </a-descriptions-item>
-      </a-descriptions>
-    </div>
-    <div class="item">
-      <div class="item-title">订单信息</div>
-      <a-descriptions bordered :column="isMobile ? 1 : 2" :label-style="isMobile ? {} : { width: '160px' }">
+        <a-descriptions-item label="售后原因">{{ afterSaleStatus.reasonMap[currentOrder?.reason] }}</a-descriptions-item>
+        <a-descriptions-item label="货物状态">{{ currentOrder?.goodsStatusDesc || '—' }}</a-descriptions-item>
+        <a-descriptions-item label="退款金额">￥{{ refundTotal.toFixed(2) }}</a-descriptions-item>
         <a-descriptions-item label="订单号">{{ currentOrder?.orderNo }}</a-descriptions-item>
         <a-descriptions-item label="支付时间">{{ currentOrder?.payAt }}</a-descriptions-item>
         <a-descriptions-item label="支付方式">{{ currentOrder?.payTypeDesc }}</a-descriptions-item>
-        <a-descriptions-item label="退款金额">￥{{ refundTotal.toFixed(2) }}</a-descriptions-item>
+        <a-descriptions-item label="收货人">{{ currentOrder?.consignee }}</a-descriptions-item>
+        <a-descriptions-item label="手机号码">{{ maskPhone(currentOrder?.phone) }}</a-descriptions-item>
+        <a-descriptions-item label="补充说明">{{ currentOrder?.remark || '—' }}</a-descriptions-item>
+        <a-descriptions-item label="收货地址" :span="isMobile ? 1 : 3">
+          {{ (currentOrder?.region || '') + ' ' + (currentOrder?.detailAddress || '') }}
+        </a-descriptions-item>
       </a-descriptions>
     </div>
     <div class="item">
@@ -74,9 +61,10 @@
         </a-steps>
       </div>
     </div>
-    <a-form :model="confirmForm" layout="vertical">
+    <a-form :model="confirmForm" layout="inline" class="remark-form">
       <a-form-item label="商家内部备注" name="merchantRemark">
-        <a-textarea v-model:value="confirmForm.merchantRemark" placeholder="请输入内部备注" :rows="3" />
+        <a-input v-model:value="confirmForm.merchantRemark" placeholder="如拒绝，请填原因"
+                 allow-clear style="width: min(420px, 60vw)" />
       </a-form-item>
     </a-form>
     <a-alert v-if="!primaryAction && !rejectAction" type="info" show-icon
@@ -223,17 +211,26 @@ const submitReview = (targetStatus) => {
 
 <style scoped>
 .review .item {
-  margin-bottom: 20px;
-  padding-bottom: 10px;
+  margin-bottom: 14px;
+  padding-bottom: 8px;
   border-bottom: 1px solid #eee;
 }
 
 .item .item-title {
-  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.1);
-  margin-bottom: 5px;
-  padding: 8px 0 8px 10px;
-  font-size: 16px;
-  border-radius: 8px;
+  margin-bottom: 8px;
+  padding-left: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  border-left: 3px solid #1677ff;
+  line-height: 1.4;
+}
+
+.remark-form {
+  margin-top: 4px;
+}
+
+.remark-form :deep(.ant-form-item) {
+  margin-bottom: 8px;
 }
 
 

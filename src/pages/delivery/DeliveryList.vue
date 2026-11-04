@@ -250,7 +250,7 @@ const deliveryColumns = [
   { title: '签收状态', key: 'signStatus'},
   // 不设 fixed:'right'：有 fixed 列 antd 会切 table-layout: fixed，无宽度的列平分剩余空间，
   // 长文本列（收货地址/买家备注）会被挤爆变形、内容被裁掉；去掉后走 auto 布局按内容自适应
-  { title: '操作', key: 'action' },
+  { title: '操作', key: 'action' ,width:100},
 ]
 
 function loadDeliveryList() {
@@ -529,12 +529,8 @@ onActivated(() => {
   display: grid;
   grid-template-columns: repeat(2, auto);
   gap: 6px;
-  justify-content: start;
 }
 
-.action-buttons :deep(.ant-btn) {
-  width: auto;
-}
 
 .empty-hint {
   margin-top: -40px;

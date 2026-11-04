@@ -44,10 +44,7 @@
         <template v-else-if="column.key === 'action'">
           <div class="action-buttons">
             <a-button size="small" type="primary" @click="openEdit(record)">编辑</a-button>
-            <a-popconfirm v-if="record.status === 1" title="确定禁用该 Banner？" @confirm="handleToggle(record, 0)">
-              <a-button v-permission="'business:banner:edit'" size="small">禁用</a-button>
-            </a-popconfirm>
-            <a-popconfirm v-else title="确定启用该 Banner？" @confirm="handleToggle(record, 1)">
+            <a-popconfirm v-if="record.status !== 1" title="确定启用该 Banner？" @confirm="handleToggle(record, 1)">
               <a-button v-permission="'business:banner:edit'" size="small">启用</a-button>
             </a-popconfirm>
             <a-popconfirm title="确定删除该 Banner？删除后不再展示。" @confirm="handleDelete(record)">

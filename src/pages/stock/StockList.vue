@@ -5,11 +5,16 @@
     </a-input-search>
   </div>
   <a-table :dataSource="stockList" class="title" :row-selection="{}">
-    <a-table-column title="编号" dataIndex="stockId"></a-table-column>
+    <a-table-column title="编号">
+      <template #default="{record}">
+        <span v-if="record.stockId">{{ record.stockId }}</span>
+        <span v-else style="color: #bfbfbf">待分配</span>
+      </template>
+    </a-table-column>
     <a-table-column title="商品信息" dataIndex="name"></a-table-column>
     <a-table-column>
       <template #default="{record}">
-        <img v-lazy="record.image" width="80" />
+        <img v-lazy="record.image" width="60" />
       </template>
     </a-table-column>
     <!-- 主标题是 40~90 字的 SEO 长标题，单行省略，悬停看全文，避免表格被撑宽 -->
@@ -77,12 +82,20 @@ const statusColor = (key) => stockStatus.value.color?.[key] || 'default'
 const loadStockList = () => {
   getStockList({search: searchProductName.value})
       .then(res => {
-        stockList.value = res.data.data.map(item => ({
-          ...item,
-          alertEnabled: item.alertEnabled === 1,
-          // 状态是算出来的，不是接口字段，见 utils/stock.js
-          statusKey: stockStatusOf(item),
-        }))
+        stockList.value = res.data.data
+            .map(item => ({
+              ...item,
+              alertEnabled: item.alertEnabled === 1,
+              // 状态是算出来的，不是接口字段，见 utils/stock.js
+              statusKey: stockStatusOf(item),
+            }))
+            // 编号升序；还没分配编号（未开启预警）的排到最后
+            .sort((a, b) => {
+              if (a.stockId == null && b.stockId == null) return 0
+              if (a.stockId == null) return 1
+              if (b.stockId == null) return -1
+              return a.stockId - b.stockId
+            })
       })
       .catch(err => console.log(err))
 }

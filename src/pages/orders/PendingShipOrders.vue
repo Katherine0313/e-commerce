@@ -26,8 +26,6 @@
           <div class="ops">
             <a-button type="primary" style="margin-right:10px;" @click="$emit('view',record.id)">查看订单
             </a-button>
-            <a-button v-if="hasPermi('order:order:update')" @click="handleCancel(record)" size="small" type="link">取消订单
-            </a-button>
             <a-button v-if="hasPermi('order:order:remove')" @click="$emit('delete',record.id)" size="small" type="link">删除
             </a-button>
           </div>
@@ -65,27 +63,6 @@ const batchDelete = () => {
   emit('batchDelete', selectedRowKeys.value)
 }
 
-//====================== 取消订单 ====================
-// 待发货订单已付款，取消会自动生成整单退款售后单
-const handleCancel = (record) => {
-  Modal.confirm({
-    title: '取消订单',
-    content: '确定取消这笔订单吗？已付款的订单取消会全额退款。',
-    okText: '确定取消',
-    cancelText: '再想想',
-    onOk() {
-      cancelOrder(record.id)
-          .then(() => {
-            message.success('订单已取消')
-            emit('refresh')
-          })
-          .catch(err => {
-            console.log(err)
-            message.error('取消失败')
-          })
-    }
-  })
-}
 </script>
 
 

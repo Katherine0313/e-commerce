@@ -51,10 +51,7 @@
         <template v-else-if="column.key === 'action'">
           <div class="action-buttons">
             <a-button size="small" type="primary" @click="openEdit(record)">编辑</a-button>
-            <a-popconfirm v-if="record.status === 1" title="确定下架该文章？" @confirm="handleToggle(record, 0)">
-              <a-button v-permission="'business:article:edit'" size="small">下架</a-button>
-            </a-popconfirm>
-            <a-popconfirm v-else title="确定上架该文章？" @confirm="handleToggle(record, 1)">
+            <a-popconfirm v-if="record.status !== 1" title="确定上架该文章？" @confirm="handleToggle(record, 1)">
               <a-button v-permission="'business:article:edit'" size="small">上架</a-button>
             </a-popconfirm>
             <a-popconfirm title="确定删除该文章？删除后不可恢复。" @confirm="handleDelete(record)">
@@ -180,14 +177,14 @@ const pagination = ref({
 const columns = [
   { title: '封面', key: 'cover', width: 90 },
   { title: '标题', dataIndex: 'title', key: 'title' },
-  { title: '分类', key: 'category', width: 120 },
-  { title: '作者', dataIndex: 'author', key: 'author', width: 100 },
-  { title: '简介', key: 'introduction', width: 200 },
-  { title: '排序', dataIndex: 'sortOrder', key: 'sortOrder', width: 80 },
-  { title: '推荐', key: 'recommend', width: 120 },
-  { title: '状态', key: 'status', width: 90 },
-  { title: '浏览量', dataIndex: 'browseCount', key: 'browseCount', width: 90 },
-  { title: '创建时间', dataIndex: 'createTime', key: 'createTime', width: 170 },
+  { title: '分类', key: 'category'},
+  { title: '作者', dataIndex: 'author', key: 'author' },
+  { title: '简介', key: 'introduction' },
+  { title: '排序', dataIndex: 'sortOrder', key: 'sortOrder' },
+  { title: '推荐', key: 'recommend' },
+  { title: '状态', key: 'status' },
+  { title: '浏览量', dataIndex: 'browseCount', key: 'browseCount'},
+  { title: '创建时间', dataIndex: 'createTime', key: 'createTime'},
   { title: '操作', key: 'action', width: 200 },
 ]
 
