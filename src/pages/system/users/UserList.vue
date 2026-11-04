@@ -23,7 +23,10 @@
     <a-table :dataSource="list" :columns="columns" :pagination="pagination" row-key="id"
              @change="handleTableChange">
       <template #bodyCell="{ column, record }">
-        <template v-if="column.key === 'roles'">
+        <template v-if="column.key === 'phone'">
+          {{ maskPhone(record.phone) }}
+        </template>
+        <template v-else-if="column.key === 'roles'">
           <a-tag v-for="name in record.roleNames" :key="name" color="blue">{{ name }}</a-tag>
         </template>
         <template v-else-if="column.key === 'status'">
@@ -110,6 +113,7 @@ import { computed, onActivated, onMounted, ref } from 'vue'
 import { SearchOutlined } from '@ant-design/icons-vue'
 import { message } from 'ant-design-vue'
 import { getCurrentUser } from '@/utils/auth'
+import { maskPhone } from '@/utils/mask.js'
 import {
   addAdminUser,
   deleteAdminUser,

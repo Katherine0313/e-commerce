@@ -28,7 +28,10 @@
         <a-table :dataSource="members" :columns="memberColumns" :pagination="pagination" row-key="id"
                  @change="handleTableChange">
           <template #bodyCell="{ column, record }">
-            <template v-if="column.key === 'avatar'">
+            <template v-if="column.key === 'phone'">
+              {{ maskPhone(record.phone) }}
+            </template>
+            <template v-else-if="column.key === 'avatar'">
               <a-avatar :src="record.avatar" :size="32">{{ (record.name || '用')[0] }}</a-avatar>
             </template>
             <template v-else-if="column.key === 'levelName'">
@@ -85,7 +88,7 @@
       <a-descriptions v-if="detail" :column="1" bordered size="small">
         <a-descriptions-item label="用户 ID">{{ detail.id }}</a-descriptions-item>
         <a-descriptions-item label="昵称">{{ detail.name || '—' }}</a-descriptions-item>
-        <a-descriptions-item label="手机号">{{ detail.phone || '—' }}</a-descriptions-item>
+        <a-descriptions-item label="手机号">{{ maskPhone(detail.phone) || '—' }}</a-descriptions-item>
         <a-descriptions-item label="状态">
           <a-tag :color="detail.isDeleted ? 'default' : 'green'">
             {{ detail.isDeleted ? '已注销' : '正常' }}
@@ -112,6 +115,7 @@ import {
   refreshMember,
   updateMemberLevel,
 } from '@/api/member.js'
+import { maskPhone } from '@/utils/mask.js'
 
 const activeTab = ref('members')
 const members = ref([])

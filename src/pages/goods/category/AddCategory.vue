@@ -59,6 +59,28 @@
           <a-switch v-model:checked="addCategoryForm.recommend" />
         </a-form-item>
       </div>
+      <a-form-item label="规格模板">
+        <div class="spec-template">
+          <div class="spec-template-tip">
+            新增商品选择该分类时，按下面顺序自动生成规格参数行；模板项非必填，可留空。参数名可带单位，如「重量(kg)」。
+          </div>
+          <div class="spec-template-row" v-for="(item, index) in addCategoryForm.specTemplate" :key="index">
+            <a-input
+                v-model:value="addCategoryForm.specTemplate[index]"
+                placeholder="参数名，如 屏幕尺寸 / 重量(kg)"
+                :maxlength="32"
+            />
+            <a-button type="text" danger @click="removeTemplateItem(index)">
+              <DeleteOutlined/>
+            </a-button>
+          </div>
+          <a-button size="small" type="dashed" @click="addTemplateItem"
+                    :disabled="addCategoryForm.specTemplate.length >= 30">
+            <PlusOutlined/>
+            添加模板字段
+          </a-button>
+        </div>
+      </a-form-item>
     </a-form>
   </a-modal>
 </template>
@@ -68,7 +90,7 @@ import {computed, ref} from "vue";
 import { useDragModal } from '@/composables/useDragModal'
 import {addCategory, getCategoryFlat, updateCategoryTree} from '@/api/products.js'
 import {message} from 'ant-design-vue'
-import {UploadOutlined} from '@ant-design/icons-vue'
+import {UploadOutlined, PlusOutlined, DeleteOutlined} from '@ant-design/icons-vue'
 import {getToken} from '@/utils/token'
 import {compressImage} from '@/utils/compressImage'
 import {getImageSpec, specLabel} from '@/utils/image-spec'
@@ -88,6 +110,8 @@ const addCategoryForm = ref({
   parentId: undefined,
   recommend: false,
   image: '',
+  // 规格模板：字段名数组，顺序即商品表单中的展示顺序，模板项非必填
+  specTemplate: [],
 })
 // 定义父级分类列表
 const parentList = ref([])
@@ -102,6 +126,7 @@ const resetCategoryForm = () => {
     parentId: undefined,
     recommend: false,
     image: '',
+    specTemplate: [],
   }
   categoryFormRef.value?.clearValidate()
 }
@@ -137,6 +162,7 @@ const editCategoryModal = (record) => {
     parentId: record.parentId ?? undefined,
     recommend: record.recommend === 1,
     image: record.image || '',
+    specTemplate: Array.isArray(record.specTemplate) ? [...record.specTemplate] : [],
   }
   open.value = true
   loadParentList()
@@ -171,6 +197,19 @@ const imageUpload = (info) => {
     message.error(msg)
   }
 }
+//=============规格模板=================
+const addTemplateItem = () => {
+  if (addCategoryForm.value.specTemplate.length >= 30) {
+    message.warning('规格模板最多 30 项')
+    return
+  }
+  addCategoryForm.value.specTemplate.push('')
+}
+
+const removeTemplateItem = (index) => {
+  addCategoryForm.value.specTemplate.splice(index, 1)
+}
+
 //=============表单校验=================
 // 定义表单实例
 const categoryFormRef = ref(null)
@@ -192,7 +231,11 @@ const handleCategorySubmit = () => {
           // 分类图只属于一级分类，二级分类不提交；编辑时传空串才能清空已有图片（null 会被后端忽略）
           image: addCategoryForm.value.group === '1'
               ? (addCategoryForm.value.image || (isEdit ? '' : null))
-              : null
+              : null,
+          // 空数组表示清空模板；模板项非必填，商品表单只负责按顺序展示字段名
+          specTemplate: addCategoryForm.value.specTemplate
+              .map(item => (item || '').trim())
+              .filter(Boolean)
         }
         return isEdit ? updateCategoryTree(editingId.value, data) : addCategory(data)
       })
@@ -226,6 +269,25 @@ const handleCategorySubmit = () => {
 .unit {
   color: #999;
   font-size: 12px;
+}
+
+.spec-template {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 100%;
+}
+
+.spec-template-tip {
+  color: #999;
+  font-size: 12px;
+}
+
+.spec-template-row {
+  display: grid;
+  grid-template-columns: 1fr 32px;
+  align-items: center;
+  gap: 8px;
 }
 
 .category-image-preview {

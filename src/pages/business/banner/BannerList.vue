@@ -30,6 +30,7 @@
         <template v-if="column.key === 'image'">
           <img v-if="record.image" :src="imageUrl(record.image)" class="banner-image" />
           <span v-else class="muted">无图</span>
+          <a-tag v-if="record.images && record.images.length > 1">{{ record.images.length }} 张</a-tag>
         </template>
         <template v-else-if="column.key === 'position'">
           {{ record.positionDesc }}
@@ -72,7 +73,7 @@
               点击上传
             </a-button>
           </a-upload>
-          <span class="unit">建议尺寸 {{ bannerSpecLabel }}，上传后按该尺寸居中裁切</span>
+          <span class="unit">最多 4 张，建议尺寸 {{ bannerSpecLabel }}，上传后按该尺寸居中裁切</span>
         </a-form-item>
         <a-form-item label="广告位置" required>
           <a-select v-model:value="form.position" :options="positionOptions" placeholder="请选择广告位置" />
@@ -169,7 +170,6 @@ const form = ref(emptyForm())
 function emptyForm() {
   return {
     title: '',
-    image: '',
     position: 1,
     linkType: 0,
     linkValue: '',
@@ -215,7 +215,6 @@ function openEdit(record) {
     editingId.value = data.id
     form.value = {
       title: data.title,
-      image: data.image || '',
       position: data.position,
       linkType: data.linkType,
       // linkValue 存的是字符串，商品/文章 ID 转成数字才能交给 input-number
@@ -225,15 +224,30 @@ function openEdit(record) {
       sortOrder: data.sortOrder ?? 0,
       status: data.status,
     }
-    fileList.value = data.image ? [{ uid: '-1', name: data.image, status: 'done', url: imageUrl(data.image) }] : []
+    // images 是完整列表；老数据没有 images 时回落到单图 image
+    const images = Array.isArray(data.images) && data.images.length
+      ? data.images
+      : (data.image ? [data.image] : [])
+    fileList.value = images.map((path, i) => ({
+      uid: `-${i + 1}`,
+      name: path,
+      status: 'done',
+      url: imageUrl(path),
+      path,
+    }))
     formVisible.value = true
   })
 }
 
 function handleSubmit() {
+  if (fileList.value.some((f) => f.status === 'uploading')) {
+    message.warning('图片还在上传，请稍候')
+    return
+  }
+  const images = fileList.value.map(imagePath).filter(Boolean)
   const payload = {
     title: form.value.title,
-    image: form.value.image,
+    images,
     position: form.value.position,
     linkType: form.value.linkType,
     linkValue: form.value.linkType === 0 ? '' : String(form.value.linkValue ?? ''),
@@ -244,7 +258,7 @@ function handleSubmit() {
     message.warning('请输入标题')
     return
   }
-  if (!payload.image) {
+  if (!images.length) {
     message.warning('请上传 Banner 图')
     return
   }
@@ -293,6 +307,14 @@ function imageUrl(path) {
   return /^https?:\/\//.test(path) ? path : (import.meta.env.VITE_API_BASE_URL || '') + path
 }
 
+// 取待提交的服务端相对路径：新上传的从响应里拿，编辑回显的已存在 path 字段
+function imagePath(file) {
+  if (file.response && file.response.data && file.response.data.url) {
+    return file.response.data.url
+  }
+  return file.path || ''
+}
+
 // ====================== 图片上传 =====================
 const uploadAction = import.meta.env.VITE_API_BASE_URL + '/api/admin/upload?type=banner'
 const uploadHeaders = { Authorization: 'Bearer ' + getToken() }
@@ -303,21 +325,31 @@ const bannerSpec = computed(() => getImageSpec('banner', form.value.position))
 const bannerSpecLabel = computed(() => specLabel(bannerSpec.value))
 
 function beforeUpload(file) {
+  // ant-design-vue 3.2 的 maxCount 只截断列表、不拦请求，这里先挡掉超出 4 张的上传
+  const count = fileList.value.filter((f) => f.status === 'done' || f.status === 'uploading').length
+  if (count >= 4) {
+    message.warning('最多上传 4 张图')
+    return false
+  }
   return compressImage(file, bannerSpec.value)
 }
 
 // 位置换了，之前传的图画幅就对不上了，提示重新传
 watch(() => form.value.position, (pos, old) => {
-  if (old !== undefined && form.value.image) {
+  if (old !== undefined && fileList.value.length) {
     message.warning('切换广告位置后建议重新上传图，原图尺寸与新位置不匹配')
   }
 })
 
 function imageUpload(info) {
-  fileList.value = info.fileList
-  if (info.file.status === 'done') {
-    form.value.image = info.file.response.data.url
-  } else if (info.file.status === 'error') {
+  // 批量选择时 maxCount 只截断展示列表，超出的文件仍会发请求；这里兜底剔掉，提交时也只取前 4 张
+  let files = info.fileList
+  if (files.length > 4) {
+    message.warning('最多上传 4 张图，超出部分已忽略')
+    files = files.slice(0, 4)
+  }
+  fileList.value = files
+  if (info.file.status === 'error') {
     const msg = (info.file.response && info.file.response.message) || '图片上传失败，请重试'
     message.error(msg)
   }
@@ -354,6 +386,12 @@ onActivated(() => {
   object-fit: cover;
   border-radius: 4px;
   border: 1px solid #f0f0f0;
+}
+
+.banner-images {
+  display: flex;
+  align-items: center;
+  gap: 6px;
 }
 
 /* 操作列一排两个，避免按钮挤在一行 */

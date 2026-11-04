@@ -10,6 +10,7 @@
               :options="categoryTree"
               :field-names="{ value: 'id', label: 'name', children: 'children' }"
               v-model:value="addGoodsForm.categoryId"
+              @change="handleCategoryChange"
               :change-on-select="false"
               placeholder="请选择商品分类"
           />
@@ -116,8 +117,8 @@ const open = (record) => {
   addGoodsForm.value.title = record.title
   addGoodsForm.value.image = record.image
   addGoodsForm.value.body = record.body
-  // 回填规格参数（商品列表接口已返回 specs 数组）
-  specsRef.value?.setSpecs(record.specs || [])
+  // 回填规格参数（商品列表接口已返回 specs 数组；分类模板决定参数顺序，模板外的旧参数保留）
+  specsRef.value?.setSpecs(record.specs || [], categoryTemplate(record.categoryId))
   // 回填已上传的图片到上传组件
   fileList.value = record.image
     ? [{ uid: '-1', name: record.image.split('/').pop() || record.image, status: 'done', url: record.image }]
@@ -128,7 +129,7 @@ const open = (record) => {
   nextTick(() => {
     addGoodsForm.value.categoryId = findCategoryPath(categoryTree.value, record.categoryId) || []
     // 弹窗内容首次渲染时组件才存在，这里再回填一次规格参数
-    specsRef.value?.setSpecs(record.specs || [])
+    specsRef.value?.setSpecs(record.specs || [], categoryTemplate(record.categoryId))
     if (salesInfoRef.value?.salesInfoForm) {
       salesInfoRef.value.salesInfoForm.listingStatus = record.listingStatus ?? 1
       salesInfoRef.value.salesInfoForm.salesPrice = record.salesPrice
@@ -136,8 +137,6 @@ const open = (record) => {
       salesInfoRef.value.salesInfoForm.costPrice = record.costPrice
       salesInfoRef.value.salesInfoForm.productCode = record.productCode
       salesInfoRef.value.salesInfoForm.stock = record.stock
-      salesInfoRef.value.salesInfoForm.weight = record.weight
-      salesInfoRef.value.salesInfoForm.volume = record.volume
     }
   })
 }
@@ -152,6 +151,26 @@ const findCategoryPath = (tree, targetId) => {
     }
   }
   return null
+}
+
+// 按 id 找分类节点，取该分类配置的规格模板字段
+const findCategoryNode = (tree, targetId) => {
+  for (const node of tree) {
+    if (node.id === targetId) return node
+    if (node.children) {
+      const hit = findCategoryNode(node.children, targetId)
+      if (hit) return hit
+    }
+  }
+  return null
+}
+
+const categoryTemplate = (categoryId) => findCategoryNode(categoryTree.value, categoryId)?.specTemplate || []
+
+// 切换分类：按新分类模板重建参数行，已填写的值继续保留
+const handleCategoryChange = (value) => {
+  const id = Array.isArray(value) ? value[value.length - 1] : value
+  specsRef.value?.applyTemplate(categoryTemplate(id))
 }
 
 // 加载全部品牌下拉选项数据
@@ -195,8 +214,8 @@ const handleSubmit = () => {
           ...addGoodsForm.value,
           categoryId: path.length ? Number(path[path.length - 1]) : null,
           ...salesInfoRef.value?.salesInfoForm,
-          // 规格参数：后端 specs 传 [] 表示清空、null 表示不修改
-          specs: specsRef.value?.specsForm ?? [],
+          // 规格参数：过滤空值（模板项非必填），后端 specs 传 [] 表示清空、null 表示不修改
+          specs: specsRef.value?.getSpecs() ?? [],
         }
         // 4. 调用更新商品接口
         return updateGoods(editingId.value, goodsData)

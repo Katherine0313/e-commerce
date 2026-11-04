@@ -206,6 +206,7 @@ import {
 } from '@/api/coupon.js'
 import { getCategoryTree, getGoodsList } from '@/api/products.js'
 import { getMemberLevels } from '@/api/member.js'
+import { maskPhone } from '@/utils/mask.js'
 
 const list = ref([])
 const saving = ref(false)
@@ -278,7 +279,7 @@ const columns = [
 const recordColumns = [
   { title: '券码', dataIndex: 'code', key: 'code', width: 190 },
   { title: '用户', dataIndex: 'userName', key: 'userName' },
-  { title: '手机号', dataIndex: 'phone', key: 'phone', width: 130 },
+  { title: '手机号', dataIndex: 'phone', key: 'phone', width: 130, customRender: ({ text }) => maskPhone(text) },
   { title: '状态', dataIndex: 'statusDesc', key: 'statusDesc', width: 90 },
   { title: '领取时间', dataIndex: 'receiveTime', key: 'receiveTime', width: 170 },
   { title: '使用时间', dataIndex: 'usedTime', key: 'usedTime', width: 170 },

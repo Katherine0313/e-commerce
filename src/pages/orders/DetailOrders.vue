@@ -6,7 +6,7 @@
         <div class="info">
           <div>
             <div class="name">
-              <span style="margin-right:15px;">{{ orderInfo.consignee }}</span><span>{{ orderInfo.phone }}</span>
+              <span style="margin-right:15px;">{{ orderInfo.consignee }}</span><span>{{ maskPhone(orderInfo.phone) }}</span>
             </div>
             <div class="address">{{ orderInfo.region }} {{ orderInfo.detailAddress }}</div>
           </div>
@@ -41,6 +41,7 @@ import {getDetailOrders, updateOrder} from '@/api/orders.js'
 import {getAddressList} from '@/api/address.js'
 import {message} from 'ant-design-vue'
 import {EnvironmentOutlined} from '@ant-design/icons-vue'
+import {maskPhone} from '@/utils/mask.js'
 import Address from "@/pages/goods/list/Address.vue";
 import LogisticsDrawer from "./LogisticsDrawer.vue";
 // 定义收货人区域的响应式变量

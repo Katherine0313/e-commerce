@@ -44,20 +44,6 @@
             </a-form-item>
           </template>
         </a-table-column>
-        <a-table-column title="重量(kg)">
-          <template #default>
-            <a-form-item >
-              <a-input-number v-model:value="salesInfoForm.weight" :min="0" :precision="1" />
-            </a-form-item>
-          </template>
-        </a-table-column>
-        <a-table-column title="体积(m³)">
-          <template #default>
-            <a-form-item >
-              <a-input-number v-model:value="salesInfoForm.volume" :min="0" :precision="1" />
-            </a-form-item>
-          </template>
-        </a-table-column>
       </a-table>
     </a-form-item>
   </a-form>
@@ -75,9 +61,7 @@ const salesInfoForm = ref({
   marketPrice: null,
   costPrice:null,
   productCode:'',
-  stock:null,
-  weight:null,
-  volume:null
+  stock:null
 })
 // 定义校验规则
 const salesInfoRules = {
@@ -100,8 +84,6 @@ const resetForm = () => {
     costPrice: null,
     productCode: '',
     stock: null,
-    weight: null,
-    volume: null,
   }
   salesInfoFormRef.value?.clearValidate()
 }

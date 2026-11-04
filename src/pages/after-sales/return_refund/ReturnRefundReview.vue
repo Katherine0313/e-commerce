@@ -20,7 +20,7 @@
       <div class="item-title">用户信息</div>
       <a-descriptions bordered :column="isMobile ? 1 : 2" :label-style="isMobile ? {} : { width: '160px' }">
         <a-descriptions-item label="收货人">{{ currentOrder?.consignee }}</a-descriptions-item>
-        <a-descriptions-item label="手机号码">{{ currentOrder?.phone }}</a-descriptions-item>
+        <a-descriptions-item label="手机号码">{{ maskPhone(currentOrder?.phone) }}</a-descriptions-item>
         <a-descriptions-item label="收货地址" :span="2">
           {{ (currentOrder?.region || '') + ' ' + (currentOrder?.detailAddress || '') }}
         </a-descriptions-item>
@@ -97,6 +97,7 @@ import {ref, computed} from "vue";
 import {getAfterSale, reviewAfterSale} from '@/api/afterSale.js'
 import {message} from 'ant-design-vue'
 import {useIsMobile} from '@/composables/useMediaQuery'
+import {maskPhone} from '@/utils/mask.js'
 
 // 手机端描述列表改单列，避免 160px 标签把内容挤没
 const isMobile = useIsMobile()

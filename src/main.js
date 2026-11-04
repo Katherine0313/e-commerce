@@ -16,6 +16,21 @@ import '@/theme/index.less';
 import { AuthPlugin, IconfontPlugin } from '@/plugins';
 import lazy from '@/directives/lazy';
 import permission from '@/directives/permission';
+
+// 消除 Chrome 的「Permissions policy violation: unload is not allowed」告警：
+// stepin 的 TabsView 仍在 window 上监听已废弃的 unload 事件。
+// 在应用挂载前把 unload 监听重定向到官方推荐的等价事件 pagehide（刷新/关闭/跳转都会触发），
+// 既保留页签缓存逻辑，又不再触发告警。add/remove 成对改写，保证卸载时能正常解绑。
+const nativeAddEventListener = window.addEventListener;
+const nativeRemoveEventListener = window.removeEventListener;
+const toNativeEvent = (type) => (type === 'unload' ? 'pagehide' : type);
+window.addEventListener = function (type, listener, options) {
+  return nativeAddEventListener.call(this, toNativeEvent(type), listener, options);
+};
+window.removeEventListener = function (type, listener, options) {
+  return nativeRemoveEventListener.call(this, toNativeEvent(type), listener, options);
+};
+
 const app = createApp(App);
 // 注册图片懒加载指令 v-lazy（用于列表缩略图，避免全量请求）
 app.directive('lazy', lazy);

@@ -8,6 +8,7 @@
               :options="categoryTree"
               :field-names="{ value: 'id', label: 'name', children: 'children' }"
               v-model:value="addGoodsForm.categoryId"
+              @change="handleCategoryChange"
               :change-on-select="false"
               style="max-width:270px"
           />
@@ -92,6 +93,25 @@ const fileList = ref([])
 const brandOptions = ref([])
 // 定义层级分类的数据源
 const categoryTree = ref([])
+
+// 按 id 找到分类节点（叶子节点的 specTemplate 用于自动生成规格参数行）
+const findCategoryNode = (tree, targetId) => {
+  for (const node of tree) {
+    if (node.id === targetId) return node
+    if (node.children) {
+      const hit = findCategoryNode(node.children, targetId)
+      if (hit) return hit
+    }
+  }
+  return null
+}
+
+// 切换分类：按新分类的规格模板重建参数行，已填写的值继续保留
+const handleCategoryChange = (value) => {
+  const id = Array.isArray(value) ? value[value.length - 1] : value
+  const node = findCategoryNode(categoryTree.value, id)
+  specsRef.value?.applyTemplate(node?.specTemplate || [])
+}
 const uploadAction = import.meta.env.VITE_API_BASE_URL + '/api/admin/upload'
 // 商品主图压成 800×800 白底方：与历史商品图（python 脚本产物）口径一致，
 // 商品卡和详情页都是方图位，规格表见 utils/image-spec.js
@@ -163,8 +183,8 @@ const handleSubmit = () => {
           ...addGoodsForm.value,
           categoryId: path.length ? Number(path[path.length - 1]) : null,
           ...salesInfoRef.value?.salesInfoForm,
-          // 规格参数：后端 specs 传 [] 表示清空、null 表示不修改
-          specs: specsRef.value?.specsForm ?? [],
+          // 规格参数：过滤空值（模板项非必填），后端 specs 传 [] 表示清空、null 表示不修改
+          specs: specsRef.value?.getSpecs() ?? [],
         }
         // 4. 调用添加商品接口
         return addGoods(goodsData)

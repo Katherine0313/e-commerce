@@ -131,7 +131,7 @@
       <template v-if="modalMode === 'ship' && currentOrder">
         <a-descriptions :column="2" bordered size="small" style="margin-bottom: 16px;">
           <a-descriptions-item label="订单编号">{{ currentOrder.orderNo }}</a-descriptions-item>
-          <a-descriptions-item label="收货人">{{ currentOrder.consignee }} {{ currentOrder.phone }}</a-descriptions-item>
+          <a-descriptions-item label="收货人">{{ currentOrder.consignee }} {{ maskPhone(currentOrder.phone) }}</a-descriptions-item>
           <a-descriptions-item label="收货地址" :span="2">
             {{ currentOrder.region }} {{ currentOrder.detailAddress }}
           </a-descriptions-item>
@@ -179,6 +179,7 @@ import { getAllOrders, getOrderStatus } from '@/api/orders.js'
 import LogisticsDrawer from '@/pages/orders/LogisticsDrawer.vue'
 import { createDelivery, getDeliveryList, getDeliveryLogs, getEnabledExpresses, resendDelivery, updateDelivery } from '@/api/delivery.js'
 import DateRangeSelect from '@/components/date-range-select.vue'
+import { maskPhone } from '@/utils/mask.js'
 import { hasPermi } from '@/utils/auth.js'
 
 const activeKey = ref('delivery')
@@ -243,7 +244,7 @@ const deliveryColumns = [
   { title: '发货类型', key: 'deliveryType' },
   { title: '发货时间', dataIndex: 'deliveryTime', key: 'deliveryTime' },
   { title: '收货地址', key: 'address' ,width:150},
-  { title: '手机号', dataIndex: 'phone', key: 'phone' },
+  { title: '手机号', dataIndex: 'phone', key: 'phone', customRender: ({ text }) => maskPhone(text) },
   { title: '买家备注', dataIndex: 'buyerRemark', key: 'buyerRemark',width:100},
   { title: '订单状态', key: 'orderStatus' },
   { title: '签收状态', key: 'signStatus'},
@@ -320,7 +321,7 @@ const pendingColumns = [
   { title: '支付方式', dataIndex: 'payTypeDesc', key: 'payTypeDesc' },
   { title: '客户', dataIndex: 'consignee', key: 'consignee' },
   { title: '收货地址', key: 'address' },
-  { title: '手机号', dataIndex: 'phone', key: 'phone' },
+  { title: '手机号', dataIndex: 'phone', key: 'phone', customRender: ({ text }) => maskPhone(text) },
   { title: '买家备注', dataIndex: 'remark', key: 'remark' },
   { title: '订单状态', key: 'orderStatus' },
   // 同样不设 fixed:'right'，理由同上
