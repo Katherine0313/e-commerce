@@ -25,10 +25,10 @@
     <a-table-column title="补充说明" dataIndex="remark"></a-table-column>
     <a-table-column title="操作">
       <template #default="{record}">
-        <a-button v-if="canAudit" type="primary" style="margin-right:15px;"
+        <a-button v-permission="'aftersale:aftersale:audit'" type="primary" style="margin-right:15px;"
                   @click="handleOnlyRefundReview(record)">售后审核</a-button>
         <a-button @click="handleOnlyRefundDetail(record)">售后详情</a-button>
-        <a-button type="link" @click="handleDeleteOnlyRefund(record)">删除</a-button>
+        <a-button v-permission="'aftersale:aftersale:remove'" type="link" @click="handleDeleteOnlyRefund(record)">删除</a-button>
       </template>
     </a-table-column>
   </a-table>

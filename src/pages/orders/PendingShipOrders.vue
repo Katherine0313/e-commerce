@@ -24,15 +24,15 @@
       <a-table-column title="操作">
         <template #default="{record}">
           <div class="ops">
-            <a-button type="primary" style="margin-right:10px;" @click="$emit('view',record.id)">查看订单
+            <a-button v-permission="'order:order:detail'" type="primary" style="margin-right:10px;" @click="$emit('view',record.id)">查看订单
             </a-button>
-            <a-button v-if="hasPermi('order:order:remove')" @click="$emit('delete',record.id)" size="small" type="link">删除
+            <a-button v-permission="'order:order:remove'" @click="$emit('delete',record.id)" size="small" type="link">删除
             </a-button>
           </div>
         </template>
       </a-table-column>
     </a-table>
-    <a-button v-if="hasPermi('order:order:remove')" class="bat-delete-btn" @click="batchDelete">批量删除</a-button>
+    <a-button v-permission="'order:order:remove'" class="bat-delete-btn" @click="batchDelete">批量删除</a-button>
   </div>
 </template>
 <script setup>

@@ -75,13 +75,21 @@ const categoryStatusChange = (record, checked) => {
   record.status = checked ? 1 : 0
   updateCategoryTree(record.id, {status: checked ? 1 : 0})
 }
+// 去掉空的 children 数组，否则二级分类会显示无意义的展开箭头
+const normalizeTree = (nodes) => (nodes || []).map((node) => {
+  if (Array.isArray(node.children) && node.children.length) {
+    return { ...node, children: normalizeTree(node.children) }
+  }
+  const { children, ...rest } = node
+  return rest
+})
 // ===========刷新商品列表===========
 // 定义加载商品分类列表的方法
 const loadCategoryTree = () => {
   return getCategoryTree()
       .then(res => {
         if (res.data.success) {
-          categoryData.value = res.data.data
+          categoryData.value = normalizeTree(res.data.data)
         }
       })
       .catch(err => {

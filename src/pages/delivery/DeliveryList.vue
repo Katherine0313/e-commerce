@@ -50,16 +50,16 @@
             </template>
             <template v-else-if="column.key === 'action'">
               <div class="action-buttons">
-                <a-button v-if="hasPermi('order:delivery:list')" size="small" type="primary" @click="openLogs(record)">
+                <a-button v-permission="'order:delivery:list'" size="small" type="primary" @click="openLogs(record)">
                   查看流水
                 </a-button>
-                <a-button v-if="hasPermi('order:delivery:list')" size="small" @click="openLogistics(record)">
+                <a-button v-permission="'order:delivery:list'" size="small" @click="openLogistics(record)">
                   查看物流
                 </a-button>
-                <a-button v-if="hasPermi('order:delivery:resend')" size="small" @click="openModal('resend', record)">
+                <a-button v-permission="'order:delivery:resend'" size="small" @click="openModal('resend', record)">
                   补发
                 </a-button>
-                <a-button v-if="hasPermi('order:delivery:ship')" size="small" @click="openModal('edit', record)">
+                <a-button v-permission="'order:delivery:ship'" size="small" @click="openModal('edit', record)">
                   编辑
                 </a-button>
               </div>
@@ -95,7 +95,7 @@
               </a-tag>
             </template>
             <template v-else-if="column.key === 'action'">
-              <a-button v-if="hasPermi('order:delivery:ship')" type="primary" size="small"
+              <a-button v-permission="'order:delivery:ship'" type="primary" size="small"
                         @click="openModal('ship', record)">去发货</a-button>
             </template>
           </template>
