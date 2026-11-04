@@ -10,7 +10,10 @@
             </div>
             <div class="address">{{ orderInfo.region }} {{ orderInfo.detailAddress }}</div>
           </div>
-          <a-button @click="handleEditAddress">编辑</a-button>
+          <div class="ops">
+            <a-button @click="handleEditAddress">编辑</a-button>
+            <a-button type="primary" @click="handleViewLogistics">查看物流</a-button>
+          </div>
         </div>
       </div>
     </a-card>
@@ -30,6 +33,7 @@
     </a-card>
   </a-modal>
   <Address ref="addressRef" @saved="onConsigneeSaved"/>
+  <LogisticsDrawer ref="logisticsRef" />
 </template>
 <script setup>
 import {ref} from 'vue'
@@ -38,6 +42,7 @@ import {getAddressList} from '@/api/address.js'
 import {message} from 'ant-design-vue'
 import {EnvironmentOutlined} from '@ant-design/icons-vue'
 import Address from "@/pages/goods/list/Address.vue";
+import LogisticsDrawer from "./LogisticsDrawer.vue";
 // 定义收货人区域的响应式变量
 const orderInfo = ref(null)
 // 定义数据源
@@ -65,6 +70,15 @@ const addressRef = ref(null)
 const handleEditAddress = () => {
   const { id, ...addrData } = orderInfo.value
   addressRef.value.addressVisibleOpen(addrData)
+}
+
+// ============== 查看物流轨迹 ==============
+// 轨迹是后端生成的假数据（未发货订单返回空），快递公司与单号是发货时写入的真实值
+const logisticsRef = ref(null)
+const handleViewLogistics = () => {
+  if (orderInfo.value) {
+    logisticsRef.value.open(orderInfo.value.id)
+  }
 }
 const onConsigneeSaved = () => {
   getAddressList().then(res => {
@@ -114,6 +128,13 @@ const onConsigneeSaved = () => {
   display: flex;
   justify-content: space-between;
   align-items: center;
+}
+
+/* 操作按钮组：编辑 + 查看物流 */
+.consignee .ops {
+  display: flex;
+  gap: 8px;
+  flex-shrink: 0;
 }
 
 .consignee:hover {

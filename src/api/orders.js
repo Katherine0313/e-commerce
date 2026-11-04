@@ -64,11 +64,6 @@ export function getLogistics(id) {
   return axios.get(`/api/admin/orders/${id}/logistics`)
 }
 
-// 确认收款
-export function confirmOrder(id) {
-  return axios.put(`/api/admin/orders/${id}/confirm`)
-}
-
 // 更新订单信息
 export function updateOrder(id, data) {
   return axios.put(`/api/admin/orders/${id}`, data)

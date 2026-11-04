@@ -63,7 +63,7 @@
               点击上传
             </a-button>
           </a-upload>
-          <span class="unit">建议尺寸 {{ expressSpecLabel }}，白底方图</span>
+          <span class="unit">建议尺寸 {{ expressSpecLabel }}</span>
         </a-form-item>
         <a-form-item label="排序">
           <a-input-number v-model:value="form.sortOrder" :min="0" :precision="0" style="width: 200px" />
@@ -114,13 +114,13 @@ const pagination = ref({
 })
 
 const columns = [
-  { title: '编码', dataIndex: 'code', key: 'code', width: 160 },
-  { title: '名称', dataIndex: 'name', key: 'name', width: 160 },
-  { title: 'Logo', key: 'logo', width: 110 },
-  { title: '排序', dataIndex: 'sortOrder', key: 'sortOrder', width: 80 },
-  { title: '状态', key: 'status', width: 90 },
-  { title: '创建时间', dataIndex: 'createTime', key: 'createTime', width: 170 },
-  { title: '操作', key: 'action', width: 160 },
+  { title: '编码', dataIndex: 'code', key: 'code'},
+  { title: '名称', dataIndex: 'name', key: 'name'},
+  { title: 'Logo', key: 'logo' },
+  { title: '排序', dataIndex: 'sortOrder', key: 'sortOrder' },
+  { title: '状态', key: 'status' },
+  { title: '创建时间', dataIndex: 'createTime', key: 'createTime' },
+  { title: '操作', key: 'action',width:200 },
 ]
 
 const form = ref(emptyForm())
@@ -289,7 +289,7 @@ onActivated(() => {
   object-fit: contain;
   background: #fff;
   border: 1px solid #f0f0f0;
-  border-radius: 4px;
+  border-radius: 50px;
 }
 
 .action-buttons {

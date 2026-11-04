@@ -50,22 +50,16 @@
     shopInfo: { type: Object, default: null },
     todo: {
       type: Object,
-      default: () => ({ pendingConfirm: 0, pendingShip: 0, afterSale: 0 }),
+      default: () => ({ pendingShip: 0, afterSale: 0 }),
     },
   });
   const router = useRouter();
   const todoList = computed(() => [
     {
-      key: 'confirm',
-      label: '待确认订单',
-      count: props.todo?.pendingConfirm ?? 0,
-      to: '/orders/order-list',
-    },
-    {
       key: 'ship',
       label: '待发货订单',
       count: props.todo?.pendingShip ?? 0,
-      to: '/orders/ship',
+      to: '/delivery',
     },
     {
       key: 'afterSale',

@@ -22,7 +22,7 @@ import { formatThousand } from '@/utils/formatter.js';
 
 // ==================== 口径常量 ====================
 // 计入「销售额」的状态（OrderStatusEnum 数字 code）：待付款(1)还没付钱、已取消(6)不产生成交，都排除
-const PAID_STATUS = [2, 3, 4, 5]; // 待确认/待发货/已发货/已完成
+const PAID_STATUS = [3, 4, 5]; // 待发货/已发货/已完成
 // 计入「订单量」时排除的状态（数字 code）
 const COUNTED_EXCLUDE = [6]; // 已取消
 // 待商家处理的售后状态
@@ -194,9 +194,6 @@ export function useWorkplaceData() {
 
   // ---------------- 今日待办 ----------------
   const todo = computed(() => ({
-    pendingConfirm: orders.value.filter(
-      (o) => o.orderStatus === 2
-    ).length,
     pendingShip: orders.value.filter(
       (o) => o.orderStatus === 3
     ).length,

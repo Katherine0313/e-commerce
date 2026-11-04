@@ -42,15 +42,35 @@
                     @refresh="reloadCurrent"
         />
       </a-tab-pane>
-      <a-tab-pane key="3" tab="待确认">
-        <PendingConfirmOrders :list="tabs.pendingConfirm.list"
+      <a-tab-pane key="3" tab="待发货">
+        <PendingShipOrders :list="tabs.pendingShip.list"
                     :order-status="orderStatus"
-                    :pagination="tabs.pendingConfirm.pagination"
-                    @page-change="(p) => loadTab('pendingConfirm', p)"
+                    :pagination="tabs.pendingShip.pagination"
+                    @page-change="(p) => loadTab('pendingShip', p)"
                     @view="handleDetailOrdersOpen"
                     @delete="handleDeleteOrder"
                     @batchDelete="handleBatchDeleteOrders"
                     @refresh="reloadCurrent"
+        />
+      </a-tab-pane>
+      <a-tab-pane key="4" tab="已发货">
+        <AllOrders :list="tabs.shipped.list"
+                    :order-status="orderStatus"
+                    :pagination="tabs.shipped.pagination"
+                    @page-change="(p) => loadTab('shipped', p)"
+                    @view="handleDetailOrdersOpen"
+                    @delete="handleDeleteOrder"
+                    @batchDelete="handleBatchDeleteOrders"
+        />
+      </a-tab-pane>
+      <a-tab-pane key="5" tab="已完成">
+        <AllOrders :list="tabs.finished.list"
+                    :order-status="orderStatus"
+                    :pagination="tabs.finished.pagination"
+                    @page-change="(p) => loadTab('finished', p)"
+                    @view="handleDetailOrdersOpen"
+                    @delete="handleDeleteOrder"
+                    @batchDelete="handleBatchDeleteOrders"
         />
       </a-tab-pane>
       <a-tab-pane key="7" tab="已取消">
@@ -73,22 +93,25 @@ import {getAllOrders, getOrderStatus, deleteOrder, deleteOrders} from '@/api/ord
 import DateRangeSelect from '@/components/date-range-select.vue'
 import AllOrders from './AllOrders.vue'
 import PendingPayOrders from './PendingPayOrders.vue'
-import PendingConfirmOrders from './PendingConfirmOrders.vue'
+import PendingShipOrders from './PendingShipOrders.vue'
 import CancelledOrders from './CancelledOrders.vue'
 import {message, Modal} from 'ant-design-vue'
 import DetailOrders from "@/pages/orders/DetailOrders.vue";
 
 const activeKey = ref('1');
 
-// 4 个 tab 的独立数据：status（后端筛选）+ list（当前页）+ pagination（分页器，pageSize 从后端响应读）
+// 各状态 tab 的独立数据：status（后端筛选）+ list（当前页）+ pagination（分页器，pageSize 从后端响应读）
+// 状态码与后端 OrderStatusEnum 对齐：1待付款 3待发货 4已发货 5已完成 6已取消（2待确认收款已退役）
 const tabs = reactive({
   all: { status: null, list: [], pagination: { current: 1, total: 0 } },
   pendingPay: { status: 1, list: [], pagination: { current: 1, total: 0 } },
-  pendingConfirm: { status: 2, list: [], pagination: { current: 1, total: 0 } },
+  pendingShip: { status: 3, list: [], pagination: { current: 1, total: 0 } },
+  shipped: { status: 4, list: [], pagination: { current: 1, total: 0 } },
+  finished: { status: 5, list: [], pagination: { current: 1, total: 0 } },
   cancelled: { status: 6, list: [], pagination: { current: 1, total: 0 } },
 })
 // tab key -> tab 名映射
-const keyMap = { '1': 'all', '2': 'pendingPay', '3': 'pendingConfirm', '7': 'cancelled' }
+const keyMap = { '1': 'all', '2': 'pendingPay', '3': 'pendingShip', '4': 'shipped', '5': 'finished', '7': 'cancelled' }
 
 // 加载某个 tab 的指定页（后端分页，pageSize 从响应读，前端不写死）
 const loadTab = (tabName, page = 1) => {

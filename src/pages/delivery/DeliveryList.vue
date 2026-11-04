@@ -32,7 +32,7 @@
         </a-form>
 
         <a-table :dataSource="deliveryList" :columns="deliveryColumns" :pagination="deliveryPagination"
-                 :loading="deliveryLoading" row-key="id" :scroll="{ x: 1600 }" @change="onDeliveryTableChange">
+                 :loading="deliveryLoading" row-key="id"  @change="onDeliveryTableChange">
           <template #bodyCell="{ column, record }">
             <template v-if="column.key === 'deliveryType'">
               <a-tag :color="record.deliveryType === 2 ? 'orange' : 'blue'">{{ record.deliveryTypeDesc }}</a-tag>
@@ -52,6 +52,9 @@
               <div class="action-buttons">
                 <a-button v-if="hasPermi('order:delivery:list')" size="small" type="primary" @click="openLogs(record)">
                   查看流水
+                </a-button>
+                <a-button v-if="hasPermi('order:delivery:list')" size="small" @click="openLogistics(record)">
+                  查看物流
                 </a-button>
                 <a-button v-if="hasPermi('order:delivery:resend')" size="small" @click="openModal('resend', record)">
                   补发
@@ -81,7 +84,7 @@
         </a-form>
 
         <a-table :dataSource="pendingList" :columns="pendingColumns" :pagination="pendingPagination"
-                 :loading="pendingLoading" row-key="id" :scroll="{ x: 1400 }" @change="onPendingTableChange">
+                 :loading="pendingLoading" row-key="id"  @change="onPendingTableChange">
           <template #bodyCell="{ column, record }">
             <template v-if="column.key === 'address'">
               {{ record.region }} {{ record.detailAddress }}
@@ -98,11 +101,9 @@
           </template>
         </a-table>
 
-        <!-- 待发货为空时提示还有多少单待确认收款（零后端改动：借订单列表接口的 total） -->
+        <!-- 待发货为空时给个空态提示（原先这里提示「N 单待确认收款」，该状态已退役） -->
         <div v-if="!pendingLoading && pendingList.length === 0" class="empty-hint">
-          <a-empty description="暂无待发货订单">
-            <a-button type="link" @click="goOrderList">共 {{ pendingConfirmTotal }} 单待确认收款，去订单管理处理</a-button>
-          </a-empty>
+          <a-empty description="暂无待发货订单" />
         </div>
       </a-tab-pane>
     </a-tabs>
@@ -119,6 +120,9 @@
       </a-timeline>
       <a-empty v-else description="暂无发货流水" />
     </a-drawer>
+
+    <!-- ==================== 物流轨迹抽屉 ==================== -->
+    <LogisticsDrawer ref="logisticsRef" />
 
     <!-- ==================== 发货 / 补发 / 编辑 共用弹窗 ==================== -->
     <a-modal v-model:visible="modalVisible" :title="modalTitle" :width="760" :confirm-loading="submitting"
@@ -169,15 +173,14 @@
 
 <script setup>
 import { onActivated, onMounted, ref } from 'vue'
-import { useRouter } from 'vue-router'
 import { SearchOutlined } from '@ant-design/icons-vue'
 import { Modal, message } from 'ant-design-vue'
 import { getAllOrders, getOrderStatus } from '@/api/orders.js'
+import LogisticsDrawer from '@/pages/orders/LogisticsDrawer.vue'
 import { createDelivery, getDeliveryList, getDeliveryLogs, getEnabledExpresses, resendDelivery, updateDelivery } from '@/api/delivery.js'
 import DateRangeSelect from '@/components/date-range-select.vue'
 import { hasPermi } from '@/utils/auth.js'
 
-const router = useRouter()
 const activeKey = ref('delivery')
 
 // ==================== 快递公司下拉（页面级内存缓存，只拉一次） ====================
@@ -233,18 +236,18 @@ const deliveryTypeOptions = [
 ]
 
 const deliveryColumns = [
-  { title: '订单号', dataIndex: 'orderNo', key: 'orderNo', width: 180 },
-  { title: '包裹编号', dataIndex: 'packageNo', key: 'packageNo', width: 170 },
-  { title: '快递公司', dataIndex: 'expressName', key: 'expressName', width: 110 },
-  { title: '快递单号', dataIndex: 'trackingNumber', key: 'trackingNumber', width: 170 },
-  { title: '发货类型', key: 'deliveryType', width: 90 },
-  { title: '发货时间', dataIndex: 'deliveryTime', key: 'deliveryTime', width: 170 },
-  { title: '收货地址', key: 'address', width: 240 },
-  { title: '手机号', dataIndex: 'phone', key: 'phone', width: 120 },
-  { title: '买家备注', dataIndex: 'buyerRemark', key: 'buyerRemark', width: 150 },
-  { title: '订单状态', key: 'orderStatus', width: 90 },
-  { title: '签收状态', key: 'signStatus', width: 120 },
-  { title: '操作', key: 'action', width: 220, fixed: 'right' },
+  { title: '订单号', dataIndex: 'orderNo', key: 'orderNo' },
+  { title: '包裹编号', dataIndex: 'packageNo', key: 'packageNo' },
+  { title: '快递公司', dataIndex: 'expressName', key: 'expressName',width:150},
+  { title: '快递单号', dataIndex: 'trackingNumber', key: 'trackingNumber' },
+  { title: '发货类型', key: 'deliveryType' },
+  { title: '发货时间', dataIndex: 'deliveryTime', key: 'deliveryTime' },
+  { title: '收货地址', key: 'address' ,width:150},
+  { title: '手机号', dataIndex: 'phone', key: 'phone' },
+  { title: '买家备注', dataIndex: 'buyerRemark', key: 'buyerRemark',width:100},
+  { title: '订单状态', key: 'orderStatus' },
+  { title: '签收状态', key: 'signStatus'},
+  { title: '操作', key: 'action', fixed: 'right' },
 ]
 
 function loadDeliveryList() {
@@ -289,8 +292,6 @@ function onDeliveryTableChange(pager) {
 const pendingList = ref([])
 const pendingLoading = ref(false)
 const pendingQuery = ref({ keyword: '' })
-// 待确认收款的单数（提示用）
-const pendingConfirmTotal = ref(0)
 
 const pendingPagination = ref({
   current: 1,
@@ -309,17 +310,18 @@ const dateOptions = [
 const dateRangeRef = ref(null)
 const dateFilter = ref({ dateField: 'created_at', startDate: '', endDate: '' })
 
+// 列宽不写死：由表格按内容自适应分配，表格整体撑满容器，右侧不留空白
 const pendingColumns = [
-  { title: '订单编号', dataIndex: 'orderNo', key: 'orderNo', width: 180 },
-  { title: '收款确认时间', dataIndex: 'confirmAt', key: 'confirmAt', width: 170 },
-  { title: '订单金额', dataIndex: 'payAmount', key: 'payAmount', width: 110 },
-  { title: '支付方式', dataIndex: 'payTypeDesc', key: 'payTypeDesc', width: 100 },
-  { title: '客户', dataIndex: 'consignee', key: 'consignee', width: 100 },
-  { title: '收货地址', key: 'address', width: 260 },
-  { title: '手机号', dataIndex: 'phone', key: 'phone', width: 120 },
-  { title: '买家备注', dataIndex: 'remark', key: 'remark', width: 160 },
-  { title: '订单状态', key: 'orderStatus', width: 90 },
-  { title: '操作', key: 'action', width: 100, fixed: 'right' },
+  { title: '订单编号', dataIndex: 'orderNo', key: 'orderNo' },
+  { title: '收款确认时间', dataIndex: 'confirmAt', key: 'confirmAt' },
+  { title: '订单金额', dataIndex: 'payAmount', key: 'payAmount' },
+  { title: '支付方式', dataIndex: 'payTypeDesc', key: 'payTypeDesc' },
+  { title: '客户', dataIndex: 'consignee', key: 'consignee' },
+  { title: '收货地址', key: 'address' },
+  { title: '手机号', dataIndex: 'phone', key: 'phone' },
+  { title: '买家备注', dataIndex: 'remark', key: 'remark' },
+  { title: '订单状态', key: 'orderStatus' },
+  { title: '操作', key: 'action', fixed: 'right' },
 ]
 
 function loadPendingList() {
@@ -339,24 +341,11 @@ function loadPendingList() {
         pendingPagination.value.total = data.total || 0
         pendingPagination.value.pageSize = data.pageSize || pendingPagination.value.pageSize
         pendingPagination.value.current = data.page || pendingPagination.value.current
-        // 待发货为空时才需要提示待确认收款的单数
-        if (!pendingList.value.length) {
-          loadPendingConfirmTotal()
-        }
       })
       .catch((err) => console.log(err))
       .finally(() => {
         pendingLoading.value = false
       })
-}
-
-// 待确认收款（状态 2）的单数：借订单列表接口拿 total，零后端改动
-function loadPendingConfirmTotal() {
-  getAllOrders({ status: 2, page: 1, pageSize: 1 })
-      .then((res) => {
-        pendingConfirmTotal.value = res.data?.data?.total || 0
-      })
-      .catch((err) => console.log(err))
 }
 
 function handlePendingSearch() {
@@ -383,10 +372,6 @@ function onPendingTableChange(pager) {
   loadPendingList()
 }
 
-function goOrderList() {
-  router.push('/orders/order-list')
-}
-
 // ==================== 发货流水抽屉 ====================
 const logDrawerVisible = ref(false)
 const logList = ref([])
@@ -399,6 +384,14 @@ function openLogs(record) {
         logList.value = res.data?.data || []
       })
       .catch((err) => console.log(err))
+}
+
+// ==================== 物流轨迹抽屉 ====================
+// 轨迹是后端生成的假数据（不接真实物流 API），快递公司与单号取发货时写入的真实值
+const logisticsRef = ref(null)
+
+function openLogistics(record) {
+  logisticsRef.value?.open(record.orderId)
 }
 
 // 流水时间线配色：创建发货/补发/修改快递信息
@@ -529,12 +522,12 @@ onActivated(() => {
 
 .action-buttons {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(4, auto);
   gap: 8px;
 }
 
 .action-buttons :deep(.ant-btn) {
-  width: 100%;
+  width: auto;
 }
 
 .empty-hint {

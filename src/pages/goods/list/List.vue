@@ -161,19 +161,16 @@ const columns = [
   {
     title: "创建时间",
     dataIndex: "createdAt",
-    key: "createdAt",
-    width: 150
+    key: "createdAt"
   },
   {
     title: "更新时间",
     dataIndex: "updatedAt",
-    key: "updatedAt",
-    width: 150
+    key: "updatedAt"
   },
   {
     title: "操作",
-    key: "action",
-    width: 160,
+    key: "action"
   },
 ]
 // 搜索事件：重置回第一页再查，避免带着旧页码查空页

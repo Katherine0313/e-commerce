@@ -117,15 +117,15 @@ const editingId = ref(null)
 const form = ref(emptyForm())
 
 const columns = [
-  // 名称列固定宽度：+ 号、图标、名称靠左且紧凑；类型列紧随其后，其余文字列自适应
-  { title: '菜单名称', dataIndex: 'menuName', key: 'menuName', width: 200, align: 'left' },
-  { title: '类型', key: 'menuType', width: 90 },
+  // 列宽不写死：由表格按内容自适应分配，表格整体撑满容器，右侧不留空白
+  { title: '菜单名称', dataIndex: 'menuName', key: 'menuName', align: 'left' },
+  { title: '类型', key: 'menuType' },
   { title: '路由路径', dataIndex: 'path', key: 'path' },
   { title: '权限标识', dataIndex: 'perms', key: 'perms' },
-  { title: '排序', dataIndex: 'sortOrder', key: 'sortOrder', width: 70 },
-  { title: '显示', key: 'visible', width: 80 },
-  { title: '状态', key: 'status', width: 80 },
-  { title: '操作', key: 'action', width: 250 },
+  { title: '排序', dataIndex: 'sortOrder', key: 'sortOrder' },
+  { title: '显示', key: 'visible' },
+  { title: '状态', key: 'status' },
+  { title: '操作', key: 'action' },
 ]
 
 function emptyForm() {
