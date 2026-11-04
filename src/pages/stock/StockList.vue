@@ -83,12 +83,17 @@ const loadStockList = () => {
   getStockList({search: searchProductName.value})
       .then(res => {
         stockList.value = res.data.data
-            .map(item => ({
-              ...item,
-              alertEnabled: item.alertEnabled === 1,
-              // 状态是算出来的，不是接口字段，见 utils/stock.js
-              statusKey: stockStatusOf(item),
-            }))
+            .map(item => {
+              const alertEnabled = item.alertEnabled === 1
+              return {
+                ...item,
+                alertEnabled,
+                // 编号只属于开启中的预警；未开启一律显示「待分配」
+                stockId: alertEnabled ? item.stockId : null,
+                // 状态是算出来的，不是接口字段，见 utils/stock.js
+                statusKey: stockStatusOf(item),
+              }
+            })
             // 编号升序；还没分配编号（未开启预警）的排到最后
             .sort((a, b) => {
               if (a.stockId == null && b.stockId == null) return 0
