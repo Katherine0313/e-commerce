@@ -155,13 +155,13 @@ const pagination = ref({
 })
 
 const columns = [
-  { title: 'ID', dataIndex: 'id', key: 'id', width: 70 },
-  { title: '用户名', dataIndex: 'username', key: 'username', width: 130 },
-  { title: '姓名', dataIndex: 'name', key: 'name', width: 120 },
-  { title: '手机号', dataIndex: 'phone', key: 'phone', width: 130 },
+  { title: 'ID', dataIndex: 'id', key: 'id' },
+  { title: '用户名', dataIndex: 'username', key: 'username' },
+  { title: '姓名', dataIndex: 'name', key: 'name' },
+  { title: '手机号', dataIndex: 'phone', key: 'phone' },
   { title: '角色', key: 'roles' },
-  { title: '状态', key: 'status', width: 100 },
-  { title: '创建时间', dataIndex: 'createTime', key: 'createTime', width: 170 },
+  { title: '状态', key: 'status' },
+  { title: '创建时间', dataIndex: 'createTime', key: 'createTime' },
   { title: '操作', key: 'action', width: 320 },
 ]
 
@@ -317,7 +317,12 @@ onMounted(() => {
   loadRoles()
   loadData()
 })
-onActivated(loadData)
+// 页面被 keep-alive 缓存时，回到本页要同时刷新账号列表和角色下拉，
+// 否则在角色管理新增/改名后，这里仍显示旧角色，只能按 F5
+onActivated(() => {
+  loadRoles()
+  loadData()
+})
 </script>
 
 <style scoped>

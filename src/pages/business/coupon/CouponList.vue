@@ -267,13 +267,13 @@ const pagination = ref({
 
 const columns = [
   { title: '券名称', dataIndex: 'name', key: 'name' },
-  { title: '优惠', key: 'value', width: 160 },
-  { title: '门槛', key: 'threshold', width: 110 },
-  { title: '范围', dataIndex: 'scopeTypeDesc', key: 'scopeTypeDesc', width: 110 },
-  { title: '会员门槛', key: 'memberLevel', width: 110 },
-  { title: '领取时间', key: 'receiveTime', width: 330 },
-  { title: '领取 / 发行', key: 'quantity', width: 110 },
-  { title: '状态', key: 'status', width: 90 },
+  { title: '优惠', key: 'value' },
+  { title: '门槛', key: 'threshold' },
+  { title: '范围', dataIndex: 'scopeTypeDesc', key: 'scopeTypeDesc'},
+  { title: '会员门槛', key: 'memberLevel' },
+  { title: '领取时间', key: 'receiveTime' },
+  { title: '领取 / 发行', key: 'quantity' },
+  { title: '状态', key: 'status' },
   { title: '操作', key: 'action', width: 300 },
 ]
 const recordColumns = [

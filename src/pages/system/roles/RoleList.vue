@@ -58,8 +58,15 @@
     <!-- 分配菜单 -->
     <a-modal v-model:visible="assignVisible" :title="`分配菜单 - ${assignTarget?.roleName || ''}`"
              :width="620" :confirm-loading="assigning" @ok="handleAssign">
+      <div class="tree-tools">
+        <a-button size="small" @click="selectReadonly">全部只读</a-button>
+        <a-button size="small" @click="selectAllMenus">全选</a-button>
+        <a-button size="small" @click="checkedKeys = []">清空</a-button>
+        <span class="tree-tip">只勾菜单本身 = 只能查看；再勾下面的按钮 = 才可新增/编辑/删除</span>
+      </div>
       <div class="tree-wrap">
-        <a-tree v-model:checkedKeys="checkedKeys" :tree-data="treeData" checkable
+        <!-- check-strictly：父子节点独立勾选，否则勾一个菜单会把它的所有按钮一起勾上，永远设不成只读 -->
+        <a-tree v-model:checkedKeys="checkedKeys" :tree-data="treeData" checkable check-strictly
                 default-expand-all :selectable="false" />
       </div>
     </a-modal>
@@ -91,13 +98,13 @@ const checkedKeys = ref([])
 const form = ref(emptyForm())
 
 const columns = [
-  { title: 'ID', dataIndex: 'id', key: 'id', width: 70 },
-  { title: '角色标识', dataIndex: 'roleKey', key: 'roleKey', width: 140 },
-  { title: '角色名称', dataIndex: 'roleName', key: 'roleName', width: 140 },
-  { title: '账号数', key: 'userCount', width: 120 },
-  { title: '状态', key: 'status', width: 90 },
+  { title: 'ID', dataIndex: 'id', key: 'id' },
+  { title: '角色标识', dataIndex: 'roleKey', key: 'roleKey' },
+  { title: '角色名称', dataIndex: 'roleName', key: 'roleName' },
+  { title: '账号数', key: 'userCount' },
+  { title: '状态', key: 'status'},
   { title: '备注', dataIndex: 'remark', key: 'remark' },
-  { title: '创建时间', dataIndex: 'createTime', key: 'createTime', width: 170 },
+  { title: '创建时间', dataIndex: 'createTime', key: 'createTime' },
   { title: '操作', key: 'action', width: 250 },
 ]
 
@@ -117,17 +124,40 @@ function loadData() {
 }
 
 function loadMenuTree() {
-  getMenuTree().then((res) => {
+  return getMenuTree().then((res) => {
     menuTree.value = res.data.data || []
   })
 }
 
 function toTreeData(nodes) {
   return (nodes || []).map((node) => ({
-    title: node.perms ? `${node.name}（${node.perms}）` : node.name,
+    // 按钮节点标出来，避免和「菜单」混淆：只勾菜单 = 只读，勾按钮 = 可操作
+    title: `${node.type === 'F' ? '[按钮] ' : ''}${node.name}${node.perms ? `（${node.perms}）` : ''}`,
     key: node.id,
     children: toTreeData(node.children),
   }))
+}
+
+function walkMenus(nodes, fn) {
+  ;(nodes || []).forEach((node) => {
+    fn(node)
+    walkMenus(node.children, fn)
+  })
+}
+
+// 一键只读：只勾「列表/查看」类菜单页（:list / :view），不勾按钮，也不勾「添加商品」这种 :add 页面
+function selectReadonly() {
+  const keys = []
+  walkMenus(menuTree.value, (node) => {
+    if (node.type === 'C' && /:(list|view)$/.test(node.perms || '')) keys.push(node.id)
+  })
+  checkedKeys.value = keys
+}
+
+function selectAllMenus() {
+  const keys = []
+  walkMenus(menuTree.value, (node) => keys.push(node.id))
+  checkedKeys.value = keys
 }
 
 const treeData = computed(() => toTreeData(menuTree.value))
@@ -179,7 +209,9 @@ function handleSubmit() {
 
 function openAssign(record) {
   assignTarget.value = record
-  getRole(record.id).then((res) => {
+  // 菜单树接口需要 system:role:assign 权限，只在真正打开「分配菜单」时加载；
+  // 提前在页面初始化时加载，会让只读角色一进角色管理页就 403
+  Promise.all([loadMenuTree(), getRole(record.id)]).then(([, res]) => {
     checkedKeys.value = res.data.data.menuIds || []
     assignVisible.value = true
   })
@@ -228,9 +260,11 @@ function handleDelete(record) {
 
 onMounted(() => {
   loadData()
-  loadMenuTree()
 })
-onActivated(loadData)
+// 回到本页刷新角色列表；菜单树改为每次打开「分配菜单」时重新拉取
+onActivated(() => {
+  loadData()
+})
 </script>
 
 <style scoped>
@@ -244,6 +278,18 @@ onActivated(loadData)
 .tip {
   color: #999;
   font-size: 13px;
+}
+
+.tree-tools {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.tree-tip {
+  color: #999;
+  font-size: 12px;
 }
 
 .tree-wrap {

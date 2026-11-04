@@ -22,8 +22,11 @@
 
     <a-table :dataSource="list" :columns="columns" :pagination="pagination" row-key="id"
              @change="handleTableChange">
-      <template #bodyCell="{ column, record }">
-        <template v-if="column.key === 'time'">
+      <template #bodyCell="{ column, record, index }">
+        <template v-if="column.key === 'index'">
+          {{ (pagination.current - 1) * pagination.pageSize + index + 1 }}
+        </template>
+        <template v-else-if="column.key === 'time'">
           {{ record.startTime }} ~ {{ record.endTime }}
         </template>
         <template v-else-if="column.key === 'status'">
@@ -81,12 +84,13 @@ const pagination = ref({
 })
 
 const columns = [
+  { title: '序号', key: 'index' },
   { title: '活动名称', dataIndex: 'name', key: 'name' },
-  { title: '类型', dataIndex: 'typeDesc', key: 'typeDesc', width: 140 },
-  { title: '玩法', dataIndex: 'ruleTypeDesc', key: 'ruleTypeDesc', width: 120 },
-  { title: '活动时间', key: 'time', width: 330 },
-  { title: '商品数', dataIndex: 'productCount', key: 'productCount', width: 80 },
-  { title: '状态', key: 'status', width: 100 },
+  { title: '类型', dataIndex: 'typeDesc', key: 'typeDesc' },
+  { title: '玩法', dataIndex: 'ruleTypeDesc', key: 'ruleTypeDesc' },
+  { title: '活动时间', key: 'time' },
+  { title: '商品数', dataIndex: 'productCount', key: 'productCount' },
+  { title: '状态', key: 'status' },
   { title: '操作', key: 'action', width: 200 },
 ]
 
