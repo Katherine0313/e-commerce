@@ -247,7 +247,9 @@ const deliveryColumns = [
   { title: '买家备注', dataIndex: 'buyerRemark', key: 'buyerRemark',width:100},
   { title: '订单状态', key: 'orderStatus' },
   { title: '签收状态', key: 'signStatus'},
-  { title: '操作', key: 'action', fixed: 'right' },
+  // 不设 fixed:'right'：有 fixed 列 antd 会切 table-layout: fixed，无宽度的列平分剩余空间，
+  // 长文本列（收货地址/买家备注）会被挤爆变形、内容被裁掉；去掉后走 auto 布局按内容自适应
+  { title: '操作', key: 'action' },
 ]
 
 function loadDeliveryList() {
@@ -313,7 +315,7 @@ const dateFilter = ref({ dateField: 'created_at', startDate: '', endDate: '' })
 // 列宽不写死：由表格按内容自适应分配，表格整体撑满容器，右侧不留空白
 const pendingColumns = [
   { title: '订单编号', dataIndex: 'orderNo', key: 'orderNo' },
-  { title: '收款确认时间', dataIndex: 'confirmAt', key: 'confirmAt' },
+  { title: '支付时间', dataIndex: 'payAt', key: 'payAt' },
   { title: '订单金额', dataIndex: 'payAmount', key: 'payAmount' },
   { title: '支付方式', dataIndex: 'payTypeDesc', key: 'payTypeDesc' },
   { title: '客户', dataIndex: 'consignee', key: 'consignee' },
@@ -321,7 +323,8 @@ const pendingColumns = [
   { title: '手机号', dataIndex: 'phone', key: 'phone' },
   { title: '买家备注', dataIndex: 'remark', key: 'remark' },
   { title: '订单状态', key: 'orderStatus' },
-  { title: '操作', key: 'action', fixed: 'right' },
+  // 同样不设 fixed:'right'，理由同上
+  { title: '操作', key: 'action' },
 ]
 
 function loadPendingList() {
@@ -520,10 +523,12 @@ onActivated(() => {
   margin: 20px 0 10px;
 }
 
+/* 操作列：4 个按钮排 2×2，避免一行铺开占掉太多表格宽度（窄屏时更容易挤） */
 .action-buttons {
   display: grid;
-  grid-template-columns: repeat(4, auto);
-  gap: 8px;
+  grid-template-columns: repeat(2, auto);
+  gap: 6px;
+  justify-content: start;
 }
 
 .action-buttons :deep(.ant-btn) {
@@ -532,6 +537,12 @@ onActivated(() => {
 
 .empty-hint {
   margin-top: -40px;
+}
+
+/* 长地址/长备注自动换行：表格是 auto 布局（无 fixed 列），列宽按内容分配，
+   遇到长数字串（快递单号、备注）不换行会撑破单元格 */
+:deep(.ant-table-tbody > tr > td) {
+  word-break: break-word;
 }
 
 .log-title {

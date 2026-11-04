@@ -48,6 +48,10 @@
     <a-modal v-model:visible="formVisible" :title="editingId ? '编辑快递公司' : '新建快递公司'" :width="640"
              :confirm-loading="saving" @ok="handleSubmit">
       <a-form :model="form" :label-col="{ span: 5 }">
+        <a-form-item label="排序">
+          <a-input-number v-model:value="form.sortOrder" :min="0" :precision="0" style="width: 200px" />
+          <span class="unit">数字越小越靠前</span>
+        </a-form-item>
         <a-form-item label="编码" required>
           <a-input v-model:value="form.code" :disabled="!!editingId" placeholder="英文 key，如 shunfeng" />
           <span v-if="!editingId" class="unit">建好后不可修改，订单和包裹都按编码关联</span>
@@ -64,10 +68,6 @@
             </a-button>
           </a-upload>
           <span class="unit">建议尺寸 {{ expressSpecLabel }}</span>
-        </a-form-item>
-        <a-form-item label="排序">
-          <a-input-number v-model:value="form.sortOrder" :min="0" :precision="0" style="width: 200px" />
-          <span class="unit">数字越小越靠前</span>
         </a-form-item>
         <a-form-item label="启用状态">
           <a-radio-group v-model:value="form.status">
@@ -114,10 +114,10 @@ const pagination = ref({
 })
 
 const columns = [
+  { title: '排序', dataIndex: 'sortOrder', key: 'sortOrder' },
   { title: '编码', dataIndex: 'code', key: 'code'},
   { title: '名称', dataIndex: 'name', key: 'name'},
   { title: 'Logo', key: 'logo' },
-  { title: '排序', dataIndex: 'sortOrder', key: 'sortOrder' },
   { title: '状态', key: 'status' },
   { title: '创建时间', dataIndex: 'createTime', key: 'createTime' },
   { title: '操作', key: 'action',width:200 },
