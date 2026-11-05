@@ -50,7 +50,7 @@
           <a-tag color="blue">{{ moduleLabel(record.module) }}</a-tag>
         </template>
         <template v-else-if="column.key === 'action'">
-          {{ record.action || '—' }}
+          {{ record.actionName || record.action || '—' }}
         </template>
         <template v-else-if="column.key === 'result'">
           <a-tag :color="successColor(record.success)">
@@ -81,7 +81,7 @@
         <a-descriptions-item label="操作人 ID">{{ text(current.userId) }}</a-descriptions-item>
         <a-descriptions-item label="用户类型">{{ text(current.userType) }}</a-descriptions-item>
         <a-descriptions-item label="模块">{{ moduleLabel(current.module) }}</a-descriptions-item>
-        <a-descriptions-item label="动作">{{ text(current.action) }}</a-descriptions-item>
+        <a-descriptions-item label="动作">{{ text(current.actionName || current.action) }}</a-descriptions-item>
         <a-descriptions-item label="业务对象 ID">{{ text(current.bizId) }}</a-descriptions-item>
         <a-descriptions-item label="结果">
           <a-tag :color="successColor(current.success)">
@@ -215,7 +215,7 @@ const columns = [
   { title: '账号', dataIndex: 'username', key: 'username' },
   { title: '模块', dataIndex: 'module', key: 'module' },
   { title: '动作', dataIndex: 'action', key: 'action' },
-  { title: '业务对象', dataIndex: 'bizId', key: 'bizId' },
+  { title: '业务对象 ID', dataIndex: 'bizId', key: 'bizId' },
   { title: '结果', key: 'result' },
   { title: '耗时', dataIndex: 'costMs', key: 'costMs' },
   { title: 'IP', dataIndex: 'ip', key: 'ip' },

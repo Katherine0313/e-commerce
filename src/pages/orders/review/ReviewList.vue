@@ -106,7 +106,7 @@
         </template>
         <template v-else-if="column.key === 'action'">
           <div class="action-buttons">
-            <a-button size="small" @click="openReply(record)">回复</a-button>
+            <a-button v-permission="'product:review:reply'" size="small" @click="openReply(record)">回复</a-button>
             <a-button v-permission="'product:review:remove'" size="small" danger @click="remove(record)">
               删除
             </a-button>
