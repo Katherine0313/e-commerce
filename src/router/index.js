@@ -333,6 +333,25 @@ const routes = [
                     permission: 'system:menu:list',
                 },
                 component: () => import('@/pages/system/menus/MenuList.vue'),
+            },
+            // 路径与 admin_menu.path 保持一致（/system/logs、/system/logs/login）
+            {
+                path: 'logs',
+                name: 'SystemLogs',
+                meta: {
+                    title: '操作日志',
+                    permission: 'system:log:list',
+                },
+                component: () => import('@/pages/system/logs/OperationLogList.vue'),
+            },
+            {
+                path: 'logs/login',
+                name: 'SystemLoginLogs',
+                meta: {
+                    title: '登录日志',
+                    permission: 'system:log:login:list',
+                },
+                component: () => import('@/pages/system/logs/LoginLogList.vue'),
             }
         ]
     },

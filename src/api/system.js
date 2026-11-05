@@ -78,3 +78,25 @@ export function updateMenu(id, data) {
 export function deleteMenu(id) {
   return axios.delete(`/api/admin/system/menus/${id}`)
 }
+
+// ==================== 系统管理：操作日志 / 登录日志 ====================
+
+// 操作日志分页查询（后端 VO 是驼峰字段，前端不做蛇形转换）
+export function getOperationLogs(params) {
+  return axios.get('/api/admin/system/logs', { params })
+}
+
+// 登录日志分页查询
+export function getLoginLogs(params) {
+  return axios.get('/api/admin/system/login-logs', { params })
+}
+
+// 导出操作日志，format 取 csv / xlsx，返回文件流
+export function exportOperationLogs(params) {
+  return axios.get('/api/admin/system/logs/export', { params, responseType: 'blob' })
+}
+
+// 导出登录日志，format 取 csv / xlsx，返回文件流
+export function exportLoginLogs(params) {
+  return axios.get('/api/admin/system/login-logs/export', { params, responseType: 'blob' })
+}
