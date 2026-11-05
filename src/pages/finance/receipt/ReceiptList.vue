@@ -194,7 +194,7 @@ const columns = [
   { title: '收款时间', dataIndex: 'paidAt', key: 'paidAt' },
   { title: '状态', key: 'status' },
   { title: '审核人', key: 'audit' },
-  { title: '操作', key: 'action', fixed: 'right', width: 190 },
+  { title: '操作', key: 'action', fixed: 'right', width: 200 },
 ]
 
 // 详情 / 备注
