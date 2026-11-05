@@ -297,6 +297,37 @@ const routes = [
         ]
         },
     {
+        path: '/finance',
+        name: 'Finance',
+        meta: {
+            isLogin: true,
+            title: '财务管理',
+            icon: 'AccountBookOutlined',
+            renderMenu: true,
+            cacheable: true,
+        },
+        children: [
+            {
+                path: 'receipt-list',
+                name: 'FinanceReceiptList',
+                meta: {
+                    title: '收款单',
+                    permission: 'finance:receipt:list',
+                },
+                component: () => import('@/pages/finance/receipt/ReceiptList.vue'),
+            },
+            {
+                path: 'account-list',
+                name: 'FinanceAccountList',
+                meta: {
+                    title: '收款账户',
+                    permission: 'finance:account:list',
+                },
+                component: () => import('@/pages/finance/account/AccountList.vue'),
+            }
+        ]
+        },
+    {
         path: '/system',
         name: 'System',
         meta: {
