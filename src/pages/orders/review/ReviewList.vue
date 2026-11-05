@@ -49,7 +49,10 @@
 
     <a-table :dataSource="list" :columns="columns" :pagination="pagination" row-key="id"
               @change="handleTableChange">
-      <template #bodyCell="{ column, record }">
+      <template #bodyCell="{ column, record, index }"><!-- 👉 序号渲染，跨页连续 -->
+        <template v-if="column.key === 'index'">
+          {{ (pagination.current - 1) * pagination.pageSize + index + 1 }}
+        </template>
         <template v-if="column.key === 'product'">
           <div class="cell-product">
             <a-image :src="imgUrl(record.productImage)" :width="44" :height="44" fit="cover"
@@ -189,6 +192,7 @@ const visibleOptions = [
 // 24 位订单号不会把列撑爆，表格宽度正好等于内容区宽。
 // 注意：没有 bodyCell 分支的列（如订单号）必须写 dataIndex，否则单元格是空的
 const columns = [
+  { title: '序号', key: 'index'},
   { title: '商品', key: 'product'},
   { title: '星级', key: 'rating'},
   { title: '评价内容', key: 'content'},
@@ -199,7 +203,7 @@ const columns = [
   { title: '状态', key: 'status' },
   { title: '商家回复', key: 'reply' },
   { title: '评价时间', dataIndex: 'createdAt', key: 'createdAt'},
-  { title: '操作', key: 'action', fixed: 'right', width: 120 },
+  { title: '操作', key: 'action', fixed: 'right', width: 150 },
 ]
 
 /** 拼查询参数：空值不传，后端据此不筛 */

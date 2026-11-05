@@ -356,6 +356,56 @@ const routes = [
         ]
     },
     {
+        // 系统监控：独立一级目录，与「系统管理」平级；路径与 admin_menu.path 保持一致
+        path: '/monitor',
+        name: 'Monitor',
+        meta: {
+            isLogin: true,
+            title: '系统监控',
+            icon: 'MonitorOutlined',
+            renderMenu: true,
+            cacheable: true,
+        },
+        children: [
+            {
+                path: 'server',
+                name: 'MonitorServer',
+                meta: {
+                    title: '服务监控',
+                    permission: 'monitor:server:list',
+                },
+                component: () => import('@/pages/monitor/server/ServerMonitor.vue'),
+            },
+            {
+                path: 'online',
+                name: 'MonitorOnline',
+                meta: {
+                    title: '在线用户',
+                    permission: 'monitor:online:list',
+                },
+                component: () => import('@/pages/monitor/online/OnlineUserList.vue'),
+            },
+            {
+                path: 'cache',
+                name: 'MonitorCache',
+                meta: {
+                    title: '缓存监控',
+                    permission: 'monitor:cache:list',
+                },
+                component: () => import('@/pages/monitor/cache/CacheMonitor.vue'),
+            },
+            {
+                path: 'task',
+                name: 'MonitorTask',
+                meta: {
+                    title: '定时任务',
+                    permission: 'monitor:task:list',
+                },
+                component: () => import('@/pages/monitor/task/TaskList.vue'),
+            }
+        ]
+    },
+    {
         path: '/:pathMatch(.*)*',
         name: '404',
         props: true,

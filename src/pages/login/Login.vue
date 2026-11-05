@@ -219,7 +219,6 @@ const submitAccount = () => {
     captchaCode: captchaCode.value.trim(),
   })
       .then((res) => {
-        console.log(res);
         // 登录成功后才保存，避免把错误密码记下来
         if (res.data && res.data.success) {
           if (remember.value) {
