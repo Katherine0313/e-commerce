@@ -38,20 +38,27 @@
           </template>
           <span v-else class="sub">暂无执行记录</span>
         </template>
-        <template v-else-if="column.key === 'action'">
-          <a-space>
-            <a-button type="link" size="small" @click="openLogs(record)">日志</a-button>
-            <a-button v-permission="'monitor:task:edit'" type="link" size="small"
-                      @click="openEdit(record)">编辑</a-button>
-            <a-popconfirm v-if="record.allowManualRun" title="确定立即执行一次？执行结果会记录到操作日志"
-                          @confirm="handleRun(record)">
-              <a-button v-permission="'monitor:task:run'" type="link" size="small"
-                        :loading="running === record.taskName">立即执行</a-button>
-            </a-popconfirm>
-            <a-popconfirm title="删除后执行记录保留，但任务不再调度，确定删除？" @confirm="handleDelete(record)">
-              <a-button v-permission="'monitor:task:delete'" type="link" size="small" danger>删除</a-button>
-            </a-popconfirm>
-          </a-space>
+        <template v-else-if="column.key === 'action'" >
+          <div class="action">
+            <div class="grid-cell">
+              <a-button type="link" size="small" @click="openLogs(record)">日志</a-button>
+            </div>
+            <div class="grid-cell">
+              <a-button v-permission="'monitor:task:edit'" type="link" size="small" @click="openEdit(record)">编辑</a-button>
+            </div>
+            <div class="grid-cell">
+              <a-popconfirm v-if="record.allowManualRun" title="确定立即执行一次？执行结果会记录到操作日志"
+                            @confirm="handleRun(record)">
+                <a-button v-permission="'monitor:task:run'" type="link" size="small"
+                          :loading="running === record.taskName">立即执行</a-button>
+              </a-popconfirm>
+            </div>
+            <div class="grid-cell">
+              <a-popconfirm title="删除后执行记录保留，但任务不再调度，确定删除？" @confirm="handleDelete(record)">
+                <a-button v-permission="'monitor:task:delete'" type="link" size="small" danger>删除</a-button>
+              </a-popconfirm>
+            </div>
+          </div>
         </template>
       </template>
     </a-table>
@@ -337,5 +344,17 @@ onMounted(load)
   color: #999;
   font-size: 12px;
   margin-left: 8px;
+}
+.action{
+  display:grid;
+  grid-template-columns: 50px 50px 80px 60px;
+  gap: 4px;
+  align-items: center;
+  justify-content: center;
+}
+.grid-cell {
+  /* 四个固定格子：某个按钮不存在（无权限 / 不支持手动执行）时格子仍在，后面的按钮不会左移 */
+  display: block;
+  text-align: center;
 }
 </style>

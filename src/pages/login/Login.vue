@@ -38,6 +38,7 @@
                   v-model:value="accountForm.username"
                   autocomplete="username"
                   placeholder="用户名 / 邮箱"
+                  @focus="prefetchWorkplace"
               >
                 <template #prefix>
                   <UserOutlined class="field-icon" />
@@ -51,6 +52,7 @@
                   v-model:value="accountForm.password"
                   autocomplete="current-password"
                   placeholder="请输入密码"
+                  @focus="prefetchWorkplace"
               >
                 <template #prefix>
                   <LockOutlined class="field-icon" />
@@ -106,7 +108,7 @@
 </template>
 
 <script setup>
-import {onBeforeUnmount, onMounted, reactive, ref} from 'vue';
+import {onMounted, reactive, ref} from 'vue';
 import {message} from 'ant-design-vue';
 import {
   LockOutlined,
@@ -127,7 +129,8 @@ const captchaLoading = ref(false);
 const captchaId = ref('');
 const captchaImage = ref('');
 const captchaCode = ref('');
-let prefetchTimer = null;
+// 是否已开始预取工作台代码块（只触发一次）
+let prefetchStarted = false;
 
 // 固定预填演示账号（开发和生产都回填）
 const accountForm = reactive({
@@ -162,6 +165,14 @@ const loadCaptcha = () => {
       });
 };
 
+// 用户开始填表时才预取工作台代码块，登录后 router.push 直接命中缓存。
+// 不在页面加载时定时预取：那样爬虫/扫描器访问登录页也会白拉 178kB 无关代码块。
+const prefetchWorkplace = () => {
+  if (prefetchStarted) return;
+  prefetchStarted = true;
+  import('@/pages/workplace/Workplace.vue').catch(() => {});
+};
+
 onMounted(() => {
   // 401 拦截器跳回本页时留下的原因（例如「登录已过期，请重新登录」）
   const tip = sessionStorage.getItem('loginMessage');
@@ -171,14 +182,6 @@ onMounted(() => {
   }
   // 进入登录页先拉图形验证码
   loadCaptcha();
-  // 空闲时预取工作台代码块：登录后 router.push 直接命中缓存，不再等下载
-  prefetchTimer = setTimeout(() => {
-    import('@/pages/workplace/Workplace.vue').catch(() => {});
-  }, 1200);
-});
-
-onBeforeUnmount(() => {
-  clearTimeout(prefetchTimer);
 });
 
 // 登录成功后的公共处理
