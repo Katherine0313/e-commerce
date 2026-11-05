@@ -279,6 +279,7 @@ function buildParams() {
 
 function loadData() {
   getOperationLogs(buildParams()).then((res) => {
+    console.log(res)
     const data = res.data.data || {}
     list.value = data.list || []
     pagination.value.total = data.total || 0
