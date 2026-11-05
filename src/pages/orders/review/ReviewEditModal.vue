@@ -32,15 +32,22 @@
       </a-form-item>
 
       <a-form-item label="评价标签">
-        <a-select
-            v-model:value="form.tag"
-            placeholder="可从预设标签里选，也可自己填"
-            allow-clear
-            show-search
-            :filter-option="false"
-            :options="tagOptions"
-            @search="handleTagSearch"
-        />
+        <div class="tag-grid">
+          <span
+              v-for="tag in REVIEW_TAGS"
+              :key="tag.value"
+              class="tag-item"
+              :class="{
+                'tag-item--active': form.tags.includes(tag.value),
+                'tag-item--negative': tag.negative,
+                'tag-item--disabled': !form.tags.includes(tag.value) && form.tags.length >= MAX_TAGS,
+              }"
+              @click="toggleTag(tag.value)"
+          >
+            {{ tag.value }}
+          </span>
+        </div>
+        <div class="tip">最多选 {{ MAX_TAGS }} 个，已选 {{ form.tags.length }}/{{ MAX_TAGS }}</div>
       </a-form-item>
 
       <a-form-item label="评价内容" required>
@@ -98,7 +105,7 @@ const fileList = ref([])
 const form = ref({
   productId: undefined,
   rating: 5,
-  tag: undefined,
+  tags: [],
   content: '',
 })
 
@@ -110,19 +117,33 @@ const beforeUpload = (file) => compressImage(file, reviewSpec)
 
 const isEdit = computed(() => !!props.reviewId)
 
-// 预设评价标签（后台写虚拟评价常用），允许自定义输入
-const DEFAULT_TAGS = ['质量好', '性价比高', '物流快', '包装精美', '做工精细', '与描述一致', '物美价廉']
-const tagOptions = ref(DEFAULT_TAGS.map((t) => ({ value: t, label: t })))
+// 固定 8 个评价标签（与后端 ReviewTagEnum 一致），正向 4 个 + 负向 4 个，全部平铺展示
+const MAX_TAGS = 4
+const REVIEW_TAGS = [
+  { value: '质量很好' },
+  { value: '性价比高' },
+  { value: '物流很快' },
+  { value: '服务周到' },
+  { value: '有待改进', negative: true },
+  { value: '物流慢', negative: true },
+  { value: '包装破损', negative: true },
+  { value: '与描述不符', negative: true },
+]
+const TAG_VALUES = REVIEW_TAGS.map((t) => t.value)
 
-function handleTagSearch(value) {
-  const text = (value || '').trim()
-  if (!text) {
-    tagOptions.value = DEFAULT_TAGS.map((t) => ({ value: t, label: t }))
+/** 点一下选中，再点一下取消；已选满 4 个时未选中的标签置灰不可点 */
+function toggleTag(value) {
+  const tags = form.value.tags
+  const idx = tags.indexOf(value)
+  if (idx > -1) {
+    tags.splice(idx, 1)
     return
   }
-  const list = DEFAULT_TAGS.slice()
-  if (!list.includes(text)) list.unshift(text)
-  tagOptions.value = list.map((t) => ({ value: t, label: t }))
+  if (tags.length >= MAX_TAGS) {
+    message.warning(`最多选择 ${MAX_TAGS} 个标签`)
+    return
+  }
+  tags.push(value)
 }
 
 /** 搜索商品：下拉里只显示 id，前端不传商品名 */
@@ -149,7 +170,7 @@ function handleUploadChange(info) {
 }
 
 function resetForm() {
-  form.value = { productId: undefined, rating: 5, tag: undefined, content: '' }
+  form.value = { productId: undefined, rating: 5, tags: [], content: '' }
   fileList.value = []
 }
 
@@ -162,10 +183,12 @@ watch(() => props.visible, (val) => {
   if (props.reviewId) {
     getReviewDetail(props.reviewId).then((res) => {
       const data = res.data.data
+      // 标签统一用多值字段 tags
+      const rawTags = Array.isArray(data.tags) ? data.tags : []
       form.value = {
         productId: data.productId,
         rating: data.rating || 5,
-        tag: data.tag || undefined,
+        tags: rawTags.filter((t) => TAG_VALUES.includes(t)).slice(0, MAX_TAGS),
         content: data.content || '',
       }
       // 图片回填成 a-upload 的 fileList 结构
@@ -209,7 +232,7 @@ function handleSubmit() {
   const payload = {
     productId: form.value.productId,
     rating: form.value.rating,
-    tag: form.value.tag || null,
+    tags: form.value.tags.length ? form.value.tags : null,
     content: form.value.content.trim(),
     images: images.length ? JSON.stringify(images) : null,
   }
@@ -248,5 +271,64 @@ function imgUrl(path) {
   margin-top: 6px;
   font-size: 12px;
   color: #999;
+}
+
+/* 标签平铺：两行四列，小程序/后台都能一屏放得下 */
+.tag-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.tag-item {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 32px;
+  padding: 0 8px;
+  font-size: 13px;
+  color: #555;
+  background: #fafafa;
+  border: 1px solid #e5e5e5;
+  border-radius: 16px;
+  cursor: pointer;
+  user-select: none;
+  transition: all 0.2s;
+  white-space: nowrap;
+}
+
+.tag-item:hover {
+  border-color: #ff6700;
+  color: #ff6700;
+}
+
+/* 负向标签默认淡红，选中后仍然高亮为橙色，避免用户在列表页看着像差评 */
+.tag-item--negative {
+  color: #a05a5a;
+  background: #fff5f5;
+  border-color: #f0d8d8;
+}
+
+.tag-item--active {
+  color: #fff;
+  background: #ff6700;
+  border-color: #ff6700;
+}
+
+.tag-item--active:hover {
+  color: #fff;
+}
+
+.tag-item--disabled {
+  color: #bbb;
+  background: #f5f5f5;
+  border-color: #eee;
+  cursor: not-allowed;
+}
+
+@media (max-width: 575px) {
+  .tag-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
 }
 </style>

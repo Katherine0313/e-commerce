@@ -32,7 +32,14 @@
         <a-descriptions-item label="订单号">{{ currentOrder?.orderNo }}</a-descriptions-item>
         <a-descriptions-item label="支付时间">{{ currentOrder?.payAt }}</a-descriptions-item>
         <a-descriptions-item label="支付方式">{{ currentOrder?.payTypeDesc }}</a-descriptions-item>
-        <a-descriptions-item label="退款金额">￥{{ refundTotal.toFixed(2) }}</a-descriptions-item>
+        <a-descriptions-item label="换货商品金额">￥{{ refundTotal.toFixed(2) }}</a-descriptions-item>
+        <a-descriptions-item v-if="currentOrder?.pickupAt" label="上门取件">
+          {{ currentOrder.pickupAt }}<span v-if="currentOrder.pickupNo"> · {{ currentOrder.pickupNo }}</span>
+        </a-descriptions-item>
+        <a-descriptions-item v-if="currentOrder?.shipTrackingNumber" label="补发物流" :span="2">
+          {{ currentOrder.shipCourier || '—' }} {{ currentOrder.shipTrackingNumber }}
+          <span v-if="currentOrder.shipAt"> · {{ currentOrder.shipAt }}</span>
+        </a-descriptions-item>
       </a-descriptions>
     </div>
     <div class="item">
@@ -75,60 +82,11 @@
       </div>
     </div>
     <AfterSaleLogTimeline :logs="logs" />
-    <div class="item" v-if="!currentOrder?.returnAt && currentOrder?.status === 'returning'">
-      <div class="item-title">选择退货方式</div>
-      <div class="return">
-        <div class="head"><span>官方退货</span><span>|</span><span>丢损必赔</span><span>|</span><span>免填地址</span>
-        </div>
-        <div class="content">
-          <div class="l">
-            <div class="list top" id="l-top" @click="chooseReturnWay('pickup')" style="cursor: pointer;">
-              <div style="display:flex;"> <div>上门取件</div>
-                <div style="flex:1;margin-left:10px;"><span style="padding:5px 10px;border:1px solid #FF6700;color:#FF6700">
-                  商家指定服务</span><span style="padding:5px 10px;border:1px solid #FF6700;background: #FF6700;color:#fff;">官方保障</span></div>
-              </div>
-              <div class="list-r">
-                <span class="dot" :class="{ active: returnWay === 'pickup' }"></span>
-              </div>
-            </div>
-            <div class="list">商家同意退货后，将为您上门取件，具体日期将以短信形式通知，您可随时修改或取消</div>
-            <div class="list time " :style="{ pointerEvents: returnWay === 'self' ? 'none' : 'auto', opacity: returnWay === 'self' ? 0.5 : 1 }">
-              <div class="list-l" :class="{ active: selectedTime === 'morning' }"
-                   @click="selectedTime = selectedTime === 'morning' ? '' : 'morning'">
-                <span>商家同意退货后</span><span>09:00‑13:00</span>
-              </div>
-              <div class="list-r" :class="{ active: selectedTime === 'afternoon' }"
-                   @click="selectedTime = selectedTime === 'afternoon' ? '' : 'afternoon'">
-                <span>商家同意退货后</span><span>13:00‑19:00</span>
-              </div>
-            </div>
-          </div>
-          <div class="r " @click="chooseReturnWay('self')" style="cursor: pointer;">
-            <div>
-              <div style="margin-bottom:5px;">自行寄回</div>
-              <div>
-                <div class="item-l">放弃丢损必赔保障服务，运费自行支付 / 垫付</div>
-              </div>
-            </div>
-            <div class="item-r"><span class="dot" :class="{ active: returnWay === 'self' }"></span></div>
-          </div>
-        </div>
-      </div>
-    </div>
-    <template #footer>
-      <a-button v-if="currentOrder?.status === 'returning' && !currentOrder?.returnAt"
-                :disabled="returnWay === 'pickup' && !selectedTime"
-                type="primary" @click="handleAfterSaleReturn"
-                >
-        提交退货
-      </a-button>
-    </template>
   </a-modal>
 </template>
 <script setup>
 import {ref, computed} from "vue";
-import {message} from 'ant-design-vue'
-import {getAfterSale, getAfterSaleLogs, submitAfterSaleReturn} from '@/api/afterSale.js'
+import {getAfterSale, getAfterSaleLogs} from '@/api/afterSale.js'
 import AfterSaleLogTimeline from '@/components/AfterSaleLogTimeline.vue'
 import {useIsMobile} from '@/composables/useMediaQuery'
 import {maskPhone} from '@/utils/mask.js'
@@ -137,14 +95,6 @@ import {maskPhone} from '@/utils/mask.js'
 const isMobile = useIsMobile()
 const exchangeDetailVisible = ref(false)
 const currentOrder = ref()
-// 选中的取件时间段：'' / 'morning' / 'afternoon'
-const selectedTime = ref('')
-// 退货方式：'pickup' 上门取件 / 'self' 自行寄回
-const returnWay = ref('pickup')
-const chooseReturnWay = (way) => {
-  returnWay.value = way
-  if (way === 'self') selectedTime.value = ''   // 切到自行寄回时清掉时间段
-}
 
 // 根据售后状态，算进度条走到第几步（换货流程：申请→审核→买家退货→商家换货→完成）
 const stepCurrent = computed(() => {
@@ -227,26 +177,6 @@ const exchangeDetailOpen = (record) => {
   loadDetailOrders(record.id)
 }
 defineExpose({exchangeDetailOpen})
-// =================== 提交退货方式 ===============
-const handleAfterSaleReturn = () => {
-  if (!currentOrder.value?.id) return
-  submitAfterSaleReturn(currentOrder.value.id, {
-    returnWay: returnWay.value,
-    returnTimeSlot: returnWay.value === 'pickup' ? selectedTime.value : null,
-  })
-      .then(res => {
-        if (res.data?.success) {
-          message.success('退货方式提交成功')
-          loadDetailOrders(currentOrder.value.id)   // 重新拉详情，returnAt 有值，整块自动隐藏
-        } else {
-          message.error(res.data?.message || '提交失败')
-        }
-      })
-      .catch(err => {
-        message.error('提交失败：' + (err.response?.data?.message || err.message))
-      })
-}
-
 </script>
 
 <style scoped>

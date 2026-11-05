@@ -10,13 +10,16 @@
         </a-descriptions-item>
         <a-descriptions-item label="售后原因">{{ afterSaleStatus.reasonMap[currentOrder?.reason] }}</a-descriptions-item>
         <a-descriptions-item label="货物状态">{{ currentOrder?.goodsStatusDesc || '—' }}</a-descriptions-item>
-        <a-descriptions-item label="退款金额">￥{{ refundTotal.toFixed(2) }}</a-descriptions-item>
+        <a-descriptions-item label="换货商品金额">￥{{ refundTotal.toFixed(2) }}</a-descriptions-item>
         <a-descriptions-item label="订单号">{{ currentOrder?.orderNo }}</a-descriptions-item>
         <a-descriptions-item label="支付时间">{{ currentOrder?.payAt }}</a-descriptions-item>
         <a-descriptions-item label="支付方式">{{ currentOrder?.payTypeDesc }}</a-descriptions-item>
         <a-descriptions-item label="收货人">{{ currentOrder?.consignee }}</a-descriptions-item>
         <a-descriptions-item label="手机号码">{{ maskPhone(currentOrder?.phone) }}</a-descriptions-item>
         <a-descriptions-item label="补充说明">{{ currentOrder?.remark || '—' }}</a-descriptions-item>
+        <a-descriptions-item v-if="currentOrder?.pickupAt" label="上门取件">
+          {{ currentOrder.pickupAt }}<span v-if="currentOrder.pickupNo"> · {{ currentOrder.pickupNo }}</span>
+        </a-descriptions-item>
         <a-descriptions-item label="收货地址" :span="isMobile ? 1 : 3">
           {{ (currentOrder?.region || '') + ' ' + (currentOrder?.detailAddress || '') }}
         </a-descriptions-item>
@@ -66,6 +69,16 @@
         <a-input v-model:value="confirmForm.merchantRemark" placeholder="如拒绝，请填原因"
                  allow-clear style="width: min(420px, 60vw)" />
       </a-form-item>
+      <template v-if="primaryAction?.status === 'exchanging'">
+        <a-form-item label="补发快递公司（选填）">
+          <a-input v-model:value="confirmForm.shipCourier" placeholder="如 顺丰速运"
+                   allow-clear style="width: min(220px, 40vw)" />
+        </a-form-item>
+        <a-form-item label="补发单号（选填）">
+          <a-input v-model:value="confirmForm.shipTrackingNumber" placeholder="补发快递单号"
+                   allow-clear style="width: min(240px, 40vw)" />
+        </a-form-item>
+      </template>
     </a-form>
     <a-alert v-if="!primaryAction && !rejectAction" type="info" show-icon
              message="当前状态没有可执行的操作" />
@@ -118,12 +131,12 @@ const exchangeReviewOpen = (record) => {
   exchangeReviewVisible.value = true
   currentOrder.value = record
   // 每次打开重置表单，避免上一次的备注残留
-  confirmForm.value = {result: undefined, merchantRemark: ''}
+  confirmForm.value = {result: undefined, merchantRemark: '', shipCourier: '', shipTrackingNumber: ''}
   loadDetailOrders(record.id)
 }
 defineExpose({exchangeReviewOpen})
 // ================ 商家审核 =================
-const confirmForm = ref({result: undefined, merchantRemark: ''})
+const confirmForm = ref({result: undefined, merchantRemark: '', shipCourier: '', shipTrackingNumber: ''})
 const submitting = ref(false)
 
 // 可执行动作由后端按状态机下发（availableActions），前端只按 kind 分主/危险按钮
@@ -191,10 +204,12 @@ const submitReview = (targetStatus) => {
   reviewAfterSale(currentOrder.value.id, {
     status: targetStatus,
     merchantRemark: confirmForm.value.merchantRemark,
+    shipCourier: confirmForm.value.shipCourier,
+    shipTrackingNumber: confirmForm.value.shipTrackingNumber,
   })
       .then(() => {
         message.success('审核提交成功')
-        confirmForm.value = {result: undefined, merchantRemark: ''}
+        confirmForm.value = {result: undefined, merchantRemark: '', shipCourier: '', shipTrackingNumber: ''}
         exchangeReviewVisible.value = false
         loadDetailOrders(currentOrder.value.id)
         emit('refresh')

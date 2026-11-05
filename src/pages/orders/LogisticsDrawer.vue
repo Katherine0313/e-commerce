@@ -34,10 +34,11 @@ const logistics = ref(null)
 
 const traces = computed(() => (logistics.value && logistics.value.traces) || [])
 
-// 节点配色：签收/派送用醒目色，其余走默认蓝
+// 节点配色：签收/派送用醒目色，待揽件用灰色，其余走默认蓝
 function traceColor(t) {
   if (t.status === '已签收') return 'green'
   if (t.status === '派送中') return 'orange'
+  if (t.status === '待揽件') return 'gray'
   return 'blue'
 }
 

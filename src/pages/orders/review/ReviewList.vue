@@ -65,7 +65,6 @@
         </template>
         <template v-else-if="column.key === 'content'">
           <div class="cell-content">
-            <div v-if="record.tag" class="cell-tag">{{ record.tag }}</div>
             <a-tooltip :title="record.content">
               <div class="cell-content-text">{{ record.content || '—' }}</div>
             </a-tooltip>
@@ -184,9 +183,10 @@ const visibleOptions = [
   { value: 0, label: '隐藏' },
 ]
 
-// 列不写死宽度、也不写 :scroll —— 操作列保留 fixed:'right'，
-// antd 会走 table-layout: fixed，列宽由表头文字决定，
-// 24 位订单号不会把列撑爆，表格宽度正好等于内容区宽（任何屏幕都不溢出）
+// 列不写死宽度、也不写 :scroll —— 操作列保留 fixed:'right' 并给 120px，
+// 保证「回复 / 删除」两个按钮有足够宽度；窄屏放不下时按钮自动换行，
+// 不会再出现文字挤出按钮的情况。其余列由 antd 走 table-layout: fixed 自适应，
+// 24 位订单号不会把列撑爆，表格宽度正好等于内容区宽。
 // 注意：没有 bodyCell 分支的列（如订单号）必须写 dataIndex，否则单元格是空的
 const columns = [
   { title: '商品', key: 'product'},
@@ -199,7 +199,7 @@ const columns = [
   { title: '状态', key: 'status' },
   { title: '商家回复', key: 'reply' },
   { title: '评价时间', dataIndex: 'createdAt', key: 'createdAt'},
-  { title: '操作', key: 'action',fixed: 'right' },
+  { title: '操作', key: 'action', fixed: 'right', width: 120 },
 ]
 
 /** 拼查询参数：空值不传，后端据此不筛 */
@@ -381,13 +381,6 @@ onActivated(() => {
   text-align: left;
 }
 
-.cell-tag {
-  display: inline-block;
-  font-size: 12px;
-  color: #ff6700;
-  margin-bottom: 2px;
-}
-
 .cell-content-text {
   font-size: 13px;
   color: #555;
@@ -424,15 +417,16 @@ onActivated(() => {
   border-radius: 4px;
 }
 
-/* 操作列：回复、删除两个按钮并排 */
+/* 操作列：回复、删除并排；窄屏放不下时自动换行，不挤压按钮文字 */
 .action-buttons {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  display: flex;
+  flex-wrap: wrap;
   gap: 6px;
 }
 
 .action-buttons :deep(.ant-btn) {
-  width: 100%;
+  padding: 0 8px;
+  white-space: nowrap;
 }
 
 @media (max-width: 767px) {

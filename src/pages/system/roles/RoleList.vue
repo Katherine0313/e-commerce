@@ -67,7 +67,7 @@
       <div class="tree-wrap">
         <!-- check-strictly：父子节点独立勾选，否则勾一个菜单会把它的所有按钮一起勾上，永远设不成只读 -->
         <a-tree v-model:checkedKeys="checkedKeys" :tree-data="treeData" checkable check-strictly
-                default-expand-all :selectable="false" />
+                default-expand-all :selectable="false" @check="handleTreeCheck" />
       </div>
     </a-modal>
   </div>
@@ -212,13 +212,25 @@ function openAssign(record) {
   // 菜单树接口需要 system:role:assign 权限，只在真正打开「分配菜单」时加载；
   // 提前在页面初始化时加载，会让只读角色一进角色管理页就 403
   Promise.all([loadMenuTree(), getRole(record.id)]).then(([, res]) => {
-    checkedKeys.value = res.data.data.menuIds || []
+    checkedKeys.value = toCheckedKeys(res.data.data.menuIds)
     assignVisible.value = true
   })
 }
 
+// check-strictly 模式下 a-tree 回传的是 { checked, halfChecked }，统一转成 id 数组
+function toCheckedKeys(value) {
+  if (Array.isArray(value)) return value
+  if (Array.isArray(value?.checked)) return value.checked
+  return []
+}
+
+function handleTreeCheck(keys) {
+  checkedKeys.value = toCheckedKeys(keys)
+}
+
 // 勾选子菜单时自动补上父菜单，保证侧边栏能正确组装
 function withAncestors(keys) {
+  const checked = toCheckedKeys(keys)
   const parentMap = new Map()
   const walk = (nodes) => {
     (nodes || []).forEach((node) => {
@@ -227,8 +239,8 @@ function withAncestors(keys) {
     })
   }
   walk(menuTree.value)
-  const result = new Set(keys)
-  keys.forEach((key) => {
+  const result = new Set(checked)
+  checked.forEach((key) => {
     let parent = parentMap.get(key)
     while (parent) {
       result.add(parent)
