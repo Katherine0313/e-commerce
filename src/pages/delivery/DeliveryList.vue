@@ -493,7 +493,7 @@ function doSubmit(payload) {
 
 // ==================== 签收状态三态 ====================
 function signStatusText(signStatus) {
-  return { signed: '买家已确认收货', auto: '超时自动完成', unsigned: '未签收' }[signStatus] || '未签收'
+  return { signed: '已签收', auto: '超时自动完成', unsigned: '未签收' }[signStatus] || '未签收'
 }
 
 function signStatusColor(signStatus) {

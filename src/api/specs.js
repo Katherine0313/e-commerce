@@ -2,9 +2,10 @@
 
 // ==================== 销售规格库（/api/admin/specs） ====================
 
-// 规格名 + 候选值列表
-export function getSpecLibrary() {
-  return axios.get('/api/admin/specs')
+// 规格名 + 候选值列表；categoryId 可选（任意层级，后端自动向上找祖先；不传返回全部）
+export function getSpecLibrary(categoryId) {
+  const params = categoryId != null ? { categoryId } : {}
+  return axios.get('/api/admin/specs', { params })
 }
 
 // 新增规格名

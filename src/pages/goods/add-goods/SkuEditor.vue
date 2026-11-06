@@ -112,8 +112,10 @@ const skuType = ref(0)
 const dimensions = ref([])
 // SKU 行：{ key, id, specJson, price, marketPrice, costPrice, stock, skuCode, status }
 const rows = ref([])
-// 规格库（全量，含停用）
+// 规格库（按需加载：等用户选了商品分类才拉，避免把所有不相关的规格名都展示出来）
 const specGroups = ref([])
+// 当前已拉取过的分类 id（null = 全量），用于避免重复请求
+let lastLoadedCategoryId = '__unloaded__'
 const batch = ref({ price: null, marketPrice: null, costPrice: null, stock: null })
 let dimSeq = 0
 // 编辑回显时按规格组合缓存已有 SKU，重建表格时按 key 匹配
@@ -129,8 +131,13 @@ const groupSelectOptions = computed(() => {
 
 const emit = defineEmits(['change'])
 
-const loadLibrary = () => {
-  getSpecLibrary()
+// 拉规格库：未选分类时传 null 会拉全量（用于编辑回显场景兜底）；选了分类就只拉该分类 + 全局通用的
+const loadLibrary = (categoryId) => {
+  // categoryId 相同就不重复拉（切换分类时才会重新请求）
+  const key = categoryId ?? null
+  if (lastLoadedCategoryId === key) return Promise.resolve()
+  lastLoadedCategoryId = key
+  return getSpecLibrary(categoryId)
       .then(res => {
         const data = res.data?.data
         if (Array.isArray(data)) specGroups.value = data
@@ -363,9 +370,18 @@ const setData = (type, specs, skus) => {
   emit('change', skuType.value)
 }
 
-loadLibrary()
+// 由 AddGoods/EditModal 在用户选了分类后调用；categoryId 为商品分类叶节点 id
+const setCategory = (categoryId) => {
+  // 换分类时：如果 SKU 表格里有旧维度，提示一下再清
+  const changed = lastLoadedCategoryId !== '__unloaded__' && lastLoadedCategoryId !== (categoryId ?? null)
+  if (changed && dimensions.value.length && skuType.value === 1) {
+    message.info('规格库已随分类刷新，之前的维度可能需要重新选择')
+  }
+  // 重新拉规格库（带分类过滤），拉完后已选中的维度如果还在列表里会自动保留，不在的由 a-select 自己清空
+  loadLibrary(categoryId)
+}
 
-defineExpose({ validate, getPayload, getAggregate, setData, reset })
+defineExpose({ validate, getPayload, getAggregate, setData, reset, setCategory })
 </script>
 
 <style scoped>

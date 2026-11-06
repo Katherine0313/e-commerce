@@ -116,11 +116,13 @@ const findCategoryNode = (tree, targetId) => {
   return null
 }
 
-// 切换分类：按新分类的规格模板重建参数行，已填写的值继续保留
+// 切换分类：按新分类的规格模板重建参数行 + 重新拉销售规格库（只展示该分类相关的规格名）
 const handleCategoryChange = (value) => {
   const id = Array.isArray(value) ? value[value.length - 1] : value
   const node = findCategoryNode(categoryTree.value, id)
   specsRef.value?.applyTemplate(node?.specTemplate || [])
+  // SKU 编辑器按分类过滤规格库：避免手机类也看到"轴体/色温"等无关规格名
+  skuEditorRef.value?.setCategory(id ?? null)
 }
 const uploadAction = import.meta.env.VITE_API_BASE_URL + '/api/admin/upload'
 // 商品主图压成 800×800 白底方：与历史商品图（python 脚本产物）口径一致，

@@ -156,6 +156,8 @@ const open = (record) => {
       .then(res => {
         const detail = res.data?.data
         if (!detail) return
+        // 先按商品分类过滤规格库，再 setData 回填 SKU（setData 内部按 groupId/name 匹配规格库）
+        skuEditorRef.value?.setCategory(detail.categoryId ?? null)
         skuEditorRef.value?.setData(detail.skuType, detail.skuSpecs || [], detail.skus || [])
         multiSpec.value = detail.skuType === 1
         if (salesInfoRef.value?.salesInfoForm) {
@@ -199,10 +201,11 @@ const findCategoryNode = (tree, targetId) => {
 
 const categoryTemplate = (categoryId) => findCategoryNode(categoryTree.value, categoryId)?.specTemplate || []
 
-// 切换分类：按新分类模板重建参数行，已填写的值继续保留
+// 切换分类：按新分类模板重建参数行 + 刷新销售规格库（只展示该分类相关的规格名）
 const handleCategoryChange = (value) => {
   const id = Array.isArray(value) ? value[value.length - 1] : value
   specsRef.value?.applyTemplate(categoryTemplate(id))
+  skuEditorRef.value?.setCategory(id ?? null)
 }
 
 // 加载全部品牌下拉选项数据
