@@ -31,6 +31,17 @@
       <template v-if="column.key === 'category'">
         {{ categoryMap[record.categoryId] || record.categoryId }}
       </template>
+      <template v-if="column.key === 'sku'">
+        <a-tag v-if="record.skuType === 1" color="blue">多规格</a-tag>
+        <span v-if="record.skuType === 1">{{ skuNames(record) }}</span>
+        <span v-else>单规格</span>
+      </template>
+      <template v-if="column.key === 'salesPrice'">
+        ¥{{ formatPrice(record.salesPrice) }}<span v-if="record.skuType === 1"> 起</span>
+      </template>
+      <template v-if="column.key === 'stock'">
+        <span :style="record.stock === 0 ? 'color:#ff4d4f;font-weight:600' : ''">{{ record.stock ?? 0 }}</span>
+      </template>
       <template v-if="column.key === 'listingStatus'">
         <a-switch :checked="record.listingStatus === 1" @change="(checked) => listingStatusChange(record, checked)" />
       </template>
@@ -144,6 +155,10 @@ const columns = [
     key: "category"
   },
   {
+    title: "商品规格",
+    key: "sku"
+  },
+  {
     title: "商品价格",
     dataIndex: "salesPrice",
     key: "salesPrice"
@@ -173,6 +188,14 @@ const columns = [
     key: "action"
   },
 ]
+// 多规格商品显示「颜色 / 内存」，单规格显示「单规格」
+const skuNames = (record) => {
+  const names = (record.skuSpecs || []).map(s => s.name)
+  return names.length ? names.join(' / ') : '多规格'
+}
+const formatPrice = (value) => {
+  return value == null ? '-' : Number(value).toFixed(2)
+}
 // 搜索事件：重置回第一页再查，避免带着旧页码查空页
 const handleSearch = () => {
   pagination.value.current = 1

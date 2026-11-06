@@ -48,9 +48,11 @@
     </a-card>
     <a-card title="商品规格" class="card">
       <SpecsEditor ref="specsRef" />
+      <a-divider>销售规格</a-divider>
+      <SkuEditor ref="skuEditorRef" @change="onSkuTypeChange" />
     </a-card>
     <a-card title="销售信息" class="card">
-      <SalesInfo ref="salesInfoRef" />
+      <SalesInfo ref="salesInfoRef" :multi-spec="multiSpec" />
     </a-card>
   </div>
   <div class="addGoods-btn">
@@ -69,6 +71,7 @@ import {message} from 'ant-design-vue'
 import Editor from './Editor.vue'
 import SalesInfo from './SalesInfo.vue'
 import SpecsEditor from './SpecsEditor.vue'
+import SkuEditor from './SkuEditor.vue'
 import {getToken} from '@/utils/token'
 import {compressImage} from '@/utils/compressImage'
 import {getImageSpec} from '@/utils/image-spec'
@@ -87,6 +90,13 @@ const addGoodsFormRef = ref(null)
 const salesInfoRef = ref(null)
 // 规格参数子组件实例
 const specsRef = ref(null)
+// 销售规格（SKU）子组件实例
+const skuEditorRef = ref(null)
+// 多规格时隐藏「销售信息」里的商品级价格输入
+const multiSpec = ref(false)
+const onSkuTypeChange = (type) => {
+  multiSpec.value = type === 1
+}
 // 商品图片上传列表（提交成功后清空缩略图）
 const fileList = ref([])
 // 定义商品品牌响应式变量数组
@@ -170,6 +180,10 @@ const handleSubmit = () => {
   if (!specsRef.value?.validate()) {
     return
   }
+  // 0.1 销售规格（SKU）：多规格时校验组合、价格与库存
+  if (!skuEditorRef.value?.validate()) {
+    return
+  }
   // 1. 先校验父组件表单
   addGoodsFormRef.value.validate()
       .then(() => {
@@ -185,6 +199,16 @@ const handleSubmit = () => {
           ...salesInfoRef.value?.salesInfoForm,
           // 规格参数：过滤空值（模板项非必填），后端 specs 传 [] 表示清空、null 表示不修改
           specs: specsRef.value?.getSpecs() ?? [],
+          ...skuEditorRef.value?.getPayload(),
+        }
+        // 多规格时商品级价格/库存由 SKU 聚合兜底，后端保存时会再按 SKU 重算
+        const aggregate = skuEditorRef.value?.getAggregate()
+        if (aggregate) {
+          goodsData.salesPrice = aggregate.salesPrice
+          goodsData.marketPrice = aggregate.marketPrice
+          goodsData.costPrice = aggregate.costPrice
+          goodsData.stock = aggregate.stock
+          goodsData.productCode = goodsData.productCode || aggregate.productCode || `SPU${Date.now()}`
         }
         // 4. 调用添加商品接口
         return addGoods(goodsData)
@@ -222,6 +246,8 @@ const resetAll = () => {
   fileList.value = []
   salesInfoRef.value?.resetForm()
   specsRef.value?.resetForm()
+  skuEditorRef.value?.reset()
+  multiSpec.value = false
 }
 // 取消按钮
 const cancel = () => {

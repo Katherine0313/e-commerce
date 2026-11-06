@@ -51,9 +51,11 @@
     </a-card>
     <a-card title="商品规格" class="card">
       <SpecsEditor ref="specsRef" />
+      <a-divider>销售规格</a-divider>
+      <SkuEditor ref="skuEditorRef" @change="onSkuTypeChange" />
     </a-card>
     <a-card title="销售信息" class="card">
-      <SalesInfo ref="salesInfoRef" />
+      <SalesInfo ref="salesInfoRef" :multi-spec="multiSpec" />
     </a-card>
   </div>
   <template #footer>
@@ -67,13 +69,14 @@
 <script setup>
 import {nextTick, onMounted, ref} from 'vue'
 import { useDragModal } from '@/composables/useDragModal'
-import {updateGoods, getBrandList, getCategoryTree} from '@/api/products.js'
+import {updateGoods, getBrandList, getCategoryTree, getGoodsDetail} from '@/api/products.js'
 // 导入消息组件
 import {message} from 'ant-design-vue'
 import {UploadOutlined} from "@ant-design/icons-vue";
 import Editor from "@/pages/goods/add-goods/Editor.vue";
 import SalesInfo from "@/pages/goods/add-goods/SalesInfo.vue";
 import SpecsEditor from "@/pages/goods/add-goods/SpecsEditor.vue";
+import SkuEditor from "@/pages/goods/add-goods/SkuEditor.vue";
 import {getToken} from '@/utils/token'
 import {compressImage} from '@/utils/compressImage'
 import {getImageSpec} from '@/utils/image-spec'
@@ -88,6 +91,12 @@ useDragModal('drag-modal-editgoods')
 const salesInfoRef =ref(null)
 // 规格参数子组件实例
 const specsRef = ref(null)
+// 销售规格（SKU）子组件实例
+const skuEditorRef = ref(null)
+const multiSpec = ref(false)
+const onSkuTypeChange = (type) => {
+  multiSpec.value = type === 1
+}
 // 添加商品对话框表单实例ref，用于触发校验、重置
 const addGoodsFormRef = ref(null)
 // 定义商品品牌响应式变量数组
@@ -110,6 +119,9 @@ const addGoodsForm = ref({
 // 定义打开弹窗的方法，接收 record 并回填到表单
 const open = (record) => {
   editingId.value = record.id  // 存下要编辑的商品 id
+  // 0. 先清空上一件商品的 SKU 状态，避免串数据
+  skuEditorRef.value?.reset()
+  multiSpec.value = false
   // 1. 回填商品基本信息
   addGoodsForm.value.name = record.name
   addGoodsForm.value.brand = record.brand
@@ -139,6 +151,26 @@ const open = (record) => {
       salesInfoRef.value.salesInfoForm.stock = record.stock
     }
   })
+  // 4. 列表接口不带 SKU 明细，单独查详情回填销售规格（skuType / skuSpecs / skus）
+  getGoodsDetail(record.id)
+      .then(res => {
+        const detail = res.data?.data
+        if (!detail) return
+        skuEditorRef.value?.setData(detail.skuType, detail.skuSpecs || [], detail.skus || [])
+        multiSpec.value = detail.skuType === 1
+        if (salesInfoRef.value?.salesInfoForm) {
+          salesInfoRef.value.salesInfoForm.listingStatus = detail.listingStatus ?? 1
+          salesInfoRef.value.salesInfoForm.salesPrice = detail.salesPrice
+          salesInfoRef.value.salesInfoForm.marketPrice = detail.marketPrice
+          salesInfoRef.value.salesInfoForm.costPrice = detail.costPrice
+          salesInfoRef.value.salesInfoForm.productCode = detail.productCode
+          salesInfoRef.value.salesInfoForm.stock = detail.stock
+        }
+        specsRef.value?.setSpecs(detail.specs || [], categoryTemplate(detail.categoryId))
+      })
+      .catch(() => {
+        message.warning('商品规格明细加载失败，请刷新后重试')
+      })
 }
 
 // 根据叶子节点 id 反查出完整路径，例如 101 → [1, 101]
@@ -201,6 +233,10 @@ const handleSubmit = () => {
   if (!specsRef.value?.validate()) {
     return
   }
+  // 0.1 销售规格（SKU）：多规格时校验组合、价格与库存
+  if (!skuEditorRef.value?.validate()) {
+    return
+  }
   // 1. 先校验父组件表单
   addGoodsFormRef.value.validate()
       .then(() => {
@@ -216,6 +252,16 @@ const handleSubmit = () => {
           ...salesInfoRef.value?.salesInfoForm,
           // 规格参数：过滤空值（模板项非必填），后端 specs 传 [] 表示清空、null 表示不修改
           specs: specsRef.value?.getSpecs() ?? [],
+          ...skuEditorRef.value?.getPayload(),
+        }
+        // 多规格时商品级价格/库存由 SKU 聚合兜底，后端保存时会再按 SKU 重算
+        const aggregate = skuEditorRef.value?.getAggregate()
+        if (aggregate) {
+          goodsData.salesPrice = aggregate.salesPrice
+          goodsData.marketPrice = aggregate.marketPrice
+          goodsData.costPrice = aggregate.costPrice
+          goodsData.stock = aggregate.stock
+          goodsData.productCode = goodsData.productCode || aggregate.productCode || `SPU${editingId.value}`
         }
         // 4. 调用更新商品接口
         return updateGoods(editingId.value, goodsData)
@@ -243,6 +289,8 @@ const cancel = () => {
   fileList.value = []
   addGoodsFormRef.value.resetFields()
   specsRef.value?.resetForm()
+  skuEditorRef.value?.reset()
+  multiSpec.value = false
 }
 // ====================== 表单校验 =====================
 

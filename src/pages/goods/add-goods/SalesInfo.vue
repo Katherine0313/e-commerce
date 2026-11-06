@@ -7,7 +7,7 @@
         <a-radio :value="0">下架</a-radio>
       </a-radio-group>
     </a-form-item>
-    <a-form-item label="规格明细">
+    <a-form-item v-if="!multiSpec" label="规格明细">
       <a-table :data-source="specList" class="spec-list" :pagination="false" :scroll="{x:1000}">
         <a-table-column title="销售价">
           <template #default>
@@ -50,6 +50,10 @@
 </template>
 <script setup>
 import {ref} from 'vue';
+// 多规格商品：商品级价格/库存改由 SKU 表格维护，这里隐藏「规格明细」
+const props = defineProps({
+  multiSpec: {type: Boolean, default: false}
+})
 // 定义表格行，用于占位
 const specList = ref([{}])
 // 定义表单实例
@@ -73,6 +77,10 @@ const salesInfoRules = {
 }
 // 暴露规则校验方法给父组件用
 const validate = () => {
+  // 多规格时价格/库存已在 SKU 表格校验，这里跳过商品级必填
+  if (props.multiSpec) {
+    return Promise.resolve()
+  }
   return salesInfoFormRef.value?.validate()
 }
 // 清空销售信息（提交成功 / 取消时由父组件调用）

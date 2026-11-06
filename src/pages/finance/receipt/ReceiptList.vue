@@ -129,6 +129,9 @@
           <a-descriptions-item v-if="detail.refunded" label="退款金额">
             ￥{{ money(detail.refundAmount) }}
           </a-descriptions-item>
+          <a-descriptions-item v-if="detail.refunded" label="退款时间">
+            {{ formatTime(detail.refundedAt) }}
+          </a-descriptions-item>
           <a-descriptions-item label="审核人">{{ detail.auditName || '—' }}</a-descriptions-item>
           <a-descriptions-item label="审核时间">{{ formatTime(detail.auditTime) }}</a-descriptions-item>
           <a-descriptions-item label="备注">{{ detail.remark || '—' }}</a-descriptions-item>

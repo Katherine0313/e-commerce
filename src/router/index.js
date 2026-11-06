@@ -135,6 +135,15 @@ const routes = [
                 },
                 component: () => import('@/pages/goods/tag/Tag.vue')
             },
+            {
+                path: 'specs',
+                name: 'Specs',
+                meta: {
+                    title: '销售规格库',
+                    permission: 'product:product:list',
+                },
+                component: () => import('@/pages/goods/spec/SpecList.vue')
+            },
 
         ]
     },
