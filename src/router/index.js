@@ -259,19 +259,19 @@ const routes = [
             {
                 path: 'receipts',
                 name: 'StockReceipts',
-                meta: { title: '入库单', permission: 'stock:receipt:*' },
+                meta: { title: '入库单', permission: 'stock:receipt:manage' },
                 component: () => import('@/pages/stock/Receipts.vue')
             },
             {
                 path: 'shipments',
                 name: 'StockShipments',
-                meta: { title: '出库单', permission: 'stock:shipment:*' },
+                meta: { title: '出库单', permission: 'stock:shipment:view' },
                 component: () => import('@/pages/stock/Shipments.vue')
             },
             {
                 path: 'adjustments',
                 name: 'StockAdjustments',
-                meta: { title: '调整单', permission: 'stock:adjust:*' },
+                meta: { title: '调整单', permission: 'stock:adjust:manage' },
                 component: () => import('@/pages/stock/Adjustments.vue')
             }
         ]

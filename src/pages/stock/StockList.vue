@@ -23,26 +23,26 @@
         @change="onTableChange"
         bordered
     >
-      <a-table-column title="商品图" width="80">
+      <a-table-column title="商品图">
         <template #default="{ record }">
           <img v-if="record.productImage" :src="record.productImage" width="48" height="48"
                style="object-fit: cover; border-radius: 4px" />
           <span v-else style="color: #bfbfbf">—</span>
         </template>
       </a-table-column>
-      <a-table-column title="商品名" dataIndex="productName" :ellipsis="true" />
-      <a-table-column title="SKU编码" dataIndex="skuCode" width="140">
+      <a-table-column title="商品名" dataIndex="productName" />
+      <a-table-column title="SKU编码" dataIndex="skuCode">
         <template #default="{ record }">
           <span>{{ record.skuCode || '—' }}</span>
         </template>
       </a-table-column>
-      <a-table-column title="规格组合" width="200">
+      <a-table-column title="规格组合">
         <template #default="{ record }">
           <span>{{ formatSpec(record.specJson) }}</span>
         </template>
       </a-table-column>
-      <a-table-column title="当前库存" dataIndex="stock" width="100" align="right" />
-      <a-table-column title="安全阈值" width="140" align="center">
+      <a-table-column title="当前库存" dataIndex="stock" align="right" />
+      <a-table-column title="安全阈值" align="center">
         <template #default="{ record }">
           <span v-if="record.minStock != null || record.maxStock != null">
             {{ record.minStock ?? '—' }} ~ {{ record.maxStock ?? '—' }}
@@ -50,12 +50,12 @@
           <span v-else style="color: #bfbfbf">未设置</span>
         </template>
       </a-table-column>
-      <a-table-column title="库存状态" width="100" align="center">
+      <a-table-column title="库存状态" align="center">
         <template #default="{ record }">
           <a-tag :color="skuStatus(record).color">{{ skuStatus(record).text }}</a-tag>
         </template>
       </a-table-column>
-      <a-table-column title="操作" width="120" fixed="right">
+      <a-table-column title="操作">
         <template #default="{ record }">
           <a-button type="link" size="small" @click="openAlertModal(record)">设阈值</a-button>
         </template>

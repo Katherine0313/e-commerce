@@ -2,7 +2,7 @@
   <a-modal
       :visible="visible"
       title="新建入库单"
-      :width="720"
+      :width="900"
       :confirm-loading="submitting"
       @ok="submit"
       @cancel="close"
@@ -36,15 +36,16 @@
       <a-button type="link" style="padding-left: 8px" @click="addRow">+ 添加行</a-button>
     </div>
     <a-table :dataSource="rows" :pagination="false" size="small" row-key="rowKey" bordered>
-      <a-table-column title="SKU 搜索（商品 / 编码）" width="260">
+      <a-table-column title="SKU 搜索（商品 / 编码）">
         <template #default="{ record }">
           <a-select
               v-model:value="record.skuId"
               show-search
               :filter-option="false"
-              :remote="true"
               :loading="searchLoading"
-              placeholder="输入关键字搜索"
+              :dropdownMatchSelectWidth="false"
+              :dropdownStyle="{ minWidth: '480px' }"
+              placeholder="输入商品名 / SKU编码搜索"
               style="width: 100%"
               @search="onSkuSearch"
               @change="(v) => onSkuSelect(v, record)"
@@ -55,31 +56,31 @@
                 :key="opt.skuId"
                 :value="opt.skuId"
             >
-              {{ opt.productName }} - {{ opt.skuCode }} - {{ opt.specText }}
+              {{ opt.productName }} - {{ opt.skuCode }} - {{ opt.specText }}（库存 {{ opt.currentStock }}）
             </a-select-option>
           </a-select>
         </template>
       </a-table-column>
-      <a-table-column title="SKU编码" width="120">
+      <a-table-column title="SKU编码">
         <template #default="{ record }">{{ record.skuCode || '—' }}</template>
       </a-table-column>
-      <a-table-column title="规格" width="160">
+      <a-table-column title="规格">
         <template #default="{ record }">{{ record.specText || '—' }}</template>
       </a-table-column>
-      <a-table-column title="当前库存" width="100" align="right">
+      <a-table-column title="当前库存" align="right">
         <template #default="{ record }">{{ record.currentStock ?? '—' }}</template>
       </a-table-column>
-      <a-table-column title="入库数量" width="110" align="center">
+      <a-table-column title="入库数量" align="center">
         <template #default="{ record }">
           <a-input-number v-model:value="record.qty" :min="1" :precision="0" style="width: 90px" />
         </template>
       </a-table-column>
-      <a-table-column title="成本价(选填)" width="130" align="center">
+      <a-table-column title="成本价(选填)" align="center">
         <template #default="{ record }">
           <a-input-number v-model:value="record.costPrice" :min="0" :precision="2" addon-before="￥" style="width: 110px" />
         </template>
       </a-table-column>
-      <a-table-column title="操作" width="70" align="center">
+      <a-table-column title="操作" align="center">
         <template #default="{ $index }">
           <a-button type="link" danger size="small" @click="removeRow($index)">删除</a-button>
         </template>
@@ -92,8 +93,7 @@
 <script setup>
 import { ref, reactive, watch } from 'vue'
 import { message } from 'ant-design-vue'
-import axios from '@/api/request.js'
-import { createStockOrder } from '@/api/stock.js'
+import { createStockOrder, searchSku } from '@/api/stock.js'
 import { formatSpec } from '@/utils/stock.js'
 
 const props = defineProps({ visible: Boolean })
@@ -130,31 +130,36 @@ const searchLoading = ref(false)
 const skuOptions = ref([])
 
 const onSkuSearch = (keyword) => {
-  if (!keyword) { skuOptions.value = []; return }
+  if (!keyword) return
   searchLoading.value = true
-  axios.get('/api/admin/products', { params: { search: keyword, page: 1, size: 10 } })
+  searchSku(keyword)
       .then(res => {
-        const products = res.data?.data?.records || res.data?.data?.list || []
-        const opts = []
-        products.forEach(p => {
-          ;(p.skus || []).forEach(sku => {
-            opts.push({
-              skuId: sku.id ?? sku.skuId,
-              skuCode: sku.skuCode || '',
-              productName: p.name,
-              specJson: sku.specJson || sku.spec_json,
-              specText: formatSpec(sku.specJson || sku.spec_json),
-              currentStock: sku.stock,
-            })
-          })
-        })
-        skuOptions.value = opts
+        const data = res.data?.data || {}
+        const records = data.records || data.list || []
+        const mapped = records.map(r => ({
+          skuId: r.id,
+          skuCode: r.skuCode || '',
+          productName: r.productName || '',
+          specText: formatSpec(r.specJson),
+          currentStock: r.stock,
+        }))
+        // 保留已选中的选项，避免换关键词后已选行的回显退化成纯 ID
+        const selectedIds = rows.value.map(x => x.skuId).filter(Boolean)
+        const kept = skuOptions.value.filter(o => selectedIds.includes(o.skuId) && !mapped.some(m => m.skuId === o.skuId))
+        skuOptions.value = [...kept, ...mapped]
       })
-      .catch(() => { skuOptions.value = [] })
+      .catch(() => {})
       .finally(() => { searchLoading.value = false })
 }
 
 const onSkuSelect = (skuId, record) => {
+  if (!skuId) {
+    record.skuCode = ''
+    record.skuName = ''
+    record.specText = ''
+    record.currentStock = null
+    return
+  }
   const opt = skuOptions.value.find(o => o.skuId === skuId)
   if (!opt) return
   record.skuCode = opt.skuCode

@@ -5,6 +5,11 @@ export function getSkuStockList(params) {
   return axios.get('/api/admin/stock/skus', { params })
 }
 
+// 建单弹窗里的 SKU 远程搜索（复用 SKU 库存列表接口，返回 id/skuCode/productName/specJson/stock）
+export function searchSku(keyword) {
+  return axios.get('/api/admin/stock/skus', { params: { search: keyword, page: 1, size: 20 } })
+}
+
 export function setSkuAlert(skuId, data) {
   return axios.post(`/api/admin/stock/skus/${skuId}/alert`, data)
 }

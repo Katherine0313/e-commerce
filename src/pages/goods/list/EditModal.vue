@@ -241,7 +241,7 @@ const handleSubmit = () => {
           goodsData.salesPrice = aggregate.salesPrice
           goodsData.marketPrice = aggregate.marketPrice
           goodsData.costPrice = aggregate.costPrice
-          goodsData.stock = aggregate.stock
+          // 商品级库存不再由前端提交，后端按 SKU 自动重算（库存变动只能走库存模块）
           goodsData.productCode = goodsData.productCode || aggregate.productCode || `SPU${editingId.value}`
         }
         // 4. 调用更新商品接口

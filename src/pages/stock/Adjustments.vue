@@ -32,26 +32,26 @@
         bordered
         style="margin-top: 16px"
     >
-      <a-table-column title="单据号" dataIndex="orderNo" width="180" />
-      <a-table-column title="关联单号" dataIndex="relatedNo" width="170">
+      <a-table-column title="单据号" dataIndex="orderNo" />
+      <a-table-column title="关联单号" dataIndex="relatedNo">
         <template #default="{ record }">{{ record.relatedNo || '—' }}</template>
       </a-table-column>
-      <a-table-column title="明细行数" dataIndex="itemCount" width="100" align="right" />
-      <a-table-column title="净调整量" width="110" align="right">
+      <a-table-column title="明细行数" dataIndex="itemCount" align="right" />
+      <a-table-column title="净调整量" align="right">
         <template #default="{ record }">
           <span :style="{ color: (record.netQty || 0) >= 0 ? '#3f8600' : '#cf1322' }">
             {{ (record.netQty || 0) >= 0 ? '+' : '' }}{{ record.netQty || 0 }}
           </span>
         </template>
       </a-table-column>
-      <a-table-column title="状态" width="100" align="center">
+      <a-table-column title="状态" align="center">
         <template #default="{ record }">
           <a-tag :color="statusColor(record.status)">{{ statusText(record.status) }}</a-tag>
         </template>
       </a-table-column>
-      <a-table-column title="操作人" dataIndex="operatorName" width="110" />
-      <a-table-column title="时间" dataIndex="createTime" width="170" />
-      <a-table-column title="操作" width="180" fixed="right">
+      <a-table-column title="操作人" dataIndex="operatorName" />
+      <a-table-column title="时间" dataIndex="createTime" />
+      <a-table-column title="操作">
         <template #default="{ record }">
           <a-button type="link" size="small" @click="openDetail(record)">详情</a-button>
           <a-button v-if="record.status === 'CONFIRMED'" type="link" size="small" danger
@@ -72,12 +72,12 @@
       </a-descriptions>
       <a-divider>明细</a-divider>
       <a-table :dataSource="detail?.items || []" :pagination="false" size="small" row-key="id" bordered>
-        <a-table-column title="SKU编码" dataIndex="skuCode" width="140" />
+        <a-table-column title="SKU编码" dataIndex="skuCode" />
         <a-table-column title="商品名" dataIndex="skuName" :ellipsis="true" />
-        <a-table-column title="规格" width="180">
+        <a-table-column title="规格">
           <template #default="{ record }">{{ formatSpec(record.specJson) }}</template>
         </a-table-column>
-        <a-table-column title="调整数量" width="110" align="right">
+        <a-table-column title="调整数量" align="right">
           <template #default="{ record }">
             <span :style="{ color: (record.qty || 0) >= 0 ? '#3f8600' : '#cf1322' }">
               {{ (record.qty || 0) >= 0 ? '+' : '' }}{{ record.qty }}

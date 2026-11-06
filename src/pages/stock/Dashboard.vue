@@ -27,13 +27,13 @@
           size="middle"
           bordered
       >
-        <a-table-column title="商品名" dataIndex="productName" :ellipsis="true" />
-        <a-table-column title="SKU 规格" width="200">
+        <a-table-column title="商品名" dataIndex="productName" />
+        <a-table-column title="SKU 规格">
           <template #default="{ record }">{{ formatSpec(record.specJson) }}</template>
         </a-table-column>
-        <a-table-column title="当前库存" dataIndex="stock" width="100" align="right" />
-        <a-table-column title="安全下限" dataIndex="minStock" width="100" align="right" />
-        <a-table-column title="操作" width="120">
+        <a-table-column title="当前库存" dataIndex="stock" align="right" />
+        <a-table-column title="安全下限" dataIndex="minStock" align="right" />
+        <a-table-column title="操作">
           <template #default="{ record }">
             <a-button type="link" size="small" @click="openAlertModal(record)">设阈值</a-button>
           </template>

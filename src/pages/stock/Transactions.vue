@@ -49,35 +49,35 @@
         bordered
         style="margin-top: 16px"
     >
-      <a-table-column title="SKU编码" dataIndex="skuCode" width="140" />
-      <a-table-column title="商品名" dataIndex="productName" :ellipsis="true" />
-      <a-table-column title="规格" width="200">
+      <a-table-column title="SKU编码" dataIndex="skuCode" />
+      <a-table-column title="商品名" dataIndex="productName" />
+      <a-table-column title="规格">
         <template #default="{ record }">{{ formatSpec(record.specJson) }}</template>
       </a-table-column>
-      <a-table-column title="类型" width="90" align="center">
+      <a-table-column title="类型" align="center">
         <template #default="{ record }">
           <a-tag :color="typeColor(record.type)">{{ typeText(record.type) }}</a-tag>
         </template>
       </a-table-column>
-      <a-table-column title="数量" width="100" align="right">
+      <a-table-column title="数量" align="right">
         <template #default="{ record }">
           <span :style="{ color: record.type === 'IN' ? '#3f8600' : '#cf1322' }">
             {{ record.type === 'IN' ? '+' : '-' }}{{ record.qty }}
           </span>
         </template>
       </a-table-column>
-      <a-table-column title="结存快照" dataIndex="stockSnapshot" width="100" align="right" />
-      <a-table-column title="原因" width="120">
+      <a-table-column title="结存快照" dataIndex="stockSnapshot" align="right" />
+      <a-table-column title="原因">
         <template #default="{ record }">{{ reasonText(record.reason) }}</template>
       </a-table-column>
-      <a-table-column title="关联单号" width="160">
+      <a-table-column title="关联单号">
         <template #default="{ record }">
           <a-link v-if="record.orderNo" @click="goOrder(record.orderItemId, record.orderNo)">{{ record.orderNo }}</a-link>
           <span v-else>—</span>
         </template>
       </a-table-column>
-      <a-table-column title="操作人" dataIndex="operatorName" width="110" />
-      <a-table-column title="时间" dataIndex="createTime" width="170" />
+      <a-table-column title="操作人" dataIndex="operatorName" />
+      <a-table-column title="时间" dataIndex="createTime" />
     </a-table>
   </div>
 </template>
