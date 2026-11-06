@@ -237,15 +237,44 @@ const routes = [
             icon: 'InboxOutlined',
             renderMenu: true,
             cacheable: true,
-        },children: [{
-            path: 'stock-list',
-            name: 'StockList',
-            meta: {
-                title: '库存列表',
-                    permission: 'product:stock:list',
+        },children: [
+            {
+                path: 'dashboard',
+                name: 'StockDashboard',
+                meta: { title: '库存看板', permission: 'stock:dashboard:view' },
+                component: () => import('@/pages/stock/Dashboard.vue')
             },
-            component: () => import('@/pages/stock/StockList.vue'),
-        }]
+            {
+                path: 'stock-list',
+                name: 'SkuStockList',
+                meta: { title: 'SKU 库存', permission: 'product:sku-stock:list' },
+                component: () => import('@/pages/stock/StockList.vue')
+            },
+            {
+                path: 'transactions',
+                name: 'StockTransactions',
+                meta: { title: '库存流水', permission: 'stock:transaction:view' },
+                component: () => import('@/pages/stock/Transactions.vue')
+            },
+            {
+                path: 'receipts',
+                name: 'StockReceipts',
+                meta: { title: '入库单', permission: 'stock:receipt:*' },
+                component: () => import('@/pages/stock/Receipts.vue')
+            },
+            {
+                path: 'shipments',
+                name: 'StockShipments',
+                meta: { title: '出库单', permission: 'stock:shipment:*' },
+                component: () => import('@/pages/stock/Shipments.vue')
+            },
+            {
+                path: 'adjustments',
+                name: 'StockAdjustments',
+                meta: { title: '调整单', permission: 'stock:adjust:*' },
+                component: () => import('@/pages/stock/Adjustments.vue')
+            }
+        ]
         },
     {
         path: '/business',

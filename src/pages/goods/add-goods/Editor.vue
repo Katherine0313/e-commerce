@@ -94,7 +94,9 @@ onBeforeUnmount(() => {
 <style scoped>
 .rich-editor-wrap {
   width: 100%;
-  z-index: 100;
+  /* 确保编辑区不被 a-card 标题栏/按钮层覆盖 */
+  position: relative;
+  z-index: 1;
   /* 把 wangEditor 自带的白底配色接到 stepin 主题变量上，切换夜间/暗色主题时编辑器一起变色 */
   --w-e-textarea-bg-color: var(--color-bg-container, #fff);
   --w-e-textarea-color: var(--color-text-1, rgba(0, 0, 0, 0.85));
@@ -116,6 +118,8 @@ onBeforeUnmount(() => {
   border: 1px solid var(--color-border-1, #d9d9d9);
   border-bottom: none;
   border-radius: 6px 6px 0 0;
+  position: relative;
+  z-index: 2;
 }
 
 .rich-editor-body {
@@ -123,5 +127,16 @@ onBeforeUnmount(() => {
   border-radius: 0 0 6px 6px;
   min-height: 300px;
   overflow-y: auto;
+  /* 关键：给 body 明确的层叠上下文和尺寸，防止被父元素 overflow 剪裁或被兄弟元素覆盖 */
+  position: relative;
+  z-index: 1;
+}
+
+/* wangEditor 的 contenteditable 内部区也要确保能点 */
+.rich-editor-body :deep(.w-e-textarea) {
+  position: relative;
+  z-index: 1;
+  min-height: 280px;
+  cursor: text;
 }
 </style>

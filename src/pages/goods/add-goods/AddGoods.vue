@@ -1,6 +1,13 @@
 <template>
   <div class="add-goods-container">
-    <a-card title="商品信息">
+    <!-- 顶部步骤条 -->
+    <a-steps :current="currentStep" class="steps" @change="onStepChange">
+      <a-step title="基础信息" description="分类 / 名称 / 图片 / 详情" />
+      <a-step title="规格与销售" description="商品参数 / SKU / 上架状态" />
+    </a-steps>
+
+    <!-- Step 1：商品基础信息 -->
+    <a-card v-if="currentStep === 0" title="商品基础信息">
       <a-form :model="addGoodsForm" :rules="addGoodsRules" ref="addGoodsFormRef"
               :label-col="{span:3, style:{paddingRight:'5px'}}" :wrapper-col="{span:21}">
         <a-form-item label="商品分类" name="categoryId" >
@@ -45,24 +52,30 @@
           <Editor v-model="addGoodsForm.body" />
         </a-form-item>
       </a-form>
+      <div class="step-actions">
+        <a-button type="primary" @click="nextToStep2">下一步：填写规格</a-button>
+      </div>
     </a-card>
-    <a-card title="商品规格" class="card">
-      <SpecsEditor ref="specsRef" />
-      <a-divider>销售规格</a-divider>
-      <SkuEditor ref="skuEditorRef" @change="onSkuTypeChange" />
-    </a-card>
-    <a-card title="销售信息" class="card">
-      <SalesInfo ref="salesInfoRef" :multi-spec="multiSpec" />
-    </a-card>
-  </div>
-  <div class="addGoods-btn">
-    <a-button type="primary" @click="cancel">取消</a-button>
-    <a-button type="primary" @click="handleSubmit">提交</a-button>
-  </div>
 
+    <!-- Step 2：商品规格 + 销售信息 -->
+    <template v-if="currentStep === 1">
+      <a-card title="商品规格" class="card">
+        <SpecsEditor ref="specsRef" />
+        <a-divider>销售规格（SKU）</a-divider>
+        <SkuEditor ref="skuEditorRef" />
+      </a-card>
+      <a-card title="销售信息" class="card">
+        <SalesInfo ref="salesInfoRef" />
+      </a-card>
+      <div class="step-actions">
+        <a-button @click="currentStep = 0">上一步</a-button>
+        <a-button type="primary" @click="handleSubmit">提交商品</a-button>
+      </div>
+    </template>
+  </div>
 </template>
 <script setup>
-import {onActivated, onMounted, ref} from 'vue'
+import {nextTick, onActivated, onMounted, ref} from 'vue'
 import {getGoodsList, getBrandList, getCategoryTree, addGoods} from '@/api/products.js'
 import {UploadOutlined} from '@ant-design/icons-vue'
 // 导入消息组件
@@ -92,11 +105,8 @@ const salesInfoRef = ref(null)
 const specsRef = ref(null)
 // 销售规格（SKU）子组件实例
 const skuEditorRef = ref(null)
-// 多规格时隐藏「销售信息」里的商品级价格输入
-const multiSpec = ref(false)
-const onSkuTypeChange = (type) => {
-  multiSpec.value = type === 1
-}
+// 当前步骤：0 = 基础信息，1 = 规格与销售
+const currentStep = ref(0)
 // 商品图片上传列表（提交成功后清空缩略图）
 const fileList = ref([])
 // 定义商品品牌响应式变量数组
@@ -174,6 +184,36 @@ onActivated(() => {
     console.log(err)
   })
 })
+// ====================== 步骤切换 ======================
+// 点击步骤条切换：从 0 → 1 要校验；从 1 → 0 不需要
+const onStepChange = (step) => {
+  if (step === currentStep.value) return
+  if (step > currentStep.value) {
+    nextToStep2()
+  } else {
+    currentStep.value = step
+  }
+}
+// Step 1 → Step 2：校验基础信息表单必须过
+const nextToStep2 = () => {
+  addGoodsFormRef.value.validate()
+      .then(() => {
+        currentStep.value = 1
+        // v-if 导致 SkuEditor / SpecsEditor 首次挂载，handleCategoryChange 里的调用可能白跑（ref 为 null）
+        // 所以切到 Step 2 后主动再调一次，确保规格模板和规格库都已按分类过滤加载
+        const path = addGoodsForm.value.categoryId || []
+        const id = path.length ? Number(path[path.length - 1]) : null
+        const node = findCategoryNode(categoryTree.value, id)
+        nextTick(() => {
+          specsRef.value?.applyTemplate(node?.specTemplate || [])
+          skuEditorRef.value?.setCategory(id ?? null)
+        })
+      })
+      .catch(() => {
+        message.warning('请先完善基础信息（分类、名称、品牌、副标题）')
+      })
+}
+
 // ====================== 按钮 ======================
 
 //提交按钮
@@ -182,28 +222,23 @@ const handleSubmit = () => {
   if (!specsRef.value?.validate()) {
     return
   }
-  // 0.1 销售规格（SKU）：多规格时校验组合、价格与库存
+  // 0.1 销售规格（SKU）：校验组合、价格与库存
   if (!skuEditorRef.value?.validate()) {
     return
   }
-  // 1. 先校验父组件表单
+  // 1. 校验主表单
   addGoodsFormRef.value.validate()
       .then(() => {
-        // 2. 再检验子组件的销售信息表单
-       return salesInfoRef.value.validate()
-      })
-      .then(() => {
-        // 3. 级联框的值是路径数组(如[1,101])，后端需要单个 number，取最后一级 id
+        // 2. 级联框的值是路径数组(如[1,101])，后端需要单个 number，取最后一级 id
         const path = addGoodsForm.value.categoryId || []
         const goodsData = {
           ...addGoodsForm.value,
           categoryId: path.length ? Number(path[path.length - 1]) : null,
           ...salesInfoRef.value?.salesInfoForm,
-          // 规格参数：过滤空值（模板项非必填），后端 specs 传 [] 表示清空、null 表示不修改
           specs: specsRef.value?.getSpecs() ?? [],
           ...skuEditorRef.value?.getPayload(),
         }
-        // 多规格时商品级价格/库存由 SKU 聚合兜底，后端保存时会再按 SKU 重算
+        // 商品级价格/库存由 SKU 聚合兜底，后端保存时会再按 SKU 重算
         const aggregate = skuEditorRef.value?.getAggregate()
         if (aggregate) {
           goodsData.salesPrice = aggregate.salesPrice
@@ -212,24 +247,18 @@ const handleSubmit = () => {
           goodsData.stock = aggregate.stock
           goodsData.productCode = goodsData.productCode || aggregate.productCode || `SPU${Date.now()}`
         }
-        // 4. 调用添加商品接口
+        // 3. 调用添加商品接口
         return addGoods(goodsData)
       })
-      .then(res => {
-        console.log(res)
-        // 3. 后端接口返回成功，执行收尾逻辑
+      .then(() => {
         message.success('商品新增成功')
-        // 主表单 + 图片 + 富文本 + 销售信息全部清空，方便继续录入下一件
         resetAll()
-        // 重新加载数据
         loadData()
       })
       .catch(err => {
-        //  errorFields（存储所有出错字段的数组）
         if (err && err.errorFields) {
           console.log('表单校验未通过', err)
         } else {
-          // 只有接口请求报错才提示
           message.error('网络连接异常，请检查网络后再试')
           console.log('产品新增失败', err)
         }
@@ -237,6 +266,7 @@ const handleSubmit = () => {
 }
 // 清空整页表单：主表单有 name 的字段由 resetFields 清，其余手动清
 const resetAll = () => {
+  currentStep.value = 0
   addGoodsFormRef.value?.resetFields()
   addGoodsForm.value.name = ''
   addGoodsForm.value.brand = undefined
@@ -246,10 +276,8 @@ const resetAll = () => {
   addGoodsForm.value.image = undefined
   addGoodsForm.value.body = ''
   fileList.value = []
-  salesInfoRef.value?.resetForm()
   specsRef.value?.resetForm()
   skuEditorRef.value?.reset()
-  multiSpec.value = false
 }
 // 取消按钮
 const cancel = () => {
@@ -308,16 +336,25 @@ const uploadHeaders = {
   max-width:900px;
   display: flex;
   flex-direction: column;
+  margin: 0 auto;
 }
 
 .card {
   margin-top: 20px;
 }
 
-.addGoods-btn {
+.steps {
+  margin-bottom: 24px;
+  max-width: 600px;
+}
+
+.step-actions {
   display: flex;
-  gap: 20px;
-  margin: 20px 0 0 600px;
+  gap: 12px;
+  margin: 20px 0;
+  padding-top: 16px;
+  border-top: 1px dashed #f0f0f0;
+  justify-content: center;
 }
 
 /*卡片标题样式*/
@@ -325,15 +362,14 @@ const uploadHeaders = {
   font-weight: bold;
 }
 
-/* 笔记本：600px 左边距会把按钮挤出屏幕，改为右对齐 */
+/* 笔记本 */
 @media (max-width: 1200px) {
-  .addGoods-btn {
-    justify-content: flex-end;
-    margin-left: 0;
+  .steps {
+    max-width: 100%;
   }
 }
 
-/* 手机：表单标签改为上下结构，固定宽度字段铺满 */
+/* 手机：表单标签改为上下结构 */
 @media (max-width: 767px) {
   .add-goods-container {
     max-width: 100%;
@@ -357,11 +393,6 @@ const uploadHeaders = {
   .add-goods-container :deep(.ant-select) {
     width: 100% !important;
     max-width: 100% !important;
-  }
-
-  .addGoods-btn {
-    margin: 16px 0 0;
-    justify-content: flex-end;
   }
 }
 </style>

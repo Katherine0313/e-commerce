@@ -51,11 +51,11 @@
     </a-card>
     <a-card title="商品规格" class="card">
       <SpecsEditor ref="specsRef" />
-      <a-divider>销售规格</a-divider>
-      <SkuEditor ref="skuEditorRef" @change="onSkuTypeChange" />
+      <a-divider>销售规格（SKU）</a-divider>
+      <SkuEditor ref="skuEditorRef" />
     </a-card>
     <a-card title="销售信息" class="card">
-      <SalesInfo ref="salesInfoRef" :multi-spec="multiSpec" />
+      <SalesInfo ref="salesInfoRef" />
     </a-card>
   </div>
   <template #footer>
@@ -93,10 +93,6 @@ const salesInfoRef =ref(null)
 const specsRef = ref(null)
 // 销售规格（SKU）子组件实例
 const skuEditorRef = ref(null)
-const multiSpec = ref(false)
-const onSkuTypeChange = (type) => {
-  multiSpec.value = type === 1
-}
 // 添加商品对话框表单实例ref，用于触发校验、重置
 const addGoodsFormRef = ref(null)
 // 定义商品品牌响应式变量数组
@@ -121,7 +117,6 @@ const open = (record) => {
   editingId.value = record.id  // 存下要编辑的商品 id
   // 0. 先清空上一件商品的 SKU 状态，避免串数据
   skuEditorRef.value?.reset()
-  multiSpec.value = false
   // 1. 回填商品基本信息
   addGoodsForm.value.name = record.name
   addGoodsForm.value.brand = record.brand
@@ -144,11 +139,6 @@ const open = (record) => {
     specsRef.value?.setSpecs(record.specs || [], categoryTemplate(record.categoryId))
     if (salesInfoRef.value?.salesInfoForm) {
       salesInfoRef.value.salesInfoForm.listingStatus = record.listingStatus ?? 1
-      salesInfoRef.value.salesInfoForm.salesPrice = record.salesPrice
-      salesInfoRef.value.salesInfoForm.marketPrice = record.marketPrice
-      salesInfoRef.value.salesInfoForm.costPrice = record.costPrice
-      salesInfoRef.value.salesInfoForm.productCode = record.productCode
-      salesInfoRef.value.salesInfoForm.stock = record.stock
     }
   })
   // 4. 列表接口不带 SKU 明细，单独查详情回填销售规格（skuType / skuSpecs / skus）
@@ -159,14 +149,8 @@ const open = (record) => {
         // 先按商品分类过滤规格库，再 setData 回填 SKU（setData 内部按 groupId/name 匹配规格库）
         skuEditorRef.value?.setCategory(detail.categoryId ?? null)
         skuEditorRef.value?.setData(detail.skuType, detail.skuSpecs || [], detail.skus || [])
-        multiSpec.value = detail.skuType === 1
         if (salesInfoRef.value?.salesInfoForm) {
           salesInfoRef.value.salesInfoForm.listingStatus = detail.listingStatus ?? 1
-          salesInfoRef.value.salesInfoForm.salesPrice = detail.salesPrice
-          salesInfoRef.value.salesInfoForm.marketPrice = detail.marketPrice
-          salesInfoRef.value.salesInfoForm.costPrice = detail.costPrice
-          salesInfoRef.value.salesInfoForm.productCode = detail.productCode
-          salesInfoRef.value.salesInfoForm.stock = detail.stock
         }
         specsRef.value?.setSpecs(detail.specs || [], categoryTemplate(detail.categoryId))
       })
@@ -243,17 +227,11 @@ const handleSubmit = () => {
   // 1. 先校验父组件表单
   addGoodsFormRef.value.validate()
       .then(() => {
-        // 2. 再检验子组件的销售信息表单
-        return salesInfoRef.value?.validate()
-      })
-      .then(() => {
-        // 3. 级联框的值是路径数组(如[1,101])，后端需要单个 number，取最后一级 id
         const path = addGoodsForm.value.categoryId || []
         const goodsData = {
           ...addGoodsForm.value,
           categoryId: path.length ? Number(path[path.length - 1]) : null,
-          ...salesInfoRef.value?.salesInfoForm,
-          // 规格参数：过滤空值（模板项非必填），后端 specs 传 [] 表示清空、null 表示不修改
+          ...(salesInfoRef.value?.salesInfoForm || {}),
           specs: specsRef.value?.getSpecs() ?? [],
           ...skuEditorRef.value?.getPayload(),
         }
@@ -293,7 +271,6 @@ const cancel = () => {
   addGoodsFormRef.value.resetFields()
   specsRef.value?.resetForm()
   skuEditorRef.value?.reset()
-  multiSpec.value = false
 }
 // ====================== 表单校验 =====================
 

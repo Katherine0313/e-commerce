@@ -35,10 +35,9 @@ export default ({ command, mode }) => {
     server: {
       proxy: {
         '/api': {
-          target: env.VITE_API_URL,
+          target: env.VITE_API_BASE_URL || env.VITE_API_URL || 'http://127.0.0.1:8080',
           ws: true,
           changeOrigin: true,
-          rewrite: (path) => path.replace(/^\/api/, ''),
         },
         // 图片统一从后端 upload/image/ 取，不再使用前端 public/image 里的历史副本；
         // 生产环境由 Nginx 把 /image/** 反代到后端，这里只处理本地开发

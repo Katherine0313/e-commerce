@@ -1,16 +1,49 @@
 import axios from './request.js'
 
-// 获取库存预警列表（支持 ?search= 商品名模糊搜索）
-export function getStockList(params) {
-  return axios.get('/api/admin/stock',{params})
+// ==================== SKU 库存 ====================
+export function getSkuStockList(params) {
+  return axios.get('/api/admin/stock/skus', { params })
 }
 
-// 获取库存状态常量（high/normal/low 的中文与颜色），前端启动时调用一次
-export function getStockStatus() {
-  return axios.get('/api/admin/stock/status-constants')
+export function setSkuAlert(skuId, data) {
+  return axios.post(`/api/admin/stock/skus/${skuId}/alert`, data)
 }
 
-// 创建库存预警
-export function createStock(data) {
-  return axios.post('/api/admin/stock', data)
+// ==================== 看板 ====================
+export function getDashboard() {
+  return axios.get('/api/admin/stock/dashboard')
+}
+
+export function getLowStockSku(limit = 20) {
+  return axios.get('/api/admin/stock/dashboard/low-stock', { params: { limit } })
+}
+
+export function getTrend(days = 30) {
+  return axios.get('/api/admin/stock/dashboard/trend', { params: { days } })
+}
+
+// ==================== 流水 ====================
+export function getTransactions(params) {
+  return axios.get('/api/admin/stock/transactions', { params })
+}
+
+// ==================== 单据 ====================
+export function getStockOrders(params) {
+  return axios.get('/api/admin/stock/orders', { params })
+}
+
+export function getStockOrderDetail(id) {
+  return axios.get(`/api/admin/stock/orders/${id}`)
+}
+
+export function createStockOrder(data) {
+  return axios.post('/api/admin/stock/orders', data)
+}
+
+export function completeStockOrder(id) {
+  return axios.post(`/api/admin/stock/orders/${id}/complete`)
+}
+
+export function cancelStockOrder(id) {
+  return axios.post(`/api/admin/stock/orders/${id}/cancel`)
 }

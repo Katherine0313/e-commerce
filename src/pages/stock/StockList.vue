@@ -1,191 +1,197 @@
 <template>
-  <div class="search">
-    <a-input-search placeholder="请输入商品名称" enter-button="搜索"
-                    v-model:value="searchProductName" @search="loadStockList" allow-clear>
-    </a-input-search>
-  </div>
-  <a-table :dataSource="stockList" class="title" :row-selection="{}">
-    <a-table-column title="编号">
-      <template #default="{record}">
-        <span v-if="record.stockId">{{ record.stockId }}</span>
-        <span v-else style="color: #bfbfbf">待分配</span>
-      </template>
-    </a-table-column>
-    <a-table-column title="商品信息" dataIndex="name"></a-table-column>
-    <a-table-column>
-      <template #default="{record}">
-        <img v-lazy="record.image" width="60" />
-      </template>
-    </a-table-column>
-    <!-- 主标题是 40~90 字的 SEO 长标题，单行省略，悬停看全文，避免表格被撑宽 -->
-    <a-table-column title="主标题" dataIndex="title">
-      <template #default="{record}">
-        <span class="title-ellipsis" :title="record.title">{{ record.title }}</span>
-      </template>
-    </a-table-column>
-    <a-table-column title="库存" dataIndex="stock"></a-table-column>
-    <a-table-column title="库存状态">
-      <template #default="{record}">
-        <a-tag v-if="record.statusKey" :color="statusColor(record.statusKey)">
-          {{ statusText(record.statusKey) }}</a-tag>
-        <span v-else style="color: #bfbfbf">未设置</span>
-      </template>
-    </a-table-column>
-    <a-table-column title="预警状态">
-      <template #default="{record}">
-        <a-tag :color="isAlertOn(record.alertEnabled) ? 'green' : 'default'">
-          {{ isAlertOn(record.alertEnabled) ? '已开' : '未开'}}</a-tag>
-      </template>
-    </a-table-column>
-    <a-table-column title="操作">
-      <template #default="{record}">
-        <a-button v-permission="'product:stock:edit'" type="primary" @click="handleStockVisible(record)">设置</a-button>
-      </template>
-    </a-table-column>
-  </a-table>
-  <a-modal v-model:visible="stockVisible" @ok="submitStockForm">
-    <a-form :model="stockForm" ref="stockFormRef" :rules="stockRules">
-      <a-form-item label="库存预警">
-        <a-switch v-model:checked="stockForm.alertEnabled" />
-      </a-form-item>
-        <template v-if="stockForm.alertEnabled">
-          <a-form-item label="库存下限" name="minStock" required>
-            <a-input-number v-model:value="stockForm.minStock" />
-          </a-form-item>
-          <a-form-item label="库存上限" name="maxStock" required>
-            <a-input-number v-model:value="stockForm.maxStock" />
-          </a-form-item>
+  <div>
+    <!-- 顶部过滤区 -->
+    <div class="filter-bar">
+      <a-input-search
+          placeholder="商品名 / SKU编码 模糊搜索"
+          enter-button="搜索"
+          v-model:value="search"
+          @search="onSearch"
+          allow-clear
+          style="width: 280px"
+      />
+      <span class="filter-label">仅低库存</span>
+      <a-switch v-model:checked="lowStockOnly" @change="onSearch" />
+    </div>
+
+    <!-- 主表格 -->
+    <a-table
+        :dataSource="list"
+        :loading="loading"
+        :pagination="pagination"
+        :rowKey="(r) => r.skuId"
+        @change="onTableChange"
+        bordered
+    >
+      <a-table-column title="商品图" width="80">
+        <template #default="{ record }">
+          <img v-if="record.productImage" :src="record.productImage" width="48" height="48"
+               style="object-fit: cover; border-radius: 4px" />
+          <span v-else style="color: #bfbfbf">—</span>
         </template>
-    </a-form>
-  </a-modal>
+      </a-table-column>
+      <a-table-column title="商品名" dataIndex="productName" :ellipsis="true" />
+      <a-table-column title="SKU编码" dataIndex="skuCode" width="140">
+        <template #default="{ record }">
+          <span>{{ record.skuCode || '—' }}</span>
+        </template>
+      </a-table-column>
+      <a-table-column title="规格组合" width="200">
+        <template #default="{ record }">
+          <span>{{ formatSpec(record.specJson) }}</span>
+        </template>
+      </a-table-column>
+      <a-table-column title="当前库存" dataIndex="stock" width="100" align="right" />
+      <a-table-column title="安全阈值" width="140" align="center">
+        <template #default="{ record }">
+          <span v-if="record.minStock != null || record.maxStock != null">
+            {{ record.minStock ?? '—' }} ~ {{ record.maxStock ?? '—' }}
+          </span>
+          <span v-else style="color: #bfbfbf">未设置</span>
+        </template>
+      </a-table-column>
+      <a-table-column title="库存状态" width="100" align="center">
+        <template #default="{ record }">
+          <a-tag :color="skuStatus(record).color">{{ skuStatus(record).text }}</a-tag>
+        </template>
+      </a-table-column>
+      <a-table-column title="操作" width="120" fixed="right">
+        <template #default="{ record }">
+          <a-button type="link" size="small" @click="openAlertModal(record)">设阈值</a-button>
+        </template>
+      </a-table-column>
+    </a-table>
+
+    <!-- 设阈值弹窗 -->
+    <a-modal
+        v-model:visible="alertVisible"
+        title="设置库存安全阈值"
+        :confirm-loading="alertSubmitting"
+        @ok="submitAlert"
+    >
+      <div style="margin-bottom: 12px; color: #595959">
+        当前 SKU：<b>{{ alertRecord?.productName }}</b>
+        <span style="margin-left: 8px; color: #8c8c8c">{{ alertRecord?.skuCode }}</span>
+      </div>
+      <div style="margin-bottom: 12px; color: #595959">
+        规格：<b>{{ formatSpec(alertRecord?.specJson) }}</b>
+      </div>
+      <div style="margin-bottom: 16px; color: #595959">
+        当前库存：<b>{{ alertRecord?.stock ?? 0 }}</b>
+      </div>
+      <a-form layout="inline">
+        <a-form-item label="下限（低于此值预警）">
+          <a-input-number v-model:value="alertForm.minStock" :min="0" placeholder="未设置" />
+        </a-form-item>
+        <a-form-item label="上限（高于此值预警）">
+          <a-input-number v-model:value="alertForm.maxStock" :min="0" placeholder="未设置" />
+        </a-form-item>
+      </a-form>
+    </a-modal>
+  </div>
 </template>
 
 <script setup>
-import {ref, onMounted, onActivated} from 'vue'
-import {getStockList, createStock, getStockStatus} from '@/api/stock.js'
-import {isAlertOn, stockStatusOf} from '@/utils/stock.js'
-import {message} from 'ant-design-vue'
-const stockList = ref([])
-const searchProductName = ref('')
-// 库存状态字典（high/normal/low 的中文与颜色），和订单/售后页拉字典的写法保持一致
-const stockStatus = ref({map: {}, color: {}})
-const loadStockStatus = () => {
-  getStockStatus()
-      .then(res => {
-        stockStatus.value = res.data.data
-      })
-      .catch(err => console.log(err))
-}
-const statusText = (key) => stockStatus.value.map?.[key] || key
-const statusColor = (key) => stockStatus.value.color?.[key] || 'default'
-// 加载库存列表的方法（带搜索关键词）
-const loadStockList = () => {
-  getStockList({search: searchProductName.value})
-      .then(res => {
-        stockList.value = res.data.data
-            .map(item => {
-              const alertEnabled = item.alertEnabled === 1
-              return {
-                ...item,
-                alertEnabled,
-                // 编号只属于开启中的预警；未开启一律显示「待分配」
-                stockId: alertEnabled ? item.stockId : null,
-                // 状态是算出来的，不是接口字段，见 utils/stock.js
-                statusKey: stockStatusOf(item),
-              }
-            })
-            // 编号升序；还没分配编号（未开启预警）的排到最后
-            .sort((a, b) => {
-              if (a.stockId == null && b.stockId == null) return 0
-              if (a.stockId == null) return 1
-              if (b.stockId == null) return -1
-              return a.stockId - b.stockId
-            })
-      })
-      .catch(err => console.log(err))
-}
-onMounted(() => {
-  loadStockStatus()
+import { ref, reactive, onMounted } from 'vue'
+import { getSkuStockList, setSkuAlert } from '@/api/stock.js'
+import { formatSpec, skuStatus } from '@/utils/stock.js'
+import { message } from 'ant-design-vue'
+
+const loading = ref(false)
+const list = ref([])
+const search = ref('')
+const lowStockOnly = ref(false)
+
+const pagination = reactive({
+  current: 1,
+  pageSize: 10,
+  total: 0,
+  showSizeChanger: true,
+  showQuickJumper: true,
+  showTotal: (t) => `共 ${t} 条`,
 })
-onActivated(() => {
-  loadStockList()
-})
-// =================== 设置按钮 ================
-// 弹窗
-const stockVisible = ref(false)
-const stockForm = ref()
-const handleStockVisible = (record) => {
-  stockVisible.value = true
-  stockForm.value = {
-    productId: record.productId,
-    alertEnabled: record.alertEnabled,
-    minStock: record.minStock,
-    maxStock: record.maxStock,
+
+const loadList = () => {
+  loading.value = true
+  const params = {
+    page: pagination.current,
+    size: pagination.pageSize,
+    search: search.value || undefined,
+    lowStockOnly: lowStockOnly.value ? 1 : 0,
   }
-}
-// ================== 校验规则 ==================
-const stockFormRef = ref(null)
-// min/max 校验交给 v-if 控制：alertEnabled=false 时表单项不渲染，规则不参与校验
-const stockRules = {
-  minStock: [{ required: true, message: '请填写库存下限', trigger: 'blur' }],
-  // maxStock 加一条跨字段校验：必须大于 minStock，否则报错
-  maxStock: [
-    { required: true, message: '请填写库存上限', trigger: 'blur' },
-    {
-      validator: (rule, value) => {
-        if (stockForm.value.minStock != null && value != null && stockForm.value.minStock >= value) {
-          return Promise.reject('库存下限必须小于上限')
-        }
-        return Promise.resolve()
-      },
-      trigger: 'blur'
-    }
-  ],
-}
-// ================== 提交库存预警表单 ============
-const submitStockForm = () => {
-  stockFormRef.value.validate()
-      .then(()=>{
-        createStock({
-          productId: stockForm.value.productId,
-          alertEnabled: stockForm.value.alertEnabled ? 1 : 0,
-          minStock: stockForm.value.minStock,
-          maxStock: stockForm.value.maxStock,
-        })
+  getSkuStockList(params)
+      .then(res => {
+        const data = res.data?.data || {}
+        list.value = data.records || data.list || []
+        pagination.total = data.total || 0
       })
-      .then(() => {
-        stockVisible.value = false
-        message.success('库存预警创建成功！')
-        loadStockList()
+      .catch(() => {
+        list.value = []
+        pagination.total = 0
       })
-      .catch(err => {
-        console.log(err)
-        message.error('库存预警创建失败！')
+      .finally(() => {
+        loading.value = false
       })
 }
 
+const onSearch = () => {
+  pagination.current = 1
+  loadList()
+}
+
+const onTableChange = (pag) => {
+  pagination.current = pag.current
+  pagination.pageSize = pag.pageSize
+  loadList()
+}
+
+// ============== 设阈值弹窗 ==============
+const alertVisible = ref(false)
+const alertSubmitting = ref(false)
+const alertRecord = ref(null)
+const alertForm = reactive({ minStock: null, maxStock: null })
+
+const openAlertModal = (record) => {
+  alertRecord.value = record
+  alertForm.minStock = record.minStock ?? null
+  alertForm.maxStock = record.maxStock ?? null
+  alertVisible.value = true
+}
+
+const submitAlert = () => {
+  if (alertForm.minStock != null && alertForm.maxStock != null
+      && alertForm.minStock >= alertForm.maxStock) {
+    message.warning('下限必须小于上限')
+    return
+  }
+  alertSubmitting.value = true
+  setSkuAlert(alertRecord.value.skuId, {
+    minStock: alertForm.minStock,
+    maxStock: alertForm.maxStock,
+  })
+      .then(() => {
+        message.success('阈值保存成功')
+        alertVisible.value = false
+        loadList()
+      })
+      .catch(() => {})
+      .finally(() => {
+        alertSubmitting.value = false
+      })
+}
+
+onMounted(loadList)
 </script>
 
 <style scoped>
-/*表头*/
-
-/*行元素*/
-.title :deep(.ant-table-tbody >tr > td) {
+.filter-bar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+.filter-label {
+  color: #595959;
   font-size: 14px;
-  text-align: center;
-}
-.search{
-  max-width: 300px;
-  margin:20px 0;
-}
-/* 主标题单行省略。用 CSS 截断而不是 a-table 的 ellipsis 属性：
-   ellipsis 会让整张表切成 table-layout:fixed，浏览器把剩余宽度按固定列宽分摊后
-   还会剩一条空白，表现为表格右侧空出一块 */
-.title-ellipsis {
-  display: inline-block;
-  max-width: 260px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
 }
 </style>
