@@ -20,13 +20,14 @@
         </a-col>
         <a-col :xs="24" :sm="12" :md="4">
           <a-select placeholder="原因" v-model:value="filters.reason" allow-clear style="width: 100%">
-            <a-select-option value="PURCHASE">采购入库</a-select-option>
-            <a-select-option value="RETURN">退货归还</a-select-option>
-            <a-select-option value="MANUAL_IN">手工补录</a-select-option>
-            <a-select-option value="ORDER_SHIP">订单发货</a-select-option>
-            <a-select-option value="LOSS">盘亏</a-select-option>
-            <a-select-option value="MANUAL_OUT">手工出库</a-select-option>
-            <a-select-option value="ADJUST">调整</a-select-option>
+            <a-select-option value="采购入库">采购入库</a-select-option>
+            <a-select-option value="退货归还">退货归还</a-select-option>
+            <a-select-option value="手工补录">手工补录</a-select-option>
+            <a-select-option value="销售出库">销售出库</a-select-option>
+            <a-select-option value="手工出库">手工出库</a-select-option>
+            <a-select-option value="盘亏出库">盘亏出库</a-select-option>
+            <a-select-option value="盘点调整">盘点调整</a-select-option>
+            <a-select-option value="单据取消冲销">单据取消冲销</a-select-option>
           </a-select>
         </a-col>
         <a-col :xs="24" :sm="12" :md="6">
@@ -50,30 +51,29 @@
         style="margin-top: 16px"
     >
       <a-table-column title="SKU编码" dataIndex="skuCode" />
-      <a-table-column title="商品名" dataIndex="productName" />
+      <a-table-column title="商品名" dataIndex="skuName" />
       <a-table-column title="规格">
-        <template #default="{ record }">{{ formatSpec(record.specJson) }}</template>
+        <template #default="{ record }">{{ record.specText || '—' }}</template>
       </a-table-column>
       <a-table-column title="类型" align="center">
         <template #default="{ record }">
           <a-tag :color="typeColor(record.type)">{{ typeText(record.type) }}</a-tag>
         </template>
       </a-table-column>
-      <a-table-column title="数量" align="right">
+      <a-table-column title="数量" >
         <template #default="{ record }">
           <span :style="{ color: record.type === 'IN' ? '#3f8600' : '#cf1322' }">
             {{ record.type === 'IN' ? '+' : '-' }}{{ record.qty }}
           </span>
         </template>
       </a-table-column>
-      <a-table-column title="结存快照" dataIndex="stockSnapshot" align="right" />
+      <a-table-column title="结存快照" dataIndex="balanceAfter"  />
       <a-table-column title="原因">
         <template #default="{ record }">{{ reasonText(record.reason) }}</template>
       </a-table-column>
-      <a-table-column title="关联单号">
+      <a-table-column title="关联单据">
         <template #default="{ record }">
-          <a-link v-if="record.orderNo" @click="goOrder(record.orderItemId, record.orderNo)">{{ record.orderNo }}</a-link>
-          <span v-else>—</span>
+          <span>{{ record.orderNo || '—' }}</span>
         </template>
       </a-table-column>
       <a-table-column title="操作人" dataIndex="operatorName" />
@@ -84,11 +84,8 @@
 
 <script setup>
 import { ref, reactive, onMounted } from 'vue'
-import { useRouter } from 'vue-router'
 import { getTransactions } from '@/api/stock.js'
-import { formatSpec } from '@/utils/stock.js'
 
-const router = useRouter()
 const loading = ref(false)
 const list = ref([])
 
@@ -110,15 +107,12 @@ const pagination = reactive({
 
 const typeText = (t) => ({ IN: '入库', OUT: '出库', ADJUST: '调整' }[t] || t)
 const typeColor = (t) => ({ IN: 'green', OUT: 'orange', ADJUST: 'blue' }[t] || 'default')
-const reasonText = (r) => ({
-  PURCHASE: '采购入库', RETURN: '退货归还', MANUAL_IN: '手工补录',
-  ORDER_SHIP: '订单发货', LOSS: '盘亏', MANUAL_OUT: '手工出库', ADJUST: '调整',
-}[r] || r || '—')
+const reasonText = (r) => r || '—'
 
 const loadList = () => {
   loading.value = true
   const params = {
-    skuId: filters.search || undefined,
+    search: filters.search || undefined,
     type: filters.type,
     reason: filters.reason,
     startTime: filters.range?.[0]?.format?.('YYYY-MM-DD HH:mm:ss'),
@@ -149,9 +143,6 @@ const onTableChange = (pag) => {
   pagination.current = pag.current
   pagination.pageSize = pag.pageSize
   loadList()
-}
-const goOrder = (_orderItemId, orderNo) => {
-  router.push({ path: '/orders/order-list', query: { orderNo } })
 }
 
 onMounted(loadList)

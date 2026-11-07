@@ -11,9 +11,8 @@
         </a-col>
         <a-col :xs="24" :sm="12" :md="4">
           <a-select placeholder="状态" v-model:value="filters.status" allow-clear style="width: 100%">
-            <a-select-option value="DRAFT">草稿</a-select-option>
-            <a-select-option value="CONFIRMED">已确认</a-select-option>
-            <a-select-option value="CANCELLED">已取消</a-select-option>
+            <a-select-option :value="1">已完成</a-select-option>
+            <a-select-option :value="0">已取消</a-select-option>
           </a-select>
         </a-col>
         <a-col :xs="24" :sm="12" :md="4">
@@ -25,6 +24,7 @@
         <a-col :xs="24" :sm="12" :md="6">
           <a-button type="primary" @click="onSearch">查询</a-button>
           <a-button style="margin-left: 8px" @click="onReset">重置</a-button>
+          <a-button type="primary" style="margin-left: 8px" @click="createVisible = true">新建出库单</a-button>
         </a-col>
       </a-row>
     </a-card>
@@ -50,8 +50,8 @@
           <span v-else>—</span>
         </template>
       </a-table-column>
-      <a-table-column title="明细行数" dataIndex="itemCount" align="right" />
-      <a-table-column title="总数量" dataIndex="totalQty" align="right" />
+      <a-table-column title="明细行数" dataIndex="itemCount"  />
+      <a-table-column title="总数量" dataIndex="totalQty"  />
       <a-table-column title="状态" align="center">
         <template #default="{ record }">
           <a-tag :color="statusColor(record.status)">{{ statusText(record.status) }}</a-tag>
@@ -66,7 +66,7 @@
       </a-table-column>
     </a-table>
 
-    <a-modal v-model:visible="detailVisible" title="出库单详情" :width="800" :footer="null">
+    <a-modal v-model:visible="detailVisible" title="出库单详情" :width="800">
       <a-descriptions :column="2" bordered v-if="detail">
         <a-descriptions-item label="单据号">{{ detail.orderNo }}</a-descriptions-item>
         <a-descriptions-item label="类型">{{ bizTypeText(detail.bizType) }}</a-descriptions-item>
@@ -81,21 +81,29 @@
       <a-divider>明细</a-divider>
       <a-table :dataSource="detail?.items || []" :pagination="false" size="small" row-key="id" bordered>
         <a-table-column title="SKU编码" dataIndex="skuCode" />
-        <a-table-column title="商品名" dataIndex="skuName" :ellipsis="true" />
+        <a-table-column title="商品名" dataIndex="skuName" />
         <a-table-column title="规格">
-          <template #default="{ record }">{{ formatSpec(record.specJson) }}</template>
+          <template #default="{ record }">{{ record.specText || '—' }}</template>
         </a-table-column>
-        <a-table-column title="数量" dataIndex="qty" align="right" />
+        <a-table-column title="数量" dataIndex="qty"  />
       </a-table>
+      <template #footer>
+        <a-button @click="detailVisible = false">关闭</a-button>
+        <a-button type="primary" @click="printDetail">打印</a-button>
+      </template>
     </a-modal>
+
+    <ShipmentCreateModal v-model:visible="createVisible" @created="loadList" />
+    <StockOrderPrint :order="detail" type="SHIPMENT" />
   </div>
 </template>
 
 <script setup>
-import { ref, reactive, onMounted } from 'vue'
+import { ref, reactive, onMounted, nextTick } from 'vue'
 import { useRouter } from 'vue-router'
 import { getStockOrders, getStockOrderDetail } from '@/api/stock.js'
-import { formatSpec } from '@/utils/stock.js'
+import ShipmentCreateModal from './ShipmentCreateModal.vue'
+import StockOrderPrint from './StockOrderPrint.vue'
 
 const router = useRouter()
 const loading = ref(false)
@@ -111,8 +119,10 @@ const pagination = reactive({
 })
 
 const bizTypeText = (t) => ({ ORDER_SHIP: '订单发货', MANUAL: '手工出库', LOSS: '盘亏出库' }[t] || t)
-const statusText = (s) => ({ DRAFT: '草稿', CONFIRMED: '已确认', CANCELLED: '已取消' }[s] || s)
-const statusColor = (s) => ({ DRAFT: 'default', CONFIRMED: 'green', CANCELLED: 'red' }[s] || 'default')
+const statusText = (s) => ({ 1: '已完成', 0: '已取消' }[s] ?? s)
+const statusColor = (s) => ({ 1: 'green', 0: 'red' }[s] || 'default')
+
+const createVisible = ref(false)
 
 const loadList = () => {
   loading.value = true
@@ -144,13 +154,20 @@ const onTableChange = (pag) => { pagination.current = pag.current; pagination.pa
 
 const openDetail = (record) => {
   getStockOrderDetail(record.id)
-      .then(res => { detail.value = res.data?.data || record; detailVisible.value = true })
+      .then(res => {
+        const d = res.data?.data
+        // 后端返回 {order, items} 嵌套结构，摊平后给弹窗和打印组件用
+        detail.value = d ? { ...d.order, items: d.items } : record
+        detailVisible.value = true
+      })
       .catch(() => { detail.value = record; detailVisible.value = true })
 }
 
 const goOrder = (orderNo) => {
   router.push({ path: '/orders/order-list', query: { orderNo } })
 }
+
+const printDetail = () => { nextTick(() => window.print()) }
 
 onMounted(loadList)
 </script>

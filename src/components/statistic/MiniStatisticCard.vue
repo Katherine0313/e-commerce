@@ -2,7 +2,8 @@
   <div
     class="mini-statistic-card overflow-hidden relative min-h-[112px] bg-container inline-flex items-center justify-between drop-shadow-sm p-md border-border rounded-lg"
   >
-    <div class="statistic-main flex-1">
+    <!-- pr-2：给右下角的装饰 icon 让出 8px，文字再长也不会贴上去 -->
+    <div class="statistic-main flex-1 pr-2">
       <div class="statistic-title text-subtext text-base">{{ title }}</div>
       <div class="statistic-content flex items-baseline">
         <span class="value text-title text-xxl font-bold">{{ value }}</span>

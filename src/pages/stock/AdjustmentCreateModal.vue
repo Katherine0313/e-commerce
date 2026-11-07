@@ -24,7 +24,13 @@
     <a-table :dataSource="rows" :pagination="false" size="small" row-key="rowKey" bordered>
       <a-table-column title="SKU 搜索">
         <template #default="{ record }">
+          <!-- 选中后改用紧凑 div 展示：a-select 的回显文案太长会把整个表格列宽挤变形 -->
+          <div v-if="record.skuId" class="sku-picked">
+            <span class="sku-picked-name" :title="record.skuName">{{ record.skuName || record.skuCode }}</span>
+            <a-button type="link" size="small" @click="clearSku(record)">重选</a-button>
+          </div>
           <a-select
+              v-else
               v-model:value="record.skuId"
               show-search
               :filter-option="false"
@@ -166,6 +172,16 @@ const onSkuSelect = (skuId, record) => {
   record.afterQty = opt.currentStock
 }
 
+// 重选：清掉该行已选 SKU，回到搜索态
+const clearSku = (record) => {
+  record.skuId = undefined
+  record.skuCode = ''
+  record.skuName = ''
+  record.specText = ''
+  record.currentStock = null
+  record.afterQty = null
+}
+
 // ====== 提交 ======
 const submitting = ref(false)
 
@@ -220,5 +236,18 @@ void computed
   font-weight: 600;
   color: #262626;
   margin-bottom: 8px;
+}
+/* 已选 SKU 的紧凑展示：名称超长省略号，避免撑变形表格 */
+.sku-picked {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 4px;
+}
+.sku-picked-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 0;
 }
 </style>

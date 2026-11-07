@@ -4,9 +4,9 @@
     <a-row :gutter="16">
       <a-col :xs="24" :sm="12" :md="6" v-for="(card, idx) in statCards" :key="idx">
         <MiniStatisticCard :title="card.title" :value="card.value" :change="card.change">
-          <template #icon>
-            <component :is="card.iconComponent" style="font-size: 48px; opacity: 0.2" />
-          </template>
+            <template #icon>
+                <component :is="card.iconComponent" style="font-size: 48px; opacity: 0.2" />
+            </template>
         </MiniStatisticCard>
       </a-col>
     </a-row>

@@ -12,9 +12,8 @@
         </a-col>
         <a-col :xs="24" :sm="12" :md="4">
           <a-select placeholder="状态" v-model:value="filters.status" allow-clear style="width: 100%">
-            <a-select-option value="DRAFT">草稿</a-select-option>
-            <a-select-option value="CONFIRMED">已确认</a-select-option>
-            <a-select-option value="CANCELLED">已取消</a-select-option>
+            <a-select-option :value="1">已完成</a-select-option>
+            <a-select-option :value="0">已取消</a-select-option>
           </a-select>
         </a-col>
         <a-col :xs="24" :sm="12" :md="4">
@@ -62,14 +61,14 @@
       <a-table-column title="操作">
         <template #default="{ record }">
           <a-button type="link" size="small" @click="openDetail(record)">详情</a-button>
-          <a-button v-if="record.status === 'CONFIRMED'" type="link" size="small" danger
+          <a-button v-if="Number(record.status) === 1" type="link" size="small" danger
                     @click="handleCancel(record)">取消</a-button>
         </template>
       </a-table-column>
     </a-table>
 
     <!-- 详情弹窗 -->
-    <a-modal v-model:visible="detailVisible" title="入库单详情" :width="800" :footer="null">
+    <a-modal v-model:visible="detailVisible" title="入库单详情" :width="800">
       <a-descriptions :column="2" bordered v-if="detail">
         <a-descriptions-item label="单据号">{{ detail.orderNo }}</a-descriptions-item>
         <a-descriptions-item label="类型">{{ bizTypeText(detail.bizType) }}</a-descriptions-item>
@@ -84,15 +83,19 @@
       <a-divider>明细</a-divider>
       <a-table :dataSource="detail?.items || []" :pagination="false" size="small" row-key="id" bordered>
         <a-table-column title="SKU编码" dataIndex="skuCode" />
-        <a-table-column title="商品名" dataIndex="skuName" :ellipsis="true" />
+        <a-table-column title="商品名" dataIndex="skuName" />
         <a-table-column title="规格">
-          <template #default="{ record }">{{ formatSpec(record.specJson) }}</template>
+          <template #default="{ record }">{{ record.specText || '—' }}</template>
         </a-table-column>
         <a-table-column title="数量" dataIndex="qty" align="right" />
         <a-table-column title="成本价" align="right">
           <template #default="{ record }">{{ record.costPrice != null ? '￥' + record.costPrice : '—' }}</template>
         </a-table-column>
       </a-table>
+      <template #footer>
+        <a-button @click="detailVisible = false">关闭</a-button>
+        <a-button type="primary" @click="printDetail">打印</a-button>
+      </template>
     </a-modal>
 
     <!-- 新建入库单 -->
@@ -100,15 +103,16 @@
         v-model:visible="createVisible"
         @created="loadList"
     />
+    <StockOrderPrint :order="detail" type="RECEIPT" />
   </div>
 </template>
 
 <script setup>
-import { ref, reactive, onMounted } from 'vue'
+import { ref, reactive, onMounted, nextTick } from 'vue'
 import { message, Modal } from 'ant-design-vue'
 import { getStockOrders, getStockOrderDetail, cancelStockOrder } from '@/api/stock.js'
-import { formatSpec } from '@/utils/stock.js'
 import ReceiptCreateModal from './ReceiptCreateModal.vue'
+import StockOrderPrint from './StockOrderPrint.vue'
 
 const loading = ref(false)
 const list = ref([])
@@ -133,8 +137,8 @@ const pagination = reactive({
 })
 
 const bizTypeText = (t) => ({ PURCHASE: '采购入库', RETURN: '退货归还', MANUAL: '手工补录' }[t] || t)
-const statusText = (s) => ({ DRAFT: '草稿', CONFIRMED: '已确认', CANCELLED: '已取消' }[s] || s)
-const statusColor = (s) => ({ DRAFT: 'default', CONFIRMED: 'green', CANCELLED: 'red' }[s] || 'default')
+const statusText = (s) => ({ 1: '已完成', 0: '已取消' }[s] ?? s)
+const statusColor = (s) => ({ 1: 'green', 0: 'red' }[s] || 'default')
 
 const loadList = () => {
   loading.value = true
@@ -168,16 +172,23 @@ const onTableChange = (pag) => { pagination.current = pag.current; pagination.pa
 
 const openDetail = (record) => {
   getStockOrderDetail(record.id)
-      .then(res => { detail.value = res.data?.data || record; detailVisible.value = true })
+      .then(res => {
+        const d = res.data?.data
+        // 后端返回 {order, items} 嵌套结构，摊平后给弹窗和打印组件用
+        detail.value = d ? { ...d.order, items: d.items } : record
+        detailVisible.value = true
+      })
       .catch(() => { detail.value = record; detailVisible.value = true })
 }
 
 const openCreate = () => { createVisible.value = true }
 
+const printDetail = () => { nextTick(() => window.print()) }
+
 const handleCancel = (record) => {
   Modal.confirm({
     title: '确认取消该入库单？',
-    content: `单据号 ${record.orderNo}，取消后无法恢复`,
+    content: `单据号 ${record.orderNo}，取消后将自动反向冲销本次入库的库存`,
     okType: 'danger',
     onOk() {
       return cancelStockOrder(record.id).then(() => {

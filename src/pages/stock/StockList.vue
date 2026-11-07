@@ -19,7 +19,7 @@
         :dataSource="list"
         :loading="loading"
         :pagination="pagination"
-        :rowKey="(r) => r.skuId"
+        :rowKey="(r) => r.id"
         @change="onTableChange"
         bordered
     >
@@ -41,7 +41,7 @@
           <span>{{ formatSpec(record.specJson) }}</span>
         </template>
       </a-table-column>
-      <a-table-column title="当前库存" dataIndex="stock" align="right" />
+      <a-table-column title="当前库存" dataIndex="stock"  />
       <a-table-column title="安全阈值" align="center">
         <template #default="{ record }">
           <span v-if="record.minStock != null || record.maxStock != null">
@@ -57,6 +57,7 @@
       </a-table-column>
       <a-table-column title="操作">
         <template #default="{ record }">
+          <a-button type="primary" size="small" @click="openEditModal(record)">编辑</a-button>
           <a-button type="link" size="small" @click="openAlertModal(record)">设阈值</a-button>
         </template>
       </a-table-column>
@@ -88,12 +89,44 @@
         </a-form-item>
       </a-form>
     </a-modal>
+
+    <!-- 编辑库存弹窗：填实盘数量，后台自动生成调整单 + 流水留痕 -->
+    <a-modal
+        v-model:visible="editVisible"
+        title="编辑库存"
+        :confirm-loading="editSubmitting"
+        @ok="submitEdit"
+    >
+      <div style="margin-bottom: 12px; color: #595959">
+        当前 SKU：<b>{{ editRecord?.productName }}</b>
+        <span style="margin-left: 8px; color: #8c8c8c">{{ editRecord?.skuCode }}</span>
+      </div>
+      <div style="margin-bottom: 12px; color: #595959">
+        规格：<b>{{ formatSpec(editRecord?.specJson) }}</b>
+      </div>
+      <div style="margin-bottom: 16px; color: #595959">
+        当前库存：<b>{{ editRecord?.stock ?? 0 }}</b>
+      </div>
+      <a-form layout="inline">
+        <a-form-item label="实盘数量">
+          <a-input-number v-model:value="editForm.newStock" :min="0" placeholder="盘点后的实际数量" />
+        </a-form-item>
+        <a-form-item label="原因">
+          <a-select v-model:value="editForm.reason" style="width: 140px">
+            <a-select-option value="盘点调整">盘点调整</a-select-option>
+            <a-select-option value="破损调整">破损调整</a-select-option>
+            <a-select-option value="期初录入">期初录入</a-select-option>
+            <a-select-option value="其他">其他</a-select-option>
+          </a-select>
+        </a-form-item>
+      </a-form>
+    </a-modal>
   </div>
 </template>
 
 <script setup>
 import { ref, reactive, onMounted } from 'vue'
-import { getSkuStockList, setSkuAlert } from '@/api/stock.js'
+import { getSkuStockList, setSkuAlert, createStockOrder } from '@/api/stock.js'
 import { formatSpec, skuStatus } from '@/utils/stock.js'
 import { message } from 'ant-design-vue'
 
@@ -165,7 +198,7 @@ const submitAlert = () => {
     return
   }
   alertSubmitting.value = true
-  setSkuAlert(alertRecord.value.skuId, {
+  setSkuAlert(alertRecord.value.id, {
     minStock: alertForm.minStock,
     maxStock: alertForm.maxStock,
   })
@@ -177,6 +210,48 @@ const submitAlert = () => {
       .catch(() => {})
       .finally(() => {
         alertSubmitting.value = false
+      })
+}
+
+// ============== 编辑库存弹窗 ==============
+const editVisible = ref(false)
+const editSubmitting = ref(false)
+const editRecord = ref(null)
+const editForm = reactive({ newStock: null, reason: '盘点调整' })
+
+const openEditModal = (record) => {
+  editRecord.value = record
+  editForm.newStock = record.stock ?? 0
+  editForm.reason = '盘点调整'
+  editVisible.value = true
+}
+
+const submitEdit = () => {
+  if (editForm.newStock == null) { message.warning('请填写实盘数量'); return }
+  const diff = editForm.newStock - (editRecord.value.stock ?? 0)
+  if (diff === 0) { message.info('与当前库存一致，无需调整'); return }
+  editSubmitting.value = true
+  // 走调整单接口：后台自动生成 PD 单 + 库存流水，留痕可查
+  createStockOrder({
+    type: 'ADJUST',
+    bizType: editForm.reason === '盘点调整' ? 'ADJUST' : 'MANUAL',
+    remark: `列表编辑库存（${editForm.reason}）`,
+    items: [{
+      skuId: editRecord.value.id,
+      skuCode: editRecord.value.skuCode,
+      skuName: editRecord.value.productName,
+      specText: formatSpec(editRecord.value.specJson),
+      qty: diff,
+    }],
+  })
+      .then(() => {
+        message.success('库存已更新')
+        editVisible.value = false
+        loadList()
+      })
+      .catch(() => {})
+      .finally(() => {
+        editSubmitting.value = false
       })
 }
 

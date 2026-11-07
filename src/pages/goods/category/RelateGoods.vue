@@ -77,7 +77,7 @@ const onSelectChange = (keys, rows) => {
 // ==================== 批量移除 ====================
 const batchRemoveGoods = () => {
   const promises = selectedRows.value.map(product =>
-    updateGoods(product.id, { categoryId: null })
+    updateGoods(product.id, { categoryId: 0 })
   )
   Promise.all(promises)
     .then(() => {
@@ -95,7 +95,8 @@ const batchRemoveGoods = () => {
 
 // ==================== 移除按钮 ====================
 const removeRelateGoods = (record) => {
-  updateGoods(record.id, {categoryId: null})
+  // 后端局部更新语义下 null 表示「不修改」，清空分类关联要传哨兵值 0
+  updateGoods(record.id, {categoryId: 0})
       .then(() => {
         message.success('移除成功')
         loadRelateGoods()
