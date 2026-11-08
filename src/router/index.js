@@ -420,6 +420,24 @@ const routes = [
                     permission: 'system:log:login:list',
                 },
                 component: () => import('@/pages/system/logs/LoginLogList.vue'),
+            },
+            {
+                path: 'database',
+                name: 'SystemDatabase',
+                meta: {
+                    title: '数据库管理',
+                    permission: 'system:db:list',
+                },
+                component: () => import('@/pages/system/database/DatabaseManage.vue'),
+            },
+            {
+                path: 'api',
+                name: 'SystemApiDocs',
+                meta: {
+                    title: '接口管理',
+                    permission: 'system:api:list',
+                },
+                component: () => import('@/pages/system/api/ApiManage.vue'),
             }
         ]
     },
@@ -484,6 +502,55 @@ const routes = [
             _is404Page: true,
         },
         component: () => import('@/pages/Exp404.vue'),
+    },
+    {
+        path: '/ai',
+        name: 'Ai',
+        meta: {
+            isLogin: true,
+            title: 'AI 客服',
+            icon: 'RobotOutlined',
+            renderMenu: true,
+            cacheable: true,
+        },
+        children: [
+            {
+                path: 'chat',
+                name: 'AiChat',
+                meta: {
+                    title: 'AI 对话',
+                    permission: 'ai:chat:use',
+                },
+                component: () => import('@/pages/ai/AiChat.vue'),
+            },
+            {
+                path: 'copy',
+                name: 'AiCopy',
+                meta: {
+                    title: '商品文案助手',
+                    permission: 'ai:copy:generate',
+                },
+                component: () => import('@/pages/ai/CopyAssistant.vue'),
+            },
+            {
+                path: 'human',
+                name: 'AiHumanService',
+                meta: {
+                    title: '人工客服',
+                    permission: 'ai:human:use',
+                },
+                component: () => import('@/pages/ai/HumanService.vue'),
+            },
+            {
+                path: 'kb',
+                name: 'AiKbManage',
+                meta: {
+                    title: '知识库',
+                    permission: 'ai:chat:use',
+                },
+                component: () => import('@/pages/ai/KbManage.vue'),
+            }
+        ]
     },
 ];
 // ==================== 路由实例创建 ====================

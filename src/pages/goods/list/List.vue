@@ -61,8 +61,9 @@
   </a-table>
 </template>
 <script setup>
-import {onMounted, onActivated, ref} from 'vue'
-import {getGoodsList, getCategoryTree, deleteGoods, updateGoods} from '@/api/products.js'
+import {onMounted, onActivated, ref, watch} from 'vue'
+import {useRoute, useRouter} from 'vue-router'
+import {getGoodsList, getCategoryTree, deleteGoods, updateGoods, getGoodsDetail} from '@/api/products.js'
 import {SearchOutlined} from '@ant-design/icons-vue'
 import dayjs from 'dayjs'
 // 导入消息组件
@@ -229,6 +230,29 @@ const handleEdit = (record) => {
   // 用实例去调用子组件暴露出来的打开弹窗的方法
   editModalRef.value.open(record)
 }
+// 支持外部页面带 ?editId= 跳转直接打开编辑弹窗（如 AI 文案助手「回填到商品」、AI 对话商品卡片「查看商品」）
+const route = useRoute()
+const router = useRouter()
+const openEditByQuery = (editId) => {
+  const id = Number(editId)
+  if (!id) return
+  getGoodsDetail(id)
+      .then(res => {
+        const detail = res.data?.data
+        if (detail) editModalRef.value?.open(detail)
+      })
+      .catch(() => {})
+      .finally(() => {
+        // 清掉 query，避免刷新/回退时重复弹出
+        router.replace({ query: { ...route.query, editId: undefined } })
+      })
+}
+watch(() => route.query.editId, (editId) => {
+  if (editId) openEditByQuery(editId)
+})
+onMounted(() => {
+  if (route.query.editId) openEditByQuery(route.query.editId)
+})
 // ====================== 删除操作 =====================
 
 const handleDelete = (record) => {
