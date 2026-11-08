@@ -1,6 +1,8 @@
 .ant-table {
   .ant-table-thead > tr > th {
-    @apply border-0 bg-fill-1;
+    @apply border-0;
+    /* 表头统一用浅灰底：原先 bg-fill-1 是 rgba(0,0,0,.15)，视觉过深 */
+    background-color: #fafafa;
     font-size: 14px;
     text-align: center;
     &:not(:last-child):not(.ant-table-selection-column):not(.ant-table-row-expand-icon-cell):not([colspan])::before {

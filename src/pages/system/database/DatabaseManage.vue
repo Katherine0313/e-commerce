@@ -49,7 +49,7 @@
         <a-table :data-source="tables" :columns="tableColumns" :loading="tableLoading"
                  :pagination="pagination" row-key="name"
                  :row-selection="{ selectedRowKeys, onChange: onSelectChange }"
-                 :scroll="{ x: 1000 }" @change="handleTableChange">
+                  @change="handleTableChange">
           <template #bodyCell="{ column, record }">
             <template v-if="column.key === 'name'">
               <span class="mono">{{ record.name }}</span>
@@ -133,7 +133,7 @@
       </a-descriptions>
 
       <a-table :data-source="columns" :columns="columnColumns" :loading="columnsLoading"
-               :pagination="false" row-key="name" size="small" :scroll="{ x: 720 }">
+               :pagination="false" row-key="name" size="small" >
         <template #bodyCell="{ column, record }">
           <template v-if="column.key === 'name'">
             <span class="mono">{{ record.name }}</span>
@@ -206,29 +206,29 @@ const pagination = ref({
 })
 
 const tableColumns = [
-  { title: '表名', dataIndex: 'name', key: 'name', width: 220 },
+  { title: '表名', dataIndex: 'name', key: 'name', align: 'left',width: 180 },
   { title: '备注', dataIndex: 'comment', key: 'comment' },
-  { title: '引擎', dataIndex: 'engine', key: 'engine', width: 100 },
-  { title: '大小', dataIndex: 'dataLengthHuman', key: 'dataLengthHuman', width: 110 },
-  { title: '行数', dataIndex: 'rows', key: 'rows', width: 110 },
-  { title: '更新时间', dataIndex: 'updateTime', key: 'updateTime', width: 175 },
-  { title: '操作', key: 'operation', width: 110, fixed: 'right' },
+  { title: '引擎', dataIndex: 'engine', key: 'engine' },
+  { title: '大小', dataIndex: 'dataLengthHuman', key: 'dataLengthHuman' },
+  { title: '行数', dataIndex: 'rows', key: 'rows' },
+  { title: '更新时间', dataIndex: 'updateTime', key: 'updateTime' },
+  { title: '操作', key: 'operation',  },
 ]
 
 const backupColumns = [
   { title: '备份文件', dataIndex: 'fileName', key: 'fileName' },
-  { title: '分卷', dataIndex: 'part', key: 'part', width: 80 },
-  { title: '大小', dataIndex: 'sizeHuman', key: 'sizeHuman', width: 110 },
-  { title: '表数量', dataIndex: 'tableCount', key: 'tableCount', width: 90 },
-  { title: '状态', dataIndex: 'status', key: 'status', width: 100 },
-  { title: '创建时间', dataIndex: 'createdAt', key: 'createdAt', width: 175 },
-  { title: '操作', key: 'operation', width: 130 },
+  { title: '分卷', dataIndex: 'part', key: 'part' },
+  { title: '大小', dataIndex: 'sizeHuman', key: 'sizeHuman'},
+  { title: '表数量', dataIndex: 'tableCount', key: 'tableCount' },
+  { title: '状态', dataIndex: 'status', key: 'status' },
+  { title: '创建时间', dataIndex: 'createdAt', key: 'createdAt' },
+  { title: '操作', key: 'operation' },
 ]
 
 const columnColumns = [
-  { title: '字段名', dataIndex: 'name', key: 'name', width: 170 },
-  { title: '类型', dataIndex: 'type', key: 'type', width: 150 },
-  { title: '可为空', dataIndex: 'nullable', key: 'nullable', width: 90 },
+  { title: '字段名', dataIndex: 'name', key: 'name' },
+  { title: '类型', dataIndex: 'type', key: 'type'},
+  { title: '可为空', dataIndex: 'nullable', key: 'nullable' },
   { title: '默认值', dataIndex: 'defaultValue', key: 'defaultValue', width: 120 },
   { title: '键', dataIndex: 'columnKey', key: 'columnKey', width: 70 },
   { title: '额外', dataIndex: 'extra', key: 'extra', width: 110 },

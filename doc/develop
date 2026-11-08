@@ -603,14 +603,32 @@ WHERE r.role_key = 'admin';
 
 ## 十、实施记录（2026-11-08）
 
-已完成：
+已完成（含发版）：
 - 前端：`src/pages/system/database/DatabaseManage.vue`、`src/pages/system/api/ApiManage.vue`、`src/api/systemDatabase.js`、`src/api/systemApi.js`，路由已注册 `/system/database`、`/system/api`；`npm run build` 通过。
 - 后端：`auth-service` 的 controller / service / mapper / VO / DTO 与 `AdminApiDocMapper.xml`，`mvn -pl auth-service -am -DskipTests compile` 通过。
 - SQL：`e-commerce-boot/docs/sql/20261108_system_db_api.sql` 已在本地执行并校验（建表 2 张、菜单 850~857、超管授权 8 条）。
 - 生产库：执行前已备份 `/www/backup/e_commerce_db_2026-11-08_2041.sql`（2.4M，含 Dump completed 校验）；同一份 SQL 已在生产执行并校验，结果与本地一致。
 - 生产 compose 已补 `auth-service` 的 `./backup/db:/data/backup/db` 挂载与 `DB_BACKUP_DIR`、`GATEWAY_URL`，服务器旧文件备份为 `docker-compose.yml.bak-20261108-2045`。
+- auth-service 已发布：`ccr.ccs.tencentyun.com/jiemi-ecommerce/auth-service:20261108-30bd176`，容器 running；运行时挂载与 `DB_BACKUP_DIR`、`GATEWAY_URL`、`SPRINGDOC_ENABLED` 均已确认。
+- 前端已发布到 `/www/wwwroot/jiemids.com`（自动快照备份在 `/www/backup/web`），`ApiManage`、`DatabaseManage` 产物公网 200。
 
-待办（需发版后生效）：
-- 发布 auth-service 镜像，使新接口在生产可用；发布前端使菜单页面可见。
-- 生产 `.env` 当前 `SPRINGDOC_ENABLED=false`，接口同步会因拿不到 OpenAPI 而失败。若要启用同步，需在受控环境打开网关与各服务的 springdoc，或仅允许 auth-service 内网访问文档端点。
+待办：
 - 生产联调：数据库列表/字段/备份/下载/删除/优化；接口同步/树/详情/编辑；无权限账号 403。
+- 生产 `.env` 已置 `SPRINGDOC_ENABLED=true` 并重启 7 个 Java 服务；`api.jiemids.com` 的 Nginx 已拒绝 `/v3/api-docs`、`/swagger-ui`、`/webjars` 及各 `/*-service/` 文档路径，公网 404，Docker 内网经网关访问仍为 200。
+
+---
+
+## 十一、架构调整：monitor-service → system-service（2026-11-08）
+
+拆分原则：`auth-service` 只保留登录认证（登录/退出/验证码/当前用户信息/jwt）；后台「系统管理 + 系统监控」统一由 `system-service` 承载。
+
+- 目录/模块：`monitor-service` 改名为 `system-service`，包名 `ecommerce.monitor` → `ecommerce.system`，artifactId 与 Nacos 服务名均为 `system-service`，端口沿用 `9008`。
+- 迁移内容：用户、角色、菜单、登录日志、操作日志、日志清理/导出、数据库管理、接口管理全部从 `auth-service` 迁入 `system-service`；监控侧 Cache/OnlineUser/Server/Task 控制器保留在同服务。`system-service` 补齐 mybatis、mapper XML、poi、spring-security-crypto 等依赖。
+- 网关：`/api/admin/system/**`、`/api/admin/monitor/**` 均指向 `lb://system-service`；`auth-service` 仅保留 `/api/login`、`/api/logout`、`/api/admin/info`、`/api/auth/captcha`；OpenAPI 聚合地址改为 `/system-service/v3/api-docs`。前端 API 路径与页面无需改动。
+- 部署：`deploy/docker-compose.yml`、`docker-compose.override.yml`、`release.sh` 服务名同步改名；生产已启动 `system-service` 并下线旧 `monitor-service` 容器；`system-service` 保留 docker.sock 与 `/data/backup/db` 持久卷。
+- 数据迁移：`docs/sql/20261108_rename_monitor_to_system.sql`
+  - `admin_monitor_task.logCleanup` 的 `task_group` 改为 `system-service`（否则手动执行找不到服务）；
+  - `admin_api_doc` 中 `monitor-service` 及 `auth-service` 下 `/api/admin/system%` 的历史文档改归 `system-service`，保留人工编辑字段；随后已触发一次 OpenAPI 同步，`missing=0`、无重复服务。
+  - 生产执行前备份：`/www/backup/e_commerce_db_20261108-214603.sql`（2.9M）。
+- 发布镜像：`auth-service` / `gateway` / `system-service` 均为 `ccr.ccs.tencentyun.com/jiemi-ecommerce/*:20261108-30bd176-dirty`。
+- 验证：本地整仓 `mvn -DskipTests compile` 通过；生产用超管权限令牌冒烟，用户/角色/菜单/日志/数据库/接口文档/监控 13 个端点全部 200；`/api/admin/info` 菜单树正常；公网 `/system-service/v3/api-docs` 为 404，内网为 200。

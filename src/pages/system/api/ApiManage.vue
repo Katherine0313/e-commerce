@@ -35,7 +35,7 @@
       <div class="tree-panel">
         <a-spin :spinning="treeLoading">
           <a-tree :tree-data="treeData" :expanded-keys="expandedKeys" :selected-keys="selectedKeys"
-                  block-node :selectable="false" @expand="handleExpand" @select="handleSelect">
+                  block-node @expand="handleExpand" @select="handleSelect">
             <template #title="{ title, dataRef }">
               <span class="node-title">
                 <template v-if="dataRef.method">
