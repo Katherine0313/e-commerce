@@ -134,8 +134,8 @@ let prefetchStarted = false;
 
 // 固定预填演示账号（开发和生产都回填）
 const accountForm = reactive({
-  username: 'saler123',
-  password: 'saler123',
+  username: 'operator',
+  password: 'operator123',
 });
 
 // 记住密码：有历史记录时优先回填（30 天过期）
