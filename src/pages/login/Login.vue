@@ -134,7 +134,7 @@ let prefetchStarted = false;
 
 // 固定预填演示账号（开发和生产都回填）
 const accountForm = reactive({
-  username: 'saler',
+  username: 'saler123',
   password: 'saler123',
 });
 
