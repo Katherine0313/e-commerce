@@ -14,6 +14,10 @@ export function setSkuAlert(skuId, data) {
   return axios.post(`/api/admin/stock/skus/${skuId}/alert`, data)
 }
 
+export function batchSetSkuAlert(data) {
+  return axios.post('/api/admin/stock/skus/alert/batch', data)
+}
+
 // ==================== 看板 ====================
 export function getDashboard() {
   return axios.get('/api/admin/stock/dashboard')
@@ -25,6 +29,14 @@ export function getLowStockSku(limit = 20) {
 
 export function getTrend(days = 30) {
   return axios.get('/api/admin/stock/dashboard/trend', { params: { days } })
+}
+
+export function getTypeDist(days = 30) {
+  return axios.get('/api/admin/stock/dashboard/type-dist', { params: { days } })
+}
+
+export function getSkuDist(limit = 15) {
+  return axios.get('/api/admin/stock/dashboard/sku-dist', { params: { limit } })
 }
 
 // ==================== 流水 ====================

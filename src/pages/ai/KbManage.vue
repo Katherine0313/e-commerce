@@ -29,10 +29,19 @@
           </a-button>
         </a-form-item>
       </a-form>
-      <a-button v-permission="'ai:chat:use'" type="primary" @click="openCreate">
-        <PlusOutlined />
-        新建条目
-      </a-button>
+      <div>
+        <a-button v-permission="'ai:chat:use'" style="margin-right: 8px" @click="downloadTemplate">
+          下载模板
+        </a-button>
+        <a-button v-permission="'ai:chat:use'" style="margin-right: 8px" @click="importVisible = true">
+          <UploadOutlined />
+          批量导入
+        </a-button>
+        <a-button v-permission="'ai:chat:use'" type="primary" @click="openCreate">
+          <PlusOutlined />
+          新建条目
+        </a-button>
+      </div>
     </div>
 
     <a-table :dataSource="list" :columns="columns" :pagination="pagination" row-key="id"
@@ -103,14 +112,57 @@
         </a-form-item>
       </a-form>
     </a-modal>
+
+    <!-- Excel 批量导入弹窗：默认 scope → 上传预检（不落库）→ 确认导入 -->
+    <a-modal v-model:visible="importVisible" title="批量导入知识库" :width="900" :footer="null">
+      <a-form layout="inline" style="margin-bottom: 12px">
+        <a-form-item label="默认 scope">
+          <a-radio-group v-model:value="importScope">
+            <a-radio-button value="客服">客服</a-radio-button>
+            <a-radio-button value="运营">运营</a-radio-button>
+          </a-radio-group>
+          <span class="unit">（Excel 里 scope 列留空的行归入此库；填了以单元格为准）</span>
+        </a-form-item>
+        <a-form-item>
+          <a-upload :show-upload-list="false" accept=".xlsx" :before-upload="pickImportFile">
+            <a-button type="primary" :loading="previewing">选择文件并预检</a-button>
+          </a-upload>
+        </a-form-item>
+      </a-form>
+
+      <template v-if="importPreview">
+        <a-alert style="margin-bottom: 12px" type="info" show-icon
+                 :message="`共 ${importPreview.summary.total} 行：新增 ${importPreview.summary.ok}，将更新 ${importPreview.summary.updated}，失败 ${importPreview.summary.failed}，重复跳过 ${importPreview.summary.duplicate}`" />
+        <a-table :dataSource="importPreview.rows" :columns="importColumns" row-key="row"
+                 size="small" :pagination="{ pageSize: 8, showTotal: (t) => `共 ${t} 行` }">
+          <template #bodyCell="{ column, record }">
+            <template v-if="column.key === 'result'">
+              <a-tag :color="{ ok: 'green', updated: 'blue', failed: 'red', duplicate: 'default' }[record.result]">
+                {{ { ok: '新增', updated: '将更新', failed: '失败', duplicate: '重复' }[record.result] }}
+              </a-tag>
+            </template>
+          </template>
+        </a-table>
+        <div style="text-align: right; margin-top: 12px">
+          <a-button style="margin-right: 8px" @click="importPreview = null">重新选择</a-button>
+          <a-button type="primary" :loading="importing"
+                    :disabled="!importPreview.summary.ok && !importPreview.summary.updated"
+                    @click="confirmImport">
+            确认导入（新增 {{ importPreview.summary.ok }} / 更新 {{ importPreview.summary.updated }}）
+          </a-button>
+        </div>
+      </template>
+      <a-empty v-else description="请先下载模板按格式填写，再选择文件预检" />
+    </a-modal>
   </div>
 </template>
 
 <script setup>
 import { ref, reactive, onMounted } from 'vue'
 import { message } from 'ant-design-vue'
-import { SearchOutlined, PlusOutlined } from '@ant-design/icons-vue'
-import { listKb, listKbCategories, createKb, updateKb, deleteKb } from '@/api/ai'
+import { SearchOutlined, PlusOutlined, UploadOutlined } from '@ant-design/icons-vue'
+import { listKb, listKbCategories, createKb, updateKb, deleteKb,
+         downloadKbTemplate, previewKbImport, confirmKbImport } from '@/api/ai'
 
 const loading = ref(false)
 const list = ref([])
@@ -141,21 +193,21 @@ const statusOptions = [
 const categoryOptions = ref([])
 
 const columns = [
-  { title: 'ID', dataIndex: 'id', key: 'id', width: 70 },
-  { title: '问题', dataIndex: 'question', key: 'question', width: 220, ellipsis: true },
-  { title: '答案', dataIndex: 'answer', key: 'answer', ellipsis: true },
-  { title: '分类', dataIndex: 'category', key: 'category', width: 110 },
-  { title: '范围', dataIndex: 'scope', key: 'scope', width: 80 },
-  { title: '优先级', dataIndex: 'priority', key: 'priority', width: 80 },
-  { title: '命中', dataIndex: 'hitCount', key: 'hitCount', width: 70 },
-  { title: '状态', dataIndex: 'status', key: 'status', width: 80 },
-  { title: '更新时间', dataIndex: 'updatedAt', key: 'updatedAt', width: 160 },
-  { title: '操作', key: 'action', width: 140, fixed: 'right' },
+  { title: 'ID', dataIndex: 'id', key: 'id' },
+  { title: '问题', dataIndex: 'question', key: 'question' },
+  { title: '答案', dataIndex: 'answer', key: 'answer' },
+  { title: '分类', dataIndex: 'category', key: 'category' },
+  { title: '范围', dataIndex: 'scope', key: 'scope' },
+  { title: '优先级', dataIndex: 'priority', key: 'priority'},
+  { title: '命中', dataIndex: 'hitCount', key: 'hitCount' },
+  { title: '状态', dataIndex: 'status', key: 'status' },
+  { title: '更新时间', dataIndex: 'updatedAt', key: 'updatedAt' },
+  { title: '操作', key: 'action', width: 140},
 ]
 
 async function loadCategories() {
-  const { data } = await listKbCategories(query.scope || undefined)
-  categoryOptions.value = (data || []).map((c) => ({ value: c, label: c }))
+  const res = await listKbCategories(query.scope || undefined)
+  categoryOptions.value = (res.data.data || []).map((c) => ({ value: c, label: c }))
 }
 
 async function loadList() {
@@ -166,7 +218,8 @@ async function loadList() {
     if (!params.category) delete params.category
     if (params.status === undefined || params.status === null) delete params.status
     if (!params.keyword) delete params.keyword
-    const { data } = await listKb(params)
+    const res = await listKb(params)
+    const data = res.data.data
     list.value = data.list || []
     pagination.total = data.total || 0
     pagination.current = data.page || 1
@@ -270,6 +323,73 @@ async function handleDelete(record) {
   await deleteKb(record.id)
   message.success('已删除')
   loadList()
+}
+
+// ---- Excel 批量导入 ----
+const importVisible = ref(false)
+const importScope = ref('客服')
+const importPreview = ref(null)
+const previewing = ref(false)
+const importing = ref(false)
+
+const importColumns = [
+  { title: '行号', dataIndex: 'row', key: 'row', width: 70 },
+  { title: 'scope', dataIndex: 'scope', key: 'scope', width: 80 },
+  { title: '分类', dataIndex: 'category', key: 'category', width: 120 },
+  { title: '问题', dataIndex: 'question', key: 'question', ellipsis: true },
+  { title: '结果', key: 'result', width: 90 },
+  { title: '原因', dataIndex: 'reason', key: 'reason', ellipsis: true },
+]
+
+function downloadTemplate() {
+  downloadKbTemplate()
+      .then(async (res) => {
+        // 后端校验失败时返回的是 JSON 错误体（blob 包装），按类型分流
+        if (res.data.type && res.data.type.includes('application/json')) {
+          const err = JSON.parse(await res.data.text())
+          message.error(err.message || '模板下载失败')
+          return
+        }
+        const link = document.createElement('a')
+        link.href = URL.createObjectURL(res.data)
+        link.download = 'kb_import_template.xlsx'
+        link.click()
+        URL.revokeObjectURL(link.href)
+      })
+      .catch(() => {})
+}
+
+function pickImportFile(file) {
+  const name = (file.name || '').toLowerCase()
+  // 强校验：只放行 .xlsx（后端用 openpyxl 解析，不支持 .xls 旧格式）
+  if (!name.endsWith('.xlsx')) {
+    message.error('仅支持 .xlsx 格式的 Excel 文件，不能上传 PHP、JSP 或其他格式')
+    return false
+  }
+  previewing.value = true
+  previewKbImport(file, importScope.value)
+      .then((res) => {
+        importPreview.value = res.data?.data || null
+      })
+      .catch(() => {})
+      .finally(() => { previewing.value = false })
+  return false // 阻止 antd 自动上传，文件已手动发给 preview 接口
+}
+
+function confirmImport() {
+  if (!importPreview.value?.importFileId) return
+  importing.value = true
+  confirmKbImport(importPreview.value.importFileId)
+      .then((res) => {
+        const d = res.data?.data || {}
+        message.success(`导入完成：新增 ${d.inserted ?? 0}，更新 ${d.updated ?? 0}，失败 ${d.failed ?? 0}，重复跳过 ${d.duplicate ?? 0}`)
+        importVisible.value = false
+        importPreview.value = null
+        loadCategories()
+        loadList()
+      })
+      .catch(() => {})
+      .finally(() => { importing.value = false })
 }
 
 onMounted(() => {

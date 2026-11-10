@@ -27,6 +27,15 @@ const props = defineProps({
 })
 const emit = defineEmits(['update:modelValue'])
 
+// 暴露给父组件：AI 生成详情文案/详情图时原地插入（不离开添加商品页）
+defineExpose({
+  insertHtml: (html) => {
+    if (editorRef.value && html) {
+      editorRef.value.dangerouslyInsertHtml(html)
+    }
+  }
+})
+
 const editorRef = shallowRef(null)
 
 const toolbarConfig = {

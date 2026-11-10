@@ -27,7 +27,7 @@
           <a-input v-model:value="addGoodsForm.subTitle" placeholder="请输入商品副标题" />
         </a-form-item>
         <a-form-item label="主标题">
-          <a-textarea v-model:value="addGoodsForm.title" show-count maxLength="300" />
+          <a-textarea v-model:value="addGoodsForm.title" show-count maxLength="30" />
         </a-form-item>
         <a-form-item label="商品图片">
           <a-upload
@@ -227,6 +227,13 @@ const handleSubmit = () => {
   // 1. 先校验父组件表单
   addGoodsFormRef.value.validate()
       .then(() => {
+        // 纯图详情提醒：body 去掉 HTML 标签后纯文字不足 30 字时警告（不拦截提交），
+        // AI 知识库/检索读的是纯文字，纯图详情对 AI 等于没有详情
+        const bodyText = String(addGoodsForm.value.body || '')
+            .replace(/<[^>]+>/g, '').replace(/&nbsp;/gi, '').trim()
+        if (bodyText.length < 30) {
+          message.warning('商品详情纯文字不足 30 字（纯图详情），AI 与检索将读不到详情内容', 5)
+        }
         const path = addGoodsForm.value.categoryId || []
         const goodsData = {
           ...addGoodsForm.value,

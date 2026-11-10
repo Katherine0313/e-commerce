@@ -139,8 +139,35 @@ export function deleteKb(id) {
 }
 
 // 生成商品文案（非流式；LLM 生成耗时长，单独放宽超时）
+// data 二选一：{ productId, scene, requirement? } 或 { product: {name, ...}, scene, requirement? }（新增商品内联模式）
 export function generateCopy(data) {
   return axios.post('/api/admin/ai/copy/generate', data, { timeout: 120000 })
+}
+
+// 把 AI 生成结果回填到已有商品（白名单：name/subTitle/title/description/image）
+export function applyCopy(data) {
+  return axios.post('/api/admin/ai/copy/apply', data, { timeout: 30000 })
+}
+
+// AI 生图（主图/详情图/海报/Banner；生图耗时长，单独放宽超时）
+export function generateImage(data) {
+  return axios.post('/api/admin/ai/image/generate', data, { timeout: 180000 })
+}
+
+// 知识库 Excel 批量导入：模板下载（blob）/ 预检 / 确认
+export function downloadKbTemplate() {
+  return axios.get('/api/admin/ai/kb/import/template', { responseType: 'blob', timeout: 30000 })
+}
+
+export function previewKbImport(file, scope) {
+  const form = new FormData()
+  form.append('file', file)
+  form.append('scope', scope)
+  return axios.post('/api/admin/ai/kb/import/preview', form, { timeout: 60000 })
+}
+
+export function confirmKbImport(importFileId) {
+  return axios.post('/api/admin/ai/kb/import/confirm', { importFileId }, { timeout: 60000 })
 }
 
 // ==================== 人工客服（后台工作台） ====================

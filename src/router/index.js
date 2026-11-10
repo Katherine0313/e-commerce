@@ -375,69 +375,100 @@ const routes = [
             cacheable: true,
         },
         children: [
+            // 分组节点只用于侧边栏归组，不承载页面；子页用绝对路径，保证 URL 与 admin_menu.path 不变
             {
-                path: 'users',
-                name: 'SystemUsers',
+                path: 'permission',
+                name: 'SystemPermission',
                 meta: {
-                    title: '管理员账号',
-                    permission: 'system:user:list',
+                    title: '权限管理',
+                    icon: 'SafetyCertificateOutlined',
                 },
-                component: () => import('@/pages/system/users/UserList.vue'),
+                children: [
+                    {
+                        path: '/system/users',
+                        name: 'SystemUsers',
+                        meta: {
+                            title: '管理员账号',
+                            permission: 'system:user:list',
+                        },
+                        component: () => import('@/pages/system/users/UserList.vue'),
+                    },
+                    {
+                        path: '/system/roles',
+                        name: 'SystemRoles',
+                        meta: {
+                            title: '角色管理',
+                            permission: 'system:role:list',
+                        },
+                        component: () => import('@/pages/system/roles/RoleList.vue'),
+                    },
+                    {
+                        path: '/system/menus',
+                        name: 'SystemMenus',
+                        meta: {
+                            title: '菜单管理',
+                            permission: 'system:menu:list',
+                        },
+                        component: () => import('@/pages/system/menus/MenuList.vue'),
+                    }
+                ]
             },
             {
-                path: 'roles',
-                name: 'SystemRoles',
+                path: 'log',
+                name: 'SystemLog',
                 meta: {
-                    title: '角色管理',
-                    permission: 'system:role:list',
+                    title: '日志管理',
+                    icon: 'FileTextOutlined',
                 },
-                component: () => import('@/pages/system/roles/RoleList.vue'),
+                children: [
+                    // 路径与 admin_menu.path 保持一致（/system/logs、/system/logs/login）
+                    {
+                        path: '/system/logs',
+                        name: 'SystemLogs',
+                        meta: {
+                            title: '操作日志',
+                            permission: 'system:log:list',
+                        },
+                        component: () => import('@/pages/system/logs/OperationLogList.vue'),
+                    },
+                    {
+                        path: '/system/logs/login',
+                        name: 'SystemLoginLogs',
+                        meta: {
+                            title: '登录日志',
+                            permission: 'system:log:login:list',
+                        },
+                        component: () => import('@/pages/system/logs/LoginLogList.vue'),
+                    }
+                ]
             },
             {
-                path: 'menus',
-                name: 'SystemMenus',
+                path: 'develop',
+                name: 'SystemDevelop',
                 meta: {
-                    title: '菜单管理',
-                    permission: 'system:menu:list',
+                    title: '开发管理',
+                    icon: 'ToolOutlined',
                 },
-                component: () => import('@/pages/system/menus/MenuList.vue'),
-            },
-            // 路径与 admin_menu.path 保持一致（/system/logs、/system/logs/login）
-            {
-                path: 'logs',
-                name: 'SystemLogs',
-                meta: {
-                    title: '操作日志',
-                    permission: 'system:log:list',
-                },
-                component: () => import('@/pages/system/logs/OperationLogList.vue'),
-            },
-            {
-                path: 'logs/login',
-                name: 'SystemLoginLogs',
-                meta: {
-                    title: '登录日志',
-                    permission: 'system:log:login:list',
-                },
-                component: () => import('@/pages/system/logs/LoginLogList.vue'),
-            },
-            {
-                path: 'database',
-                name: 'SystemDatabase',
-                meta: {
-                    title: '数据库管理',
-                    permission: 'system:db:list',
-                },
-                component: () => import('@/pages/system/database/DatabaseManage.vue'),
-            },
-            {
-                path: 'api',
-                name: 'SystemApiDocs',
-                meta: {
-                    title: '接口管理',
-                    permission: 'system:api:list',
-                },
-                component: () => import('@/pages/system/api/ApiManage.vue'),
+                children: [
+                    {
+                        path: '/system/database',
+                        name: 'SystemDatabase',
+                        meta: {
+                            title: '数据库管理',
+                            permission: 'system:db:list',
+                        },
+                        component: () => import('@/pages/system/database/DatabaseManage.vue'),
+                    },
+                    {
+                        path: '/system/api',
+                        name: 'SystemApiDocs',
+                        meta: {
+                            title: '接口管理',
+                            permission: 'system:api:list',
+                        },
+                        component: () => import('@/pages/system/api/ApiManage.vue'),
+                    }
+                ]
             }
         ]
     },

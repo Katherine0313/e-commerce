@@ -14,3 +14,8 @@ export function logout() {
 export function getCaptcha() {
   return axios.get('/api/auth/captcha')
 }
+
+// 获取当前登录管理员信息（含 adminAvatar 头像字段）
+export function getAdminInfo() {
+  return axios.get('/api/admin/info')
+}

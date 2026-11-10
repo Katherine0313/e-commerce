@@ -29,10 +29,30 @@
           </a-select>
         </a-form-item>
         <a-form-item label="主标题">
-          <a-textarea v-model:value="addGoodsForm.title" show-count maxLength="100" />
+          <a-textarea v-model:value="addGoodsForm.title" show-count maxLength="30" />
         </a-form-item>
         <a-form-item label="商品副标题" name="subTitle">
           <a-input v-model:value="addGoodsForm.subTitle" placeholder="请输入商品副标题" />
+        </a-form-item>
+        <!-- AI 文案助手：内联模式（商品未入库也能用），生成结果一律先进预览区，逐项点「填入」才写表单 -->
+        <a-form-item label="AI 文案">
+          <a-space wrap>
+            <a-input v-model:value="aiSellingPoints" placeholder="卖点（选填，供 AI 参考）" style="width:200px" allow-clear />
+            <a-button size="small" :loading="aiGenerating === 'name'" @click="generateAiCopy('name')">名称</a-button>
+            <a-button size="small" :loading="aiGenerating === 'subTitle'" @click="generateAiCopy('subTitle')">副标题</a-button>
+            <a-button size="small" :loading="aiGenerating === 'title'" @click="generateAiCopy('title')">主标题</a-button>
+            <a-button size="small" :loading="aiGenerating === 'description'" @click="generateAiCopy('description')">详情</a-button>
+            <a-button size="small" type="primary" ghost :loading="aiGenerating === 'all'" @click="generateAiCopy('all')">全部生成</a-button>
+          </a-space>
+        </a-form-item>
+        <a-form-item v-if="aiResults.length" label="生成预览">
+          <div class="ai-preview">
+            <div v-for="r in aiResults" :key="r.key" class="ai-preview-row">
+              <span class="ai-preview-label">{{ r.label }}</span>
+              <span class="ai-preview-value">{{ r.value }}</span>
+              <a-button size="small" type="link" @click="fillField(r)">填入</a-button>
+            </div>
+          </div>
         </a-form-item>
         <a-form-item label="商品图片">
           <a-upload
@@ -47,9 +67,14 @@
               点击上传
             </a-button>
           </a-upload>
+          <a-button type="link" size="small" @click="openImageModal('main')">AI 生成主图</a-button>
         </a-form-item>
         <a-form-item label="商品详情">
-          <Editor v-model="addGoodsForm.body" />
+          <template #label>
+            商品详情
+            <a-button type="link" size="small" style="padding:0 4px" @click="openImageModal('detail')">AI 详情图</a-button>
+          </template>
+          <Editor ref="editorRef" v-model="addGoodsForm.body" />
         </a-form-item>
       </a-form>
       <div class="step-actions">
@@ -72,6 +97,26 @@
         <a-button type="primary" @click="handleSubmit">提交商品</a-button>
       </div>
     </template>
+
+    <!-- AI 生图弹窗：主图/详情图共用，原地生成原地用，不离开本页 -->
+    <a-modal v-model:visible="imgModal.open" :title="imgModal.target === 'main' ? 'AI 生成主图' : 'AI 生成详情图'"
+             :footer="null" width="640px">
+      <a-textarea v-model:value="imgModal.prompt" :rows="3"
+                  placeholder="画面描述（选填，默认按商品名称 + 卖点生成）" allow-clear />
+      <div class="ai-img-toolbar">
+        <a-radio-group v-model:value="imgModal.model">
+          <a-radio-button value="">默认（Kolors）</a-radio-button>
+          <a-radio-button value="fast">快速（FLUX）</a-radio-button>
+        </a-radio-group>
+        <a-button type="primary" :loading="imgModal.loading" @click="generateAiImage">生成</a-button>
+      </div>
+      <div v-if="imgModal.images.length" class="ai-img-grid">
+        <div v-for="(img, i) in imgModal.images" :key="i" class="ai-img-item">
+          <img :src="imageHost + img.url" alt="AI 生成图" />
+          <a-button size="small" type="primary" block style="margin-top:8px" @click="adoptImage(img.url)">使用这张图</a-button>
+        </div>
+      </div>
+    </a-modal>
   </div>
 </template>
 <script setup>
@@ -88,6 +133,9 @@ import SkuEditor from './SkuEditor.vue'
 import {getToken} from '@/utils/token'
 import {compressImage} from '@/utils/compressImage'
 import {getImageSpec} from '@/utils/image-spec'
+import {generateCopy, generateImage} from '@/api/ai.js'
+
+const imageHost = import.meta.env.VITE_API_BASE_URL
 
 
 const data = ref([])
@@ -229,6 +277,13 @@ const handleSubmit = () => {
   // 1. 校验主表单
   addGoodsFormRef.value.validate()
       .then(() => {
+        // 纯图详情提醒：body 去掉 HTML 标签后纯文字不足 30 字时警告（不拦截提交），
+        // AI 知识库/检索读的是纯文字，纯图详情对 AI 等于没有详情
+        const bodyText = String(addGoodsForm.value.body || '')
+            .replace(/<[^>]+>/g, '').replace(/&nbsp;/gi, '').trim()
+        if (bodyText.length < 30) {
+          message.warning('商品详情纯文字不足 30 字（纯图详情），AI 与检索将读不到详情内容', 5)
+        }
         // 2. 级联框的值是路径数组(如[1,101])，后端需要单个 number，取最后一级 id
         const path = addGoodsForm.value.categoryId || []
         const goodsData = {
@@ -311,6 +366,110 @@ const addGoodsRules = {
     {required: true, message: '商品副标题不能为空', trigger: 'blur'}
   ]
 }
+// ====================== AI 文案 / 生图 =====================
+// Editor 组件实例（暴露 insertHtml，详情文案/详情图原地插入）
+const editorRef = ref(null)
+const aiSellingPoints = ref('')
+const aiGenerating = ref('')
+const aiResults = ref([])
+const AI_FIELD_DEFS = [
+  {key: 'name', label: '名称'},
+  {key: 'subTitle', label: '副标题'},
+  {key: 'title', label: '主标题'},
+  {key: 'description', label: '详情'},
+]
+
+// 当前选中分类的叶子节点名称（供 AI 参考分类语境）
+const currentCategoryName = () => {
+  const path = addGoodsForm.value.categoryId || []
+  const node = path.length ? findCategoryNode(categoryTree.value, path[path.length - 1]) : null
+  return node?.name || ''
+}
+
+// 内联模式调 /copy/generate：商品未入库，不带 productId
+const generateAiCopy = (scene) => {
+  if (!addGoodsForm.value.name?.trim()) {
+    message.warning('请先填写商品名称（大致名称即可），AI 以此为依据生成')
+    return
+  }
+  aiGenerating.value = scene
+  generateCopy({
+    product: {
+      name: addGoodsForm.value.name.trim(),
+      categoryName: currentCategoryName(),
+      subTitle: addGoodsForm.value.subTitle,
+      sellingPoints: aiSellingPoints.value,
+    },
+    scene,
+  })
+      .then(res => {
+        const fields = res.data?.data?.fields || {}
+        aiResults.value = AI_FIELD_DEFS
+            .filter(f => fields[f.key])
+            .map(f => ({...f, value: fields[f.key]}))
+        if (!aiResults.value.length) {
+          message.warning('生成结果为空，请重试')
+        }
+      })
+      .catch(() => {})
+      .finally(() => { aiGenerating.value = '' })
+}
+
+const escapeHtml = (s) => String(s)
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;')
+
+// 逐项「填入」：文本字段直接赋值；详情追加进富文本（不覆盖已有内容）
+const fillField = (r) => {
+  if (r.key === 'description') {
+    const html = r.value.split(/\n+/).filter(Boolean)
+        .map(p => `<p>${escapeHtml(p)}</p>`).join('')
+    editorRef.value?.insertHtml(html)
+  } else {
+    addGoodsForm.value[r.key] = r.value
+  }
+  aiResults.value = aiResults.value.filter(item => item.key !== r.key)
+  message.success(`${r.label}已填入`)
+}
+
+// AI 生图弹窗状态：target=main 设主图 / detail 插详情
+const imgModal = ref({open: false, target: 'main', prompt: '', model: '', loading: false, images: []})
+
+const openImageModal = (target) => {
+  imgModal.value = {open: true, target, prompt: '', model: '', loading: false, images: []}
+}
+
+const generateAiImage = () => {
+  imgModal.value.loading = true
+  generateImage({
+    prompt: imgModal.value.prompt,
+    scene: imgModal.value.target,
+    model: imgModal.value.model || undefined,
+    count: 1,
+    product: addGoodsForm.value.name?.trim()
+        ? {name: addGoodsForm.value.name.trim(), sellingPoints: aiSellingPoints.value}
+        : undefined,
+  })
+      .then(res => {
+        imgModal.value.images = res.data?.data?.images || []
+        if (!imgModal.value.images.length) {
+          message.warning('未生成图片，请调整描述后重试')
+        }
+      })
+      .catch(() => {})
+      .finally(() => { imgModal.value.loading = false })
+}
+
+// 采用生成图：主图写表单 + 回显缩略图；详情图原地插入富文本（相对 url，与上传图口径一致）
+const adoptImage = (url) => {
+  if (imgModal.value.target === 'main') {
+    addGoodsForm.value.image = url
+    fileList.value = [{uid: '-1', name: 'AI 主图', status: 'done', url: imageHost + url}]
+  } else {
+    editorRef.value?.insertHtml(`<img src="${url}" style="max-width:100%" alt="详情图"/>`)
+  }
+  imgModal.value.open = false
+  message.success('已使用 AI 生成图')
+}
 // ====================== 图片上传 =====================
 const imageUpload = (info) => {
   if (info.file.status === 'done') {
@@ -355,6 +514,58 @@ const uploadHeaders = {
   padding-top: 16px;
   border-top: 1px dashed #f0f0f0;
   justify-content: center;
+}
+
+/* AI 文案预览区 */
+.ai-preview {
+  width: 100%;
+  border: 1px dashed #d9d9d9;
+  border-radius: 6px;
+  padding: 8px 12px;
+  background: #fafafa;
+}
+.ai-preview-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 6px 0;
+}
+.ai-preview-row + .ai-preview-row {
+  border-top: 1px solid #f0f0f0;
+}
+.ai-preview-label {
+  flex: none;
+  width: 48px;
+  color: #8c8c8c;
+  font-size: 12px;
+  line-height: 22px;
+}
+.ai-preview-value {
+  flex: 1;
+  min-width: 0;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+/* AI 生图弹窗 */
+.ai-img-toolbar {
+  margin: 12px 0;
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+.ai-img-grid {
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+.ai-img-item {
+  width: 240px;
+}
+.ai-img-item img {
+  width: 100%;
+  border-radius: 4px;
+  display: block;
 }
 
 /*卡片标题样式*/

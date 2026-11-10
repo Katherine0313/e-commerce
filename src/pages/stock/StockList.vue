@@ -12,6 +12,15 @@
       />
       <span class="filter-label">仅低库存</span>
       <a-switch v-model:checked="lowStockOnly" @change="onSearch" />
+      <span style="flex: 1"></span>
+      <a-button
+          v-permission="'product:sku-stock:list'"
+          type="primary"
+          :disabled="selectedRowKeys.length === 0"
+          @click="openBatchAlertModal"
+      >
+        批量设阈值（已选 {{ selectedRowKeys.length }} 条）
+      </a-button>
     </div>
 
     <!-- 主表格 -->
@@ -20,6 +29,7 @@
         :loading="loading"
         :pagination="pagination"
         :rowKey="(r) => r.id"
+        :rowSelection="rowSelection"
         @change="onTableChange"
         bordered
     >
@@ -58,12 +68,12 @@
       <a-table-column title="操作">
         <template #default="{ record }">
           <a-button type="primary" size="small" @click="openEditModal(record)">编辑</a-button>
-          <a-button type="link" size="small" @click="openAlertModal(record)">设阈值</a-button>
+          <a-button v-permission="'product:sku-stock:list'" type="link" size="small" @click="openAlertModal(record)">设阈值</a-button>
         </template>
       </a-table-column>
     </a-table>
 
-    <!-- 设阈值弹窗 -->
+    <!-- 单条设阈值弹窗 -->
     <a-modal
         v-model:visible="alertVisible"
         title="设置库存安全阈值"
@@ -86,6 +96,27 @@
         </a-form-item>
         <a-form-item label="上限（高于此值预警）">
           <a-input-number v-model:value="alertForm.maxStock" :min="0" placeholder="未设置" />
+        </a-form-item>
+      </a-form>
+    </a-modal>
+
+    <!-- 批量设阈值弹窗 -->
+    <a-modal
+        v-model:visible="batchAlertVisible"
+        title="批量设置 SKU 预警阈值"
+        :confirm-loading="batchAlertSubmitting"
+        @ok="submitBatchAlert"
+    >
+      <div style="margin-bottom: 16px; color: #595959; background: #fafafa; padding: 10px 12px; border-radius: 4px">
+        将对 <b style="color: #1890ff">{{ selectedRowKeys.length }}</b> 条选中的 SKU 生效。
+        留空表示不修改该阈值。
+      </div>
+      <a-form layout="inline">
+        <a-form-item label="下限（低于此值预警）">
+          <a-input-number v-model:value="batchAlertForm.minStock" :min="0" placeholder="留空不修改" />
+        </a-form-item>
+        <a-form-item label="上限（高于此值预警）">
+          <a-input-number v-model:value="batchAlertForm.maxStock" :min="0" placeholder="留空不修改" />
         </a-form-item>
       </a-form>
     </a-modal>
@@ -126,7 +157,7 @@
 
 <script setup>
 import { ref, reactive, onMounted } from 'vue'
-import { getSkuStockList, setSkuAlert, createStockOrder } from '@/api/stock.js'
+import { getSkuStockList, setSkuAlert, batchSetSkuAlert, createStockOrder } from '@/api/stock.js'
 import { formatSpec, skuStatus } from '@/utils/stock.js'
 import { message } from 'ant-design-vue'
 
@@ -142,6 +173,14 @@ const pagination = reactive({
   showSizeChanger: true,
   showQuickJumper: true,
   showTotal: (t) => `共 ${t} 条`,
+})
+
+// 多选状态
+const selectedRowKeys = ref([])
+const rowSelection = reactive({
+  selectedRowKeys,
+  onChange: (keys) => { selectedRowKeys.value = keys },
+  preserveSelectedRowKeys: true,  // 翻页保留选中
 })
 
 const loadList = () => {
@@ -169,6 +208,7 @@ const loadList = () => {
 
 const onSearch = () => {
   pagination.current = 1
+  selectedRowKeys.value = []
   loadList()
 }
 
@@ -178,7 +218,7 @@ const onTableChange = (pag) => {
   loadList()
 }
 
-// ============== 设阈值弹窗 ==============
+// ============== 单条设阈值弹窗 ==============
 const alertVisible = ref(false)
 const alertSubmitting = ref(false)
 const alertRecord = ref(null)
@@ -213,6 +253,46 @@ const submitAlert = () => {
       })
 }
 
+// ============== 批量设阈值弹窗 ==============
+const batchAlertVisible = ref(false)
+const batchAlertSubmitting = ref(false)
+const batchAlertForm = reactive({ minStock: null, maxStock: null })
+
+const openBatchAlertModal = () => {
+  batchAlertForm.minStock = null
+  batchAlertForm.maxStock = null
+  batchAlertVisible.value = true
+}
+
+const submitBatchAlert = () => {
+  const { minStock, maxStock } = batchAlertForm
+  if (minStock != null && maxStock != null && minStock >= maxStock) {
+    message.warning('下限必须小于上限')
+    return
+  }
+  if (minStock == null && maxStock == null) {
+    message.warning('至少填一个阈值')
+    return
+  }
+  batchAlertSubmitting.value = true
+  batchSetSkuAlert({
+    skuIds: selectedRowKeys.value,
+    minStock,
+    maxStock,
+  })
+      .then(res => {
+        const updated = res.data?.data ?? 0
+        message.success(`已更新 ${updated} 条 SKU 预警阈值`)
+        batchAlertVisible.value = false
+        selectedRowKeys.value = []
+        loadList()
+      })
+      .catch(() => {})
+      .finally(() => {
+        batchAlertSubmitting.value = false
+      })
+}
+
 // ============== 编辑库存弹窗 ==============
 const editVisible = ref(false)
 const editSubmitting = ref(false)
@@ -231,7 +311,6 @@ const submitEdit = () => {
   const diff = editForm.newStock - (editRecord.value.stock ?? 0)
   if (diff === 0) { message.info('与当前库存一致，无需调整'); return }
   editSubmitting.value = true
-  // 走调整单接口：后台自动生成 PD 单 + 库存流水，留痕可查
   createStockOrder({
     type: 'ADJUST',
     bizType: editForm.reason === '盘点调整' ? 'ADJUST' : 'MANUAL',

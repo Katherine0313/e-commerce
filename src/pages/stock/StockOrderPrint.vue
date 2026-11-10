@@ -41,7 +41,7 @@
       </tfoot>
     </table>
     <div class="p-sign">
-      <div>制单人：____________</div>
+      <div>制单人：{{ order.operatorName || '____________' }}</div>
       <div>仓管员：____________</div>
       <div>财务复核：____________</div>
     </div>

@@ -41,7 +41,25 @@
 
       <!-- 消息列表 -->
       <div class="message-list" ref="messageListRef">
-        <a-empty v-if="!messages.length && !messagesLoading" description="开始新的对话吧" style="margin-top: 80px" />
+        <!-- 固定欢迎语 + 快捷提问：进入页面即有 AI 存在感，不用先发消息 -->
+        <div v-if="!messages.length && !messagesLoading" class="welcome">
+          <img class="welcome-avatar" :src="aiAvatar" alt="AI 助手" />
+          <div class="welcome-body">
+            <p class="welcome-text">您好，我是电商 AI 助手，可以帮您查订单、写文案、推荐商品。</p>
+            <div class="welcome-chips">
+              <button
+                  v-for="q in QUICK_QUESTIONS"
+                  :key="q"
+                  type="button"
+                  class="welcome-chip"
+                  :disabled="sending"
+                  @click="quickAsk(q)"
+              >
+                {{ q }}
+              </button>
+            </div>
+          </div>
+        </div>
         <a-spin v-if="messagesLoading" style="width: 100%; margin-top: 80px" />
         <div
             v-for="(m, i) in messages"
@@ -83,6 +101,13 @@
               </div>
             </div>
           </div>
+          <!-- 用户头像：气泡右侧 -->
+          <img
+              v-if="m.type === 'user'"
+              class="message-avatar message-avatar-user"
+              :src="userAvatar"
+              alt="我"
+          />
         </div>
       </div>
 
@@ -115,9 +140,24 @@ import { useRouter } from 'vue-router'
 import { message } from 'ant-design-vue'
 import { PlusOutlined, DeleteOutlined } from '@ant-design/icons-vue'
 import { chatStream, listConversations, getMessages, deleteConversation, listRoles } from '@/api/ai.js'
+import { getAdminInfo } from '@/api/auth.js'
 import aiAvatar from '@/assets/ai-avatar.webp'
+import defaultAvatar from '@/assets/avatar/zongjie.webp'
 
 const router = useRouter()
+
+// ====================== 当前用户头像 ======================
+const userAvatar = ref(defaultAvatar)
+loadUserAvatar()
+
+function loadUserAvatar() {
+  getAdminInfo()
+      .then(res => {
+        const avatar = res.data?.data?.adminAvatar
+        if (avatar) userAvatar.value = avatar
+      })
+      .catch(() => { /* 拉取失败用默认头像 */ })
+}
 
 // ====================== 会话列表 ======================
 const conversations = ref([])
@@ -184,6 +224,16 @@ const loadRoles = () => {
 const messages = ref([])
 const messagesLoading = ref(false)
 const messageListRef = ref(null)
+
+// 欢迎区快捷提问：后台运营视角
+const QUICK_QUESTIONS = ['今天有哪些待发货订单', '帮我写一段商品副标题', '推荐几款热销商品']
+
+// 点快捷提问：直接以该文本发送
+const quickAsk = (text) => {
+  if (sending.value) return
+  input.value = text
+  send()
+}
 
 const loadMessages = (id) => {
   messagesLoading.value = true
@@ -443,14 +493,18 @@ onBeforeUnmount(() => {
   justify-content: flex-start;
 }
 .message-avatar {
-  width: 32px;
-  height: 32px;
+  width: 40px;
+  height: 40px;
   flex-shrink: 0;
   align-self: flex-start;
   margin-right: 8px;
   border-radius: 50%;
   object-fit: cover;
   overflow: hidden;
+}
+.message-avatar-user {
+  margin-right: 0;
+  margin-left: 8px;
 }
 .message-bubble {
   max-width: 75%;
@@ -526,6 +580,53 @@ onBeforeUnmount(() => {
 }
 @keyframes blink {
   50% { opacity: 0; }
+}
+
+/* 固定欢迎区 */
+.welcome {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  max-width: 560px;
+  padding: 0 8px;
+}
+.welcome-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  object-fit: cover;
+  flex-shrink: 0;
+}
+.welcome-text {
+  background: #f5f5f5;
+  border-radius: 8px;
+  padding: 10px 14px;
+  color: #262626;
+  margin: 0;
+}
+.welcome-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 12px;
+}
+.welcome-chip {
+  border: 1px solid #d9d9d9;
+  background: #fff;
+  border-radius: 999px;
+  padding: 4px 12px;
+  font-size: 13px;
+  color: #595959;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.welcome-chip:hover:not(:disabled) {
+  border-color: #1677ff;
+  color: #1677ff;
+}
+.welcome-chip:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
 }
 
 /* 商品卡片 */
