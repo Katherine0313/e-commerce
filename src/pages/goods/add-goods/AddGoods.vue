@@ -106,7 +106,7 @@
       <div class="ai-img-toolbar">
         <a-radio-group v-model:value="imgModal.model">
           <a-radio-button value="">默认（Kolors）</a-radio-button>
-          <a-radio-button value="fast">快速（FLUX）</a-radio-button>
+          <a-radio-button value="fast">快速</a-radio-button>
         </a-radio-group>
         <a-button type="primary" :loading="imgModal.loading" @click="generateAiImage">生成</a-button>
       </div>

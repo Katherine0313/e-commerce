@@ -60,3 +60,33 @@ export function getMonitorTaskLogs(id, params) {
 export function runMonitorTask(name) {
   return axios.post(`/api/admin/monitor/tasks/${name}/run`)
 }
+
+// ==================== 数据库监控 ====================
+
+export function getDatabaseOverview() {
+  return axios.get('/api/admin/monitor/database/overview')
+}
+
+export function getSlowSqls(params) {
+  return axios.get('/api/admin/monitor/database/slow-sqls', { params })
+}
+
+export function getSlowSqlTop(params) {
+  return axios.get('/api/admin/monitor/database/slow-sqls/top', { params })
+}
+
+export function getSlowSqlTrend(params) {
+  return axios.get('/api/admin/monitor/database/slow-sqls/trend', { params })
+}
+
+export function getTableSizes(params) {
+  return axios.get('/api/admin/monitor/database/tables', { params })
+}
+
+export function getDatabasePools() {
+  return axios.get('/api/admin/monitor/database/pools')
+}
+
+export function clearSlowSqls(params) {
+  return axios.delete('/api/admin/monitor/database/slow-sqls', { params })
+}

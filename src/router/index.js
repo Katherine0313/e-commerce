@@ -519,6 +519,15 @@ const routes = [
                     permission: 'monitor:task:list',
                 },
                 component: () => import('@/pages/monitor/task/TaskList.vue'),
+            },
+            {
+                path: 'database',
+                name: 'MonitorDatabase',
+                meta: {
+                    title: '数据库监控',
+                    permission: 'monitor:db:list',
+                },
+                component: () => import('@/pages/monitor/database/DatabaseMonitor.vue'),
             }
         ]
     },

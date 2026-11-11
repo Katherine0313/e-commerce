@@ -12,6 +12,7 @@
 <script setup>
 import {ref, shallowRef, watch, onBeforeUnmount} from 'vue'
 import {Editor, Toolbar} from '@wangeditor/editor-for-vue'
+import {SlateEditor} from '@wangeditor/editor'
 import '@wangeditor/editor/dist/css/style.css'
 import {message} from 'ant-design-vue'
 import axios from '@/api/request.js'
@@ -28,11 +29,16 @@ const props = defineProps({
 const emit = defineEmits(['update:modelValue'])
 
 // 暴露给父组件：AI 生成详情文案/详情图时原地插入（不离开添加商品页）
+// wangEditor 坑：编辑器从未被聚焦过时 selection 为 null，dangerouslyInsertHtml 会
+// 静默丢弃内容（不报错也不插入），表现为「点填入后结果消失」；先把光标定位到文末再插
 defineExpose({
   insertHtml: (html) => {
-    if (editorRef.value && html) {
-      editorRef.value.dangerouslyInsertHtml(html)
+    const e = editorRef.value
+    if (!e || !html) return
+    if (!e.selection) {
+      e.select(SlateEditor.end(e, []))
     }
+    e.dangerouslyInsertHtml(html)
   }
 })
 

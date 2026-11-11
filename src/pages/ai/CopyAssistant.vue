@@ -134,7 +134,7 @@
               <a-form-item label="模式">
                 <a-radio-group v-model:value="imgModel">
                   <a-radio-button value="">默认（Kolors）</a-radio-button>
-                  <a-radio-button value="fast">快速（FLUX）</a-radio-button>
+                  <a-radio-button value="fast">快速</a-radio-button>
                 </a-radio-group>
               </a-form-item>
               <a-form-item>
