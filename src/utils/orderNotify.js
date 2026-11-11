@@ -54,7 +54,7 @@ export function connectOrderNotify() {
     reconnectCount = 0
     reconnectDelay = 3000
     startHeartbeat()
-    // 重连成功补一次对账：断线期间漏掉的推送不会补弹窗，但工作台统计能立即刷新
+    // 重连成功补一次对账：断线期间漏掉的推送不会弹窗，但工作台统计能立即刷新
     if (wasReconnect) orderNotifyTick.value += 1
     console.log('来单提醒连接成功')
   }
