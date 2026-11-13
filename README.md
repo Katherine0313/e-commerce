@@ -2,7 +2,7 @@
 
 「杰米多多」电商的 **PC 端后台管理系统**。管理端使用 `/api/admin/**` 路径、JWT `type=admin`，与 C 端（`/api/**`、`type=user`）完全分开。
 
-后端主仓库是 [`e-commerce-boot`](https://github.com/Katherine0313/e-commerce-boot.git)（Java 微服务），线上地址 `https://www.jiemids.com`。
+线上地址 `https://www.jiemids.com`
 
 ## 仓库清单
 
