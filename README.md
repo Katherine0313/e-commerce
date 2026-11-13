@@ -4,6 +4,16 @@
 
 后端主仓库是 [`e-commerce-boot`](https://github.com/Katherine0313/e-commerce-boot.git)（Java 微服务），线上地址 `https://www.jiemids.com`。
 
+## 仓库清单
+
+| 仓库 | 内容 |
+|---|---|
+| [e-commerce-boot](https://github.com/Katherine0313/e-commerce-boot.git) | Java 后端微服务（核心） |
+| **[e-commerce](https://github.com/Katherine0313/e-commerce.git)** | **后台管理系统（Vue 3 + Ant Design Vue），本仓库** |
+| [ecommerce-mall](https://github.com/Katherine0313/ecommerce-mall.git) | PC 商城前端（Vue 3 + Vite） |
+| [e-commerce-uniapp](https://github.com/Katherine0313/e-commerce-uniapp.git) | 微信小程序（uni-app） |
+| [ecommerce-python](https://github.com/Katherine0313/ecommerce-python.git) | AI 客服服务（Python FastAPI + LangGraph + 知识库检索） |
+
 > 本项目原本是 Vue3 + Ant Design Vue 的通用中后台模板（配套 Node + SQLite 后端）。2026-10 起后端整体迁到 Spring Boot 微服务，前端逐模块对接到 `/api/admin/**`，模板自带的 Express/SQLite 相关内容已全部移除。
 
 ## 技术栈

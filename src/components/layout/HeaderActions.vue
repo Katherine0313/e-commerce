@@ -23,11 +23,11 @@
   <StepinHeaderAction class="header-action-daynight">
     <DayNightSwitch />
   </StepinHeaderAction>
-  <!-- GitHub 入口，仓库地址待补充 -->
+  <!-- GitHub 入口：项目仓库地址 -->
   <StepinHeaderAction class="header-action-github">
     <a
       class="action-item"
-      href="#"
+      href="https://github.com/Katherine0313/e-commerce"
       target="_blank"
       rel="noopener"
     >
