@@ -5,7 +5,18 @@
       <aside class="hs-sidebar">
         <div class="hs-sidebar-header">
           <span class="hs-title">人工客服</span>
-          <a-tag v-if="conversations.length" color="red">{{ conversations.length }} 待接待</a-tag>
+          <span class="hs-header-right">
+            <a-tag v-if="conversations.length" color="red">{{ conversations.length }} 待接待</a-tag>
+            <a-popconfirm
+                v-if="conversations.length"
+                :title="`将删除当前 ${conversations.length} 个会话及其聊天记录，且无法恢复，确定清空吗？`"
+                ok-text="清空"
+                cancel-text="取消"
+                @confirm="clearAllConversations"
+            >
+              <a-button size="small" type="text" danger v-permission="'ai:human:use'">清空</a-button>
+            </a-popconfirm>
+          </span>
         </div>
         <div class="hs-conversation-list">
           <a-empty
@@ -32,6 +43,14 @@
                 {{ c.lastMessage || '暂无消息' }}
               </div>
             </div>
+            <a-popconfirm
+                title="删除后该会话及其聊天记录将无法恢复，确定删除吗？"
+                ok-text="删除"
+                cancel-text="取消"
+                @confirm="removeConversation(c)"
+            >
+              <span class="hs-del" @click.stop v-permission="'ai:human:use'">删除</span>
+            </a-popconfirm>
           </div>
         </div>
       </aside>
@@ -116,6 +135,7 @@ import {
   getHumanMessages,
   replyHuman,
   closeHuman,
+  deleteHumanConversation,
 } from '@/api/ai.js'
 import defaultAvatar from '@/assets/avatar.png'
 
@@ -244,6 +264,37 @@ const closeConversation = () => {
       .catch(() => {})
 }
 
+// 删除单个会话（连同聊天记录）
+const removeConversation = (c) => {
+  deleteHumanConversation(c.id)
+      .then(() => {
+        message.success('已删除')
+        if (currentId.value === c.id) {
+          currentId.value = null
+          messages.value = []
+          humanMode.value = false
+          stopMessagePolling()
+        }
+        loadConversations()
+      })
+      .catch(() => {})
+}
+
+// 清空当前列表里的所有会话
+const clearAllConversations = () => {
+  const ids = conversations.value.map(c => c.id)
+  if (!ids.length) return
+  Promise.all(ids.map(id => deleteHumanConversation(id).catch(() => null)))
+      .then(() => {
+        message.success('已清空')
+        currentId.value = null
+        messages.value = []
+        humanMode.value = false
+        stopMessagePolling()
+        loadConversations()
+      })
+}
+
 onMounted(() => {
   loadConversations()
   listTimer = setInterval(loadConversations, 5000)
@@ -280,6 +331,25 @@ onBeforeUnmount(() => {
 .hs-title {
   font-weight: 600;
   color: #262626;
+}
+.hs-header-right {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+/* 会话项右侧的删除入口：默认淡出，鼠标移入才明显，避免误点 */
+.hs-del {
+  flex-shrink: 0;
+  align-self: center;
+  padding: 2px 6px;
+  font-size: 12px;
+  color: #bfbfbf;
+  cursor: pointer;
+  border-radius: 4px;
+}
+.hs-conversation:hover .hs-del {
+  color: #ff4d4f;
+  background: #fff1f0;
 }
 .hs-conversation-list {
   flex: 1;

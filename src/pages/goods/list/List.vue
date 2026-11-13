@@ -76,7 +76,7 @@ const search = ref('')
 // 分页状态（后端真分页：每次只请求当前页，不再全量拉取）
 const pagination = ref({
   current: 1,
-  pageSize: 13,
+  pageSize: 10,
   total: 0,
   showSizeChanger: true,
   showTotal: (total) => `共 ${total} 条`,
@@ -89,6 +89,7 @@ const loadData = () => {
     pageSize: pagination.value.pageSize,
   })
       .then(res => {
+        console.log(res)
         data.value = res.data.data.list
         pagination.value.total = res.data.data.total
       })

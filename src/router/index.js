@@ -63,32 +63,6 @@ const routes = [
         component: () => import('@/pages/workplace/Workplace.vue'),
     },
     {
-        path: '/table',
-        name: 'Table',
-        meta: {
-            isLogin: true,
-            title: '表格',
-            icon: 'TableOutlined',
-            permission: 'system:menu:list',
-            renderMenu: true,
-            cacheable: true,
-        },
-        component: () => import('@/pages/table/Table.vue'),
-    },
-    {
-        path: '/personal',
-        name: 'Personal',
-        meta: {
-            isLogin: true,
-            title: '个人中心',
-            icon: 'ProfileOutlined',
-            permission: 'personal:view',
-            renderMenu: true,
-            cacheable: true,
-        },
-        component: () => import('@/pages/personal/Personal.vue'),
-    },
-    {
         path: '/goods',
         name: 'Goods',
         meta: {

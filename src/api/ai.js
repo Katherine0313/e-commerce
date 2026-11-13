@@ -191,3 +191,8 @@ export function replyHuman(id, message) {
 export function closeHuman(id) {
   return axios.post(`/api/admin/ai/human/conversations/${id}/close`)
 }
+
+// 删除人工会话（连同聊天记录，不可恢复）
+export function deleteHumanConversation(id) {
+  return axios.delete(`/api/admin/ai/human/conversations/${id}`)
+}
