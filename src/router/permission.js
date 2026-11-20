@@ -4,6 +4,7 @@
 import router from './index.js'
 import { getToken, removeToken } from '@/utils/token'
 import { getCurrentUser, hasPermi } from '@/utils/auth'
+import { message } from 'ant-design-vue'
 
 /** 解析 JWT 的 exp（秒）；解析失败交给后续 payload 校验 */
 function isTokenExpired(token) {
@@ -58,6 +59,9 @@ function firstAccessiblePath(currentPath) {
 function clearLogin(reason) {
     removeToken()
     sessionStorage.setItem('loginMessage', reason)
+    // 守卫里直接弹一次：被踢回登录页是同路由跳转，Login.vue 的 onMounted 不会重跑，
+    // 只靠 sessionStorage 拿不到提示，用户就只看到「登录成功」却不知道发生了什么。
+    try { message.warning(reason) } catch (e) { /* antd 未就绪时忽略 */ }
 }
 
 /**

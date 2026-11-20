@@ -231,6 +231,11 @@ function handleSubmit() {
     message.warning('请输入用户名')
     return
   }
+  // 用户名规则与后端一致：3-30 位字母、数字或下划线（仅新增时校验，账号创建后不可改）
+  if (!editingId.value && !/^[a-zA-Z0-9_]{3,30}$/.test(form.value.username.trim())) {
+    message.warning('用户名为 3-30 位字母、数字或下划线')
+    return
+  }
   if (!editingId.value && (!form.value.password || form.value.password.length < 6)) {
     message.warning('初始密码至少 6 位')
     return

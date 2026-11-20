@@ -1,6 +1,6 @@
 <template>
   <div class="sku-editor">
-    <!-- 规格名平铺 tab：点一下就加一个维度（最多 3 个） -->
+    <!-- 规格名平铺 tab：点一下就加一个维度 -->
     <div class="spec-picker">
       <span class="picker-label">选择规格名：</span>
       <a-tag
@@ -9,12 +9,13 @@
           :color="isSelectedGroup(g.id) ? 'blue' : 'default'"
           :bordered="isSelectedGroup(g.id)"
           class="spec-chip"
-          :class="{ disabled: dimensions.length >= 3 && !isSelectedGroup(g.id) }"
+          :class="{ disabled: dimensions.length >= maxDimensions && !isSelectedGroup(g.id) }"
           @click="toggleGroup(g)"
       >
         {{ g.name }}
       </a-tag>
-      <span v-if="dimensions.length >= 3" class="picker-hint">（最多选 3 个）</span>
+      <span v-if="maxDimensions > 3" class="picker-hint">（当前分类可用规格 {{ maxDimensions }} 个，需全部选择）</span>
+      <span v-else-if="dimensions.length >= maxDimensions" class="picker-hint">（最多选 {{ maxDimensions }} 个）</span>
     </div>
 
     <!-- 已选维度展开，候选值平铺（默认全勾） -->
@@ -128,6 +129,9 @@ const DEFAULT_SPEC_GROUPS = [
 ]
 // 规格库：先塞兜底值，请求成功再覆盖
 const specGroups = ref([...DEFAULT_SPEC_GROUPS])
+// 规格数量上限：规格库里的规格名全部必选，所以上限至少等于「有候选值的规格名个数」，
+// 否则手表/相机/智能家居/数码配件这类分类会因「必选 4~7 个但最多只能选 3 个」而永远提交不了
+const maxDimensions = computed(() => Math.max(3, specGroups.value.filter(g => (g.values || []).length).length))
 // 当前已拉取过的分类 id（null = 全量），用于避免重复请求
 let lastLoadedCategoryId = '__unloaded__'
 const batch = ref({ price: null, marketPrice: null, costPrice: null, stock: null })
@@ -146,8 +150,8 @@ const toggleGroup = (g) => {
     rebuildRows()
     return
   }
-  if (dimensions.value.length >= 3) {
-    message.warning('最多选 3 个规格')
+  if (dimensions.value.length >= maxDimensions.value) {
+    message.warning(`最多选 ${maxDimensions.value} 个规格`)
     return
   }
   dimensions.value.push({
@@ -247,8 +251,17 @@ const validate = () => {
     message.warning('多规格商品至少需要 1 个规格维度并勾选候选值')
     return false
   }
-  if (dimensions.value.length > 3) {
-    message.warning('规格维度最多 3 个')
+  if (dimensions.value.length > maxDimensions.value) {
+    message.warning(`规格维度最多 ${maxDimensions.value} 个`)
+    return false
+  }
+  // 规格库里的规格名全部必选：当前分类可用、且有候选值的规格名，都必须选为 SKU 维度
+  const missingRequired = specGroups.value
+      .filter(g => (g.values || []).length
+          && !dims.some(d => (g.id != null && d.groupId === g.id) || d.name === g.name))
+      .map(g => g.name)
+  if (missingRequired.length) {
+    message.warning(`请选择必选规格：${missingRequired.join('、')}`)
     return false
   }
   const names = new Set()

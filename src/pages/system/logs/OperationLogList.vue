@@ -94,11 +94,11 @@
         <a-descriptions-item label="IP">{{ text(current.ip) }}</a-descriptions-item>
         <a-descriptions-item label="请求方法">{{ text(current.method) }}</a-descriptions-item>
         <a-descriptions-item label="请求 URI">{{ text(current.uri) }}</a-descriptions-item>
-        <a-descriptions-item label="变更详情">{{ text(current.detail) }}</a-descriptions-item>
+        <a-descriptions-item label="变更详情">{{ maskPhones(current.detail) }}</a-descriptions-item>
         <a-descriptions-item label="请求参数">
           <pre class="code-block">{{ formattedParams }}</pre>
         </a-descriptions-item>
-        <a-descriptions-item label="错误信息">{{ text(current.errorMsg) }}</a-descriptions-item>
+        <a-descriptions-item label="错误信息">{{ maskPhones(current.errorMsg) }}</a-descriptions-item>
       </a-descriptions>
     </a-drawer>
   </div>
@@ -111,6 +111,7 @@ import { message } from 'ant-design-vue'
 import dayjs from 'dayjs'
 import { exportOperationLogs, getOperationLogs } from '@/api/system.js'
 import { downloadBlob, readBlobErrorMessage } from '@/utils/download.js'
+import { maskPhone } from '@/utils/mask.js'
 
 // 模块选项：与后端打点时的 module 值一一对应，只给固定选项，不让用户手输
 const moduleOptions = [
@@ -228,6 +229,11 @@ function text(value) {
   return value === null || value === undefined || value === '' ? '—' : value
 }
 
+// 日志原文保持完整号码，只有后台展示时替换文本中的手机号
+function maskPhones(value) {
+  return String(text(value)).replace(/\b1[3-9]\d{9}\b/g, (phone) => maskPhone(phone))
+}
+
 // 列表里的 success 是布尔值（查询参数才是 1/0），两种写法都兼容一下
 function successFlag(value) {
   if (value === true || value === 1) return true
@@ -250,14 +256,14 @@ function moduleLabel(module) {
   return moduleOptions.find((item) => item.value === module)?.label || module
 }
 
-// params 是 JSON 字符串，能解析就格式化展示，解析失败原样输出（避免丢信息）
+// params 能解析就格式化，解析失败保留原文结构；两种情况的展示值都脱敏
 const formattedParams = computed(() => {
   const raw = current.value.params
   if (!raw) return '—'
   try {
-    return JSON.stringify(JSON.parse(raw), null, 2)
+    return maskPhones(JSON.stringify(JSON.parse(raw), null, 2))
   } catch (e) {
-    return raw
+    return maskPhones(raw)
   }
 })
 

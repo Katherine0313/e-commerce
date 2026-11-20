@@ -190,7 +190,18 @@ const finishLogin = (res) => {
     setToken(res.data.data.token);
     connectOrderNotify();
     message.success('登录成功');
-    router.push('/workplace');
+    // router.push 返回 Promise：路由守卫拒绝或懒加载 chunk 失败时会 reject，
+    // 不 catch 就什么提示都没有，用户只看到「登录成功」却停在原地。
+    router.push('/workplace').catch((err) => {
+      console.error('登录后跳转失败', err);
+      const failedToLoad = err?.message?.includes('Failed to fetch')
+          || err?.message?.includes('dynamically imported module');
+      if (failedToLoad) {
+        message.error('页面资源加载失败，请刷新页面后重试（如仍失败需重新部署前端）');
+      } else {
+        message.warning((err && err.message) || '跳转失败，请手动刷新页面');
+      }
+    });
   }
 };
 

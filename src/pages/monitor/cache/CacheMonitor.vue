@@ -45,8 +45,15 @@
 
     <a-card size="small" title="Key 浏览（SCAN 游标分页，不阻塞 Redis）" class="block">
       <div class="filter">
-        <a-input v-model:value="query.prefix" placeholder="前缀，如 auth: / monitor:task:last:" allow-clear
-                 style="width: 260px" @pressEnter="scan(true)" />
+        <a-auto-complete
+            v-model:value="query.prefix"
+            :options="prefixOptions"
+            placeholder="前缀，如 auth: / monitor:task:last:"
+            allow-clear
+            style="width: 260px"
+            @pressEnter="scan(true)"
+            @select="scan(true)"
+        />
         <a-input v-model:value="query.keyword" placeholder="包含关键字（可选）" allow-clear
                  style="width: 220px" @pressEnter="scan(true)" />
         <a-button type="primary" :loading="loading" @click="scan(true)">扫描</a-button>
@@ -93,7 +100,7 @@
 </template>
 
 <script setup>
-import { onMounted, ref } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import { message } from 'ant-design-vue'
 import { deleteCacheKey, getCacheKeys, getCacheOverview, revealCacheKey } from '@/api/monitor.js'
 
@@ -106,6 +113,19 @@ const finished = ref(false)
 const query = ref({ prefix: '', keyword: '' })
 
 const quickPrefixes = ['auth:captcha:', 'auth:login:fail:', 'auth:online:', 'monitor:task:last:']
+
+// 下拉建议：内置常用前缀 + 从已扫描到的 key 中自动提取的命名空间前缀（首段冒号）。
+// 这样用户不用记前缀，点一下就能看到目前库里都有哪些缓存命名空间。
+const prefixOptions = computed(() => {
+  const set = new Set(quickPrefixes)
+  list.value.forEach((item) => {
+    const key = item.fullKey || item.key
+    if (!key) return
+    const colon = key.indexOf(':')
+    if (colon > 0) set.add(key.slice(0, colon + 1))
+  })
+  return Array.from(set).map((v) => ({ value: v }))
+})
 
 const columns = [
   { title: 'Key', dataIndex: 'key', key: 'key' },

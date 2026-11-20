@@ -7,7 +7,9 @@
     </a-steps>
 
     <!-- Step 1：商品基础信息 -->
-    <a-card v-if="currentStep === 0" title="商品基础信息">
+    <!-- 用 v-show 而不是 v-if：提交按钮在 Step 2，v-if 会把 Step 1 的 a-form 卸载，
+         addGoodsFormRef 变成 null，点「提交商品」时 validate() 直接报 TypeError -->
+    <a-card v-show="currentStep === 0" title="商品基础信息">
       <a-form :model="addGoodsForm" :rules="addGoodsRules" ref="addGoodsFormRef"
               :label-col="{span:3, style:{paddingRight:'5px'}}" :wrapper-col="{span:21}">
         <a-form-item label="商品分类" name="categoryId" >
@@ -24,7 +26,7 @@
           <a-input placeholder="请输入商品名称" v-model:value="addGoodsForm.name" style="width:40%" />
         </a-form-item>
         <a-form-item label="商品品牌" name="brand">
-          <a-select placeholder="请选择商品品牌" v-model:value="addGoodsForm.brand">
+          <a-select placeholder="请选择商品品牌" v-model:value="addGoodsForm.brand" @change="onBrandChange">
             <a-select-option v-for="brand in brandOptions" :value="brand" :key="brand" label="option"></a-select-option>
           </a-select>
         </a-form-item>
@@ -42,7 +44,16 @@
             <a-button size="small" :loading="aiGenerating === 'subTitle'" @click="generateAiCopy('subTitle')">副标题</a-button>
             <a-button size="small" :loading="aiGenerating === 'title'" @click="generateAiCopy('title')">主标题</a-button>
             <a-button size="small" :loading="aiGenerating === 'description'" @click="generateAiCopy('description')">详情</a-button>
-            <a-button size="small" type="primary" ghost :loading="aiGenerating === 'all'" @click="generateAiCopy('all')">全部生成</a-button>
+            <a-button size="small" type="primary" ghost :loading="aiGenerating === 'all'" @click="generateAll">AI生成</a-button>
+            <a-popconfirm
+                title="清空 AI 生成的文案、主图和详情图？分类、规格等信息会保留"
+                ok-text="清空"
+                cancel-text="取消"
+                ok-type="danger"
+                @confirm="clearAiGenerated"
+            >
+              <a-button size="small" danger :disabled="aiGenerating === 'all'">一键清空</a-button>
+            </a-popconfirm>
           </a-space>
         </a-form-item>
         <a-form-item v-if="aiResults.length" label="生成预览">
@@ -120,7 +131,7 @@
   </div>
 </template>
 <script setup>
-import {nextTick, onActivated, onMounted, ref} from 'vue'
+import {nextTick, onActivated, onMounted, ref, watch} from 'vue'
 import {getGoodsList, getBrandList, getCategoryTree, addGoods} from '@/api/products.js'
 import {UploadOutlined} from '@ant-design/icons-vue'
 // 导入消息组件
@@ -211,6 +222,8 @@ const loadBrand = () => {
       .then(res => {
         // 将接口返回的品牌数组赋值给下拉响应式变量，渲染a-select-option
         brandOptions.value = res.data.data
+        // 品牌列表返回时商品名可能已经填了，补一次自动匹配
+        autoMatchBrand()
       })
       .catch(err => {
         message.error('网络连接超时，请检查网络后再试')
@@ -323,6 +336,7 @@ const handleSubmit = () => {
 const resetAll = () => {
   currentStep.value = 0
   addGoodsFormRef.value?.resetFields()
+  brandTouched.value = false
   addGoodsForm.value.name = ''
   addGoodsForm.value.brand = undefined
   addGoodsForm.value.subTitle = ''
@@ -366,6 +380,29 @@ const addGoodsRules = {
     {required: true, message: '商品副标题不能为空', trigger: 'blur'}
   ]
 }
+
+// ====================== 品牌自动匹配 =====================
+// 用户手动选过品牌后，不再用商品名去覆盖他的选择
+const brandTouched = ref(false)
+const onBrandChange = () => {
+  brandTouched.value = true
+}
+
+// 商品名包含品牌名就自动选中（忽略大小写和空格；多个命中取最长的，避免短品牌抢先）
+const matchBrandByName = (name) => {
+  const target = String(name || '').toLowerCase().replace(/\s+/g, '')
+  if (!target) return undefined
+  return brandOptions.value
+      .filter(b => b && target.includes(String(b).toLowerCase().replace(/\s+/g, '')))
+      .sort((a, b) => b.length - a.length)[0]
+}
+
+const autoMatchBrand = () => {
+  if (brandTouched.value) return
+  addGoodsForm.value.brand = matchBrandByName(addGoodsForm.value.name)
+}
+
+watch(() => addGoodsForm.value.name, autoMatchBrand)
 // ====================== AI 文案 / 生图 =====================
 // Editor 组件实例（暴露 insertHtml，详情文案/详情图原地插入）
 const editorRef = ref(null)
@@ -429,6 +466,107 @@ const fillField = (r) => {
   }
   aiResults.value = aiResults.value.filter(item => item.key !== r.key)
   message.success(`${r.label}已填入`)
+}
+
+// 文本转富文本段落（详情文案统一走这个，保证和「填入」口径一致）
+const toBodyHtml = (text) => String(text || '').split(/\n+/).filter(Boolean)
+    .map(p => `<p>${escapeHtml(p)}</p>`).join('')
+
+// 全部生成：文案（名称/副标题/主标题/详情）+ 主图 + 详情图，一次跑完并自动回填
+const generateAll = async () => {
+  if (!addGoodsForm.value.name?.trim()) {
+    message.warning('请先填写商品名称（大致名称即可），AI 以此为依据生成')
+    return
+  }
+  if (aiGenerating.value) {
+    return
+  }
+  aiGenerating.value = 'all'
+  // 每一步都基于最新表单值取上下文：文案生成后名称可能已被改写，生图要用新名称
+  const aiProduct = () => ({
+    name: addGoodsForm.value.name.trim(),
+    categoryName: currentCategoryName(),
+    subTitle: addGoodsForm.value.subTitle,
+    sellingPoints: aiSellingPoints.value,
+  })
+
+  // 1. 文案
+  let fields = {}
+  try {
+    const res = await generateCopy({ product: aiProduct(), scene: 'all' })
+    fields = res.data?.data?.fields || {}
+  } catch (e) {
+    aiGenerating.value = ''
+    message.error('文案生成失败，请稍后重试')
+    return
+  }
+  let filled = 0
+  for (const key of ['name', 'subTitle', 'title']) {
+    if (fields[key]) {
+      addGoodsForm.value[key] = fields[key]
+      filled++
+    }
+  }
+  if (fields.description) filled++
+  // 已自动回填，清空旧的预览区，避免还要再点一次「填入」
+  aiResults.value = []
+
+  // 2. 主图
+  let mainUrl = ''
+  try {
+    const res = await generateImage({ prompt: '', scene: 'main', count: 1, product: aiProduct() })
+    mainUrl = res.data?.data?.images?.[0]?.url || ''
+  } catch (e) {
+    message.warning('主图生成失败，文案已回填')
+  }
+
+  // 3. 详情图
+  let detailUrl = ''
+  try {
+    const res = await generateImage({ prompt: '', scene: 'detail', count: 1, product: aiProduct() })
+    detailUrl = res.data?.data?.images?.[0]?.url || ''
+  } catch (e) {
+    message.warning('详情图生成失败，其余内容已回填')
+  }
+
+  // 统一写回表单：主图走 image + 缩略图；详情文案和详情图一次性写成 body，避免多次插入错位
+  if (mainUrl) {
+    addGoodsForm.value.image = mainUrl
+    fileList.value = [{uid: '-1', name: 'AI 主图', status: 'done', url: imageHost + mainUrl}]
+  }
+  const descHtml = fields.description ? toBodyHtml(fields.description) : (addGoodsForm.value.body || '')
+  const imgHtml = detailUrl
+      ? `<p><img src="${detailUrl}" style="max-width:100%" alt="详情图"/></p>`
+      : ''
+  if (descHtml || imgHtml) {
+    addGoodsForm.value.body = descHtml + imgHtml
+  }
+
+  aiGenerating.value = ''
+  if (!filled && !mainUrl && !detailUrl) {
+    message.warning('没有生成任何内容，请补充卖点后重试')
+    return
+  }
+  message.success('已一键生成并回填：文案、主图、详情图')
+}
+
+// 一键清空：只清 AI 生成/回填的内容，保留分类、规格、SKU、销售信息等手动维护部分
+const clearAiGenerated = () => {
+  // 只移除 AI 主图（uid = -1），用户自己上传的图片保留
+  const hadAiMain = fileList.value.some(f => f.uid === '-1')
+  fileList.value = fileList.value.filter(f => f.uid !== '-1')
+  if (hadAiMain) {
+    // 当前主图若指向 AI 图，回退到剩余上传图（没有就置空）
+    const rest = fileList.value.find(f => f.status === 'done')
+    addGoodsForm.value.image = rest?.response?.data?.url || undefined
+  }
+  addGoodsForm.value.name = ''
+  addGoodsForm.value.subTitle = ''
+  addGoodsForm.value.title = ''
+  addGoodsForm.value.body = ''
+  aiSellingPoints.value = ''
+  aiResults.value = []
+  message.success('已清空 AI 生成的内容')
 }
 
 // AI 生图弹窗状态：target=main 设主图 / detail 插详情
@@ -572,7 +710,13 @@ const uploadHeaders = {
 :deep(.ant-card-head-title ) {
   font-weight: bold;
 }
-
+/* antd 默认规则 `.ant-steps-horizontal:not(.ant-steps-label-vertical) .ant-steps-item-description`
+   的优先级(3 个 class)高于 `:deep(.ant-steps-item-description)`(1 个 class + 1 个 scoped 属性)，
+   所以必须把选择器写全，否则 max-width 会被 140px 覆盖 */
+:deep(.ant-steps-horizontal:not(.ant-steps-label-vertical) .ant-steps-item-description) {
+  max-width: 240px;
+  white-space: normal;
+}
 /* 笔记本 */
 @media (max-width: 1200px) {
   .steps {

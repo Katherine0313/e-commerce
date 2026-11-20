@@ -12,7 +12,7 @@
           <!--1. 加点击事件：点击这个容器，打开弹窗，让用户填地址，弹窗用Address.vue封装-->
           <div class="addr-text" @click="handleAddress">
             <template v-if="defaultAddress">
-              <div class="addr-title">{{ defaultAddress.consignee }} {{ defaultAddress.phone }}</div>
+              <div class="addr-title">{{ defaultAddress.consignee }} {{ maskPhone(defaultAddress.phone) }}</div>
               <div class="addr-tip">{{ defaultAddress.region }} {{ defaultAddress.detail_address }}</div>
             </template>
             <template v-else>
@@ -169,6 +169,7 @@ import {addOrder} from '@/api/orders.js'
 import {message} from 'ant-design-vue'
 import Paid from './Paid.vue'
 import StoreCard from './StoreCard.vue'
+import {maskPhone} from '@/utils/mask.js'
 
 const baseUrl = import.meta.env.BASE_URL
 // 定义打开子组件Paid.vue的实例

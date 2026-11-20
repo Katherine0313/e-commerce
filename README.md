@@ -92,7 +92,7 @@ npm run preview    # 预览构建产物
 
 ## 权限与登录
 
-- 登录：`POST /api/admin/login`，需带图形验证码（`captchaId` / `captchaCode`，180 秒一次性）
+- 登录：`POST /api/admin/login`，需带图形验证码（`captchaId` / `captchaCode`，300 秒 / 5 分钟一次性）
 - 失败锁定：同一「用户名 + IP」连续错 5 次锁 10 分钟
 - 令牌存在 **sessionStorage**（不是 localStorage）：关掉标签页即登出，离开工位不会残留登录态
 - 菜单与按钮权限由后端下发，`v-permission` 指令控制按钮级显示；前端路由守卫拦截无权限直链

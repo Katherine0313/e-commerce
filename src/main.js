@@ -17,6 +17,16 @@ import { AuthPlugin, IconfontPlugin } from '@/plugins';
 import lazy from '@/directives/lazy';
 import permission from '@/directives/permission';
 
+// 发版后旧页面再懒加载 chunk 会 404（旧 hash 文件已被新版本覆盖），
+// 这里自动刷新一次拿最新 index.html；sessionStorage 标记防止刷新死循环。
+window.addEventListener('vite:preloadError', (event) => {
+  event.preventDefault();
+  if (!sessionStorage.getItem('chunk-reloaded')) {
+    sessionStorage.setItem('chunk-reloaded', '1');
+    window.location.reload();
+  }
+});
+
 // 消除 Chrome 的「Permissions policy violation: unload is not allowed」告警：
 // stepin 的 TabsView 仍在 window 上监听已废弃的 unload 事件。
 // 在应用挂载前把 unload 监听重定向到官方推荐的等价事件 pagehide（刷新/关闭/跳转都会触发），
